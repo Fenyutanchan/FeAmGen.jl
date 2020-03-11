@@ -20,7 +20,7 @@ generate_amp( "parton_parton_TO_parton_t/b_u_TO_d_t.yaml", "Models" )
 This is used to generate diagrams and amplitudes by using the previously generated process input file and model directory.
 
 
-Here we use directly the UFO model files stored in <model directory>.
+Here we use directly the UFO model files stored in `<model directory>`.
 
 -----------------------------------------------
 
