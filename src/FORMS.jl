@@ -146,18 +146,18 @@ CFunction VecEpsilon, VecEpsilon1,...,VecEpsilon4, VecEps, VecEpsC;
 CFunction Spinor, Spinor1,...,Spinor4, FermionChain;
 
 CFunction SpUB, SpVB, SpU, SpV;
-Set SPINORSET: SpUB, SpVB, SpU, SpV;
-Set LEFTSPINORSET: SpUB, SpVB;
-Set RIGHTSPINORSET: SpU, SpV;
+Set SPSET: SpUB, SpVB, SpU, SpV;
+Set LSPSET: SpUB, SpVB;
+Set RSPSET: SpU, SpV;
 
 CFunction UB, VB, U, V;
-Set INNERSPINORSET: UB, VB, U, V;
-Set LEFTINNERSPINORSET: UB, VB;
-Set RIGHTINNERSPINORSET: U, V;
+Set INSPSET: UB, VB, U, V;
+Set ILSPSET: UB, VB;
+Set IRSPSET: U, V;
 
 CFunction SP(symmetric), LMT(symmetric), Levi(antisymmetric);
 CFunction SPC(symmetric);
-CFunction GAij, PLij, PRij, ONEij(symmetric);
+CFunction GAij, PLij, PRij, ONEij(symmetric), Trace, Trace5, Trace5sym;
 CFunction GA, PL, PR;
 
 CFunction JJ(antisymmetric), FF(antisymmetric);
@@ -207,7 +207,7 @@ repeat;
   id GAij(spa1?,spa2?,rho?)*ONEij(spa3?,spa2?) = GAij(spa1,spa3,rho);
   id GAij(spa2?,spa1?,rho?)*ONEij(spa3?,spa2?) = GAij(spa3,spa1,rho);
 
-  id Spinor?SPINORSET(int?,spa1?,mom?,ref?,mass?)*ONEij(spa1?,spa2?) = Spinor(int,spa2,mom,ref,mass);
+  id Spinor?SPSET(int?,spa1?,mom?,ref?,mass?)*ONEij(spa1?,spa2?) = Spinor(int,spa2,mom,ref,mass);
 endrepeat;
 .sort
 *
@@ -386,7 +386,7 @@ id VecEpsilon?{VecEps,VecEpsC}(int?,mom0?,mom?,ref?,mass?) = FV(mom0,EPSMU[int])
 id mom?NULL.mom?NULL = 0;
 id mom1?.mom2? = SP(mom1,mom2);
 id mom?(rho?ALLLOR) = FV(mom,rho);
-id e_(rho1?,rho2?,rho3?,rho4?) = complexj*Levi(rho1,rho2,rho3,rho4);
+id e_(rho1?,rho2?,rho3?,rho4?) = I*Levi(rho1,rho2,rho3,rho4);
 .sort
 
 id d_(rho1?,rho2?) = LMT(rho1,rho2);
@@ -496,7 +496,7 @@ repeat;
   id PRij(spa1?,spa2?)*PLij(spa2?,spa3?) = 0;
 
 
-  id Spinor?SPINORSET(int?,spa1?,mom?,ref?,mass?)*ONEij(spa1?,spa2?) = Spinor(int,spa2,mom,ref,mass);
+  id Spinor?SPSET(int?,spa1?,mom?,ref?,mass?)*ONEij(spa1?,spa2?) = Spinor(int,spa2,mom,ref,mass);
 endrepeat;
 .sort
 
@@ -509,19 +509,19 @@ id GAij(spa1?,spa2?,var?) = GAij(spa1,spa2,var);
 * now chainin the Dirac objects in FermionChain according to Dirac indices
 *
 ***Here var? could be mom? or rho?
-id Spinor?LEFTSPINORSET[setint](int?,spa1?,?vars)*GAij(spa1?,spa2?,mom?) = FermionChain( LEFTINNERSPINORSET[setint](int,?vars), GA(mom), spa2 );
-id Spinor?LEFTSPINORSET[setint](int?,spa1?,?vars)*GAij(spa1?,spa2?,rho?ALLLOR) = FermionChain( LEFTINNERSPINORSET[setint](int,?vars), GA(rho), spa2 );
-id Spinor?LEFTSPINORSET[setint](int?,spa1?,?vars)*PLij(spa1?,spa2?) = FermionChain( LEFTINNERSPINORSET[setint](int,?vars), PL, spa2 );
-id Spinor?LEFTSPINORSET[setint](int?,spa1?,?vars)*PRij(spa1?,spa2?) = FermionChain( LEFTINNERSPINORSET[setint](int,?vars), PR, spa2 );
+id Spinor?LSPSET[setint](int?,spa1?,?vars)*GAij(spa1?,spa2?,mom?) = FermionChain( ILSPSET[setint](int,?vars), GA(mom), spa2 );
+id Spinor?LSPSET[setint](int?,spa1?,?vars)*GAij(spa1?,spa2?,rho?ALLLOR) = FermionChain( ILSPSET[setint](int,?vars), GA(rho), spa2 );
+id Spinor?LSPSET[setint](int?,spa1?,?vars)*PLij(spa1?,spa2?) = FermionChain( ILSPSET[setint](int,?vars), PL, spa2 );
+id Spinor?LSPSET[setint](int?,spa1?,?vars)*PRij(spa1?,spa2?) = FermionChain( ILSPSET[setint](int,?vars), PR, spa2 );
 
 ***flip
-id Spinor?LEFTSPINORSET[setint](int?,spa1?,?vars)*GAij(spa2?,spa1?,mom?) = -FermionChain( LEFTINNERSPINORSET[setint](int,?vars), GA(mom), spa2 );
-id Spinor?LEFTSPINORSET[setint](int?,spa1?,?vars)*GAij(spa2?,spa1?,rho?ALLLOR) = -FermionChain( LEFTINNERSPINORSET[setint](int,?vars), GA(rho), spa2 );
-id Spinor?LEFTSPINORSET[setint](int?,spa1?,?vars)*PLij(spa2?,spa1?) = FermionChain( LEFTINNERSPINORSET[setint](int,?vars), PL, spa2 );
-id Spinor?LEFTSPINORSET[setint](int?,spa1?,?vars)*PRij(spa2?,spa1?) = FermionChain( LEFTINNERSPINORSET[setint](int,?vars), PR, spa2 );
+id Spinor?LSPSET[setint](int?,spa1?,?vars)*GAij(spa2?,spa1?,mom?) = -FermionChain( ILSPSET[setint](int,?vars), GA(mom), spa2 );
+id Spinor?LSPSET[setint](int?,spa1?,?vars)*GAij(spa2?,spa1?,rho?ALLLOR) = -FermionChain( ILSPSET[setint](int,?vars), GA(rho), spa2 );
+id Spinor?LSPSET[setint](int?,spa1?,?vars)*PLij(spa2?,spa1?) = FermionChain( ILSPSET[setint](int,?vars), PL, spa2 );
+id Spinor?LSPSET[setint](int?,spa1?,?vars)*PRij(spa2?,spa1?) = FermionChain( ILSPSET[setint](int,?vars), PR, spa2 );
 
 
-id Spinor1?LEFTSPINORSET[setint1](int1?,spa?,?var1)*Spinor2?RIGHTSPINORSET[setint2](int2?,spa?,?var2) = FermionChain( LEFTINNERSPINORSET[setint1](int1,?var1), RIGHTINNERSPINORSET[setint2](int2,?var2) );
+id Spinor1?LSPSET[setint1](int1?,spa?,?var1)*Spinor2?RSPSET[setint2](int2?,spa?,?var2) = FermionChain( ILSPSET[setint1](int1,?var1), IRSPSET[setint2](int2,?var2) );
 .sort
 
 repeat;
@@ -540,7 +540,7 @@ repeat;
   id FermionChain(?vars,spa1?)*PRij(spa2?,spa1?) = FermionChain( ?vars, PR, spa2 );
 endrepeat;
 
-id FermionChain(?vars1,spa?)*Spinor?RIGHTSPINORSET[setint](int?,spa?,?vars2) = FermionChain( ?vars1, RIGHTINNERSPINORSET[setint](int,?vars2) );
+id FermionChain(?vars1,spa?)*Spinor?RSPSET[setint](int?,spa?,?vars2) = FermionChain( ?vars1, IRSPSET[setint](int,?vars2) );
 .sort
 
 
@@ -650,36 +650,36 @@ repeat;
 #include baseINC.frm
 ***pull momentum of right-side spinor to the relevant spinor
   repeat;
-  id FermionChain( ?vars1, GA(mom?), GA(rho?ALLLOR), ?vars2, Spinor?RIGHTINNERSPINORSET(int?,mom?,ref?,mass?) )
+  id FermionChain( ?vars1, GA(mom?), GA(rho?ALLLOR), ?vars2, Spinor?IRSPSET(int?,mom?,ref?,mass?) )
     = FermionChain( ?vars1, ?vars2, Spinor(int,mom,ref,mass) )*2*FV(mom,rho)
      -FermionChain( ?vars1, GA(rho), GA(mom), ?vars2, Spinor(int,mom,ref,mass) );
 
-  id FermionChain( ?vars1, GA(mom1?kn[setint]), GA(rho?ALLLOR), ?vars2, Spinor?RIGHTINNERSPINORSET(int?,mom2?Kn[setint],ref?,mass?!{,0}) )
+  id FermionChain( ?vars1, GA(mom1?kn[setint]), GA(rho?ALLLOR), ?vars2, Spinor?IRSPSET(int?,mom2?Kn[setint],ref?,mass?!{,0}) )
     = FermionChain( ?vars1, ?vars2, Spinor(int,mom2,ref,mass) )*2*FV(mom1,rho)
      -FermionChain( ?vars1, GA(rho), GA(mom1), ?vars2, Spinor(int,mom2,ref,mass) );
 
-  id FermionChain( ?vars1, GA(ref?), GA(rho?ALLLOR), ?vars2, Spinor?RIGHTINNERSPINORSET(int?,mom?Kn,ref?,mass?!{,0}) )
+  id FermionChain( ?vars1, GA(ref?), GA(rho?ALLLOR), ?vars2, Spinor?IRSPSET(int?,mom?Kn,ref?,mass?!{,0}) )
     = FermionChain( ?vars1, ?vars2, Spinor(int,mom,ref,mass) )*2*FV(ref,rho)
      -FermionChain( ?vars1, GA(rho), GA(ref), ?vars2, Spinor(int,mom,ref,mass) );
 
   id FV(mom?,rho?ALLLOR)*FermionChain(?vars1,GA(rho?ALLLOR),?vars2) = FermionChain(?vars1,GA(mom),?vars2);
 
-  id FermionChain( ?vars1, GA(mom?), PR, ?vars2, Spinor?RIGHTINNERSPINORSET(int?,mom?,ref?,mass?) )
+  id FermionChain( ?vars1, GA(mom?), PR, ?vars2, Spinor?IRSPSET(int?,mom?,ref?,mass?) )
     = FermionChain( ?vars1, PL, GA(mom), ?vars2, Spinor(int,mom,ref,mass) );
 
-  id FermionChain( ?vars1, GA(mom1?kn[setint]), PR, ?vars2, Spinor?RIGHTINNERSPINORSET(int?,mom2?Kn[setint],ref?,mass?!{,0}) )
+  id FermionChain( ?vars1, GA(mom1?kn[setint]), PR, ?vars2, Spinor?IRSPSET(int?,mom2?Kn[setint],ref?,mass?!{,0}) )
     = FermionChain( ?vars1, PL, GA(mom1), ?vars2, Spinor(int,mom2,ref,mass) );
 
-  id FermionChain( ?vars1, GA(ref?), PR, ?vars2, Spinor?RIGHTINNERSPINORSET(int?,mom?Kn,ref?,mass?!{,0}) )
+  id FermionChain( ?vars1, GA(ref?), PR, ?vars2, Spinor?IRSPSET(int?,mom?Kn,ref?,mass?!{,0}) )
     = FermionChain( ?vars1, PL, GA(ref), ?vars2, Spinor(int,mom,ref,mass) );
 
-  id FermionChain( ?vars1, GA(mom?), PL, ?vars2, Spinor?RIGHTINNERSPINORSET(int?,mom?,ref?,mass?) )
+  id FermionChain( ?vars1, GA(mom?), PL, ?vars2, Spinor?IRSPSET(int?,mom?,ref?,mass?) )
     = FermionChain( ?vars1, PR, GA(mom), ?vars2, Spinor(int,mom,ref,mass) );
 
-  id FermionChain( ?vars1, GA(mom1?kn[setint]), PL, ?vars2, Spinor?RIGHTINNERSPINORSET(int?,mom2?Kn[setint],ref?,mass?!{,0}) )
+  id FermionChain( ?vars1, GA(mom1?kn[setint]), PL, ?vars2, Spinor?IRSPSET(int?,mom2?Kn[setint],ref?,mass?!{,0}) )
     = FermionChain( ?vars1, PR, GA(mom1), ?vars2, Spinor(int,mom2,ref,mass) );
 
-  id FermionChain( ?vars1, GA(ref?), PL, ?vars2, Spinor?RIGHTINNERSPINORSET(int?,mom?Kn,ref?,mass?!{,0}) )
+  id FermionChain( ?vars1, GA(ref?), PL, ?vars2, Spinor?IRSPSET(int?,mom?Kn,ref?,mass?!{,0}) )
     = FermionChain( ?vars1, PR, GA(ref), ?vars2, Spinor(int,mom,ref,mass) );
 
   repeat id FermionChain( ?vars1, GA(mom?), GA(mom?), ?vars2 ) = FermionChain( ?vars1, ?vars2 )*SP(mom,mom);
@@ -704,50 +704,50 @@ repeat;
 
 ***pull momentum of left-side spinor to the relevant spinor
   repeat;
-  id FermionChain( Spinor?LEFTINNERSPINORSET(int?,mom?,ref?,mass?), ?vars1, GA(rho?ALLLOR), GA(mom?), ?vars2 )
+  id FermionChain( Spinor?ILSPSET(int?,mom?,ref?,mass?), ?vars1, GA(rho?ALLLOR), GA(mom?), ?vars2 )
     = FermionChain( Spinor(int,mom,ref,mass), ?vars1, ?vars2 )*2*FV(mom,rho)
      -FermionChain( Spinor(int,mom,ref,mass), ?vars1, GA(mom), GA(rho), ?vars2 );
 
-  id FermionChain( Spinor?LEFTINNERSPINORSET(int?,mom1?Kn[setint],ref?,mass?!{,0}), ?vars1, GA(rho?ALLLOR), GA(mom2?kn[setint]), ?vars2 )
+  id FermionChain( Spinor?ILSPSET(int?,mom1?Kn[setint],ref?,mass?!{,0}), ?vars1, GA(rho?ALLLOR), GA(mom2?kn[setint]), ?vars2 )
     = FermionChain( Spinor(int,mom1,ref,mass), ?vars1, ?vars2 )*2*FV(mom2,rho)
      -FermionChain( Spinor(int,mom1,ref,mass), ?vars1, GA(mom2), GA(rho), ?vars2 );
 
-  id FermionChain( Spinor?LEFTINNERSPINORSET(int?,mom?Kn,ref?,mass?!{,0}), ?vars1, GA(rho?ALLLOR), GA(ref?), ?vars2 )
+  id FermionChain( Spinor?ILSPSET(int?,mom?Kn,ref?,mass?!{,0}), ?vars1, GA(rho?ALLLOR), GA(ref?), ?vars2 )
     = FermionChain( Spinor(int,mom,ref,mass), ?vars1, ?vars2 )*2*FV(ref,rho)
      -FermionChain( Spinor(int,mom,ref,mass), ?vars1, GA(ref), GA(rho), ?vars2 );
 
   id FV(mom?,rho?ALLLOR)*FermionChain(?vars1,GA(rho?ALLLOR),?vars2) = FermionChain(?vars1,GA(mom),?vars2);
 
-  id FermionChain( Spinor?LEFTINNERSPINORSET(int?,mom?,ref?,mass?), ?vars1, PR, GA(mom?), ?vars2 )
+  id FermionChain( Spinor?ILSPSET(int?,mom?,ref?,mass?), ?vars1, PR, GA(mom?), ?vars2 )
     = FermionChain( Spinor(int,mom,ref,mass), ?vars1, GA(mom), PL, ?vars2 );
 
-  id FermionChain( Spinor?LEFTINNERSPINORSET(int?,mom1?Kn[setint],ref?,mass?!{,0}), ?vars1, PR, GA(mom2?kn[setint]), ?vars2 )
+  id FermionChain( Spinor?ILSPSET(int?,mom1?Kn[setint],ref?,mass?!{,0}), ?vars1, PR, GA(mom2?kn[setint]), ?vars2 )
     = FermionChain( Spinor(int,mom1,ref,mass), ?vars1, GA(mom2), PL, ?vars2 );
 
-  id FermionChain( Spinor?LEFTINNERSPINORSET(int?,mom?Kn,ref?,mass?!{,0}), ?vars1, PR, GA(ref?), ?vars2 )
+  id FermionChain( Spinor?ILSPSET(int?,mom?Kn,ref?,mass?!{,0}), ?vars1, PR, GA(ref?), ?vars2 )
     = FermionChain( Spinor(int,mom,ref,mass), ?vars1, GA(ref), PL, ?vars2 );
 
-  id FermionChain( Spinor?LEFTINNERSPINORSET(int?,mom?,ref?,mass?), ?vars1, PL, GA(mom?), ?vars2 )
+  id FermionChain( Spinor?ILSPSET(int?,mom?,ref?,mass?), ?vars1, PL, GA(mom?), ?vars2 )
     = FermionChain( Spinor(int,mom,ref,mass), ?vars1, GA(mom), PR, ?vars2 );
 
-  id FermionChain( Spinor?LEFTINNERSPINORSET(int?,mom1?Kn[setint],ref?,mass?!{,0}), ?vars1, PL, GA(mom2?kn[setint]), ?vars2 )
+  id FermionChain( Spinor?ILSPSET(int?,mom1?Kn[setint],ref?,mass?!{,0}), ?vars1, PL, GA(mom2?kn[setint]), ?vars2 )
     = FermionChain( Spinor(int,mom1,ref,mass), ?vars1, GA(mom2), PR, ?vars2 );
 
-  id FermionChain( Spinor?LEFTINNERSPINORSET(int?,mom?Kn,ref?,mass?!{,0}), ?vars1, PL, GA(ref?), ?vars2 )
+  id FermionChain( Spinor?ILSPSET(int?,mom?Kn,ref?,mass?!{,0}), ?vars1, PL, GA(ref?), ?vars2 )
     = FermionChain( Spinor(int,mom,ref,mass), ?vars1, GA(ref), PR, ?vars2 );
 
   repeat id FermionChain( ?vars1, GA(mom?), GA(mom?), ?vars2 ) = FermionChain( ?vars1, ?vars2 )*SP(mom,mom);
   id SP(mom?NULL,mom?NULL) = 0;
 
-  id FermionChain( Spinor?LEFTINNERSPINORSET(int?,mom1?,ref?,mass?), ?vars1, GA(mom2?ALLMOM), GA(mom1?), ?vars2 )
+  id FermionChain( Spinor?ILSPSET(int?,mom1?,ref?,mass?), ?vars1, GA(mom2?ALLMOM), GA(mom1?), ?vars2 )
     = FermionChain( Spinor(int,mom1,ref,mass), ?vars1, ?vars2 )*2*SP(mom1,mom2)
      -FermionChain( Spinor(int,mom1,ref,mass), ?vars1, GA(mom1), GA(mom2), ?vars2 );
 
-  id FermionChain( Spinor?LEFTINNERSPINORSET(int?,mom1?Kn[setint],ref?,mass?!{,0}), ?vars1, GA(mom2?ALLMOM), GA(mom3?kn[setint]), ?vars2 )
+  id FermionChain( Spinor?ILSPSET(int?,mom1?Kn[setint],ref?,mass?!{,0}), ?vars1, GA(mom2?ALLMOM), GA(mom3?kn[setint]), ?vars2 )
     = FermionChain( Spinor(int,mom1,ref,mass), ?vars1, ?vars2 )*2*SP(mom3,mom2)
      -FermionChain( Spinor(int,mom1,ref,mass), ?vars1, GA(mom3), GA(mom2), ?vars2 );
 
-  id FermionChain( Spinor?LEFTINNERSPINORSET(int?,mom1?Kn,ref?,mass?!{,0}), ?vars1, GA(mom2?ALLMOM), GA(ref?), ?vars2 )
+  id FermionChain( Spinor?ILSPSET(int?,mom1?Kn,ref?,mass?!{,0}), ?vars1, GA(mom2?ALLMOM), GA(ref?), ?vars2 )
     = FermionChain( Spinor(int,mom1,ref,mass), ?vars1, ?vars2 )*2*SP(ref,mom2)
      -FermionChain( Spinor(int,mom1,ref,mass), ?vars1, GA(ref), GA(mom2), ?vars2 );
 
@@ -940,3 +940,213 @@ end # function make_contractor_script
 
 
 
+
+
+
+
+###############################################################################
+function make_baseINC_script( graph::GenericGraph )::String
+###############################################################################
+
+  result_str = string()
+
+  v0 = vertex_from_label( "graph property", graph )
+  n_inc = v0.attributes["n_inc"]
+  n_out = v0.attributes["n_out"]
+  n_leg = n_inc+n_out
+
+  ext_edge_list = filter( e_ -> ( e_.attributes["style"]=="External" ), edges(graph) )
+  sorted_ext_edge_list = sort( ext_edge_list, by=edge_index )
+
+  momN = sorted_ext_edge_list[n_leg].attributes["momentum"]
+  momNm1 = sorted_ext_edge_list[n_leg-1].attributes["momentum"]
+  momNm2 = sorted_ext_edge_list[n_leg-2].attributes["momentum"]
+
+
+  #-------------------------------------------------------------
+  sorted_notN_ext_edge_list = filter( e_ -> ( edge_index(e_) != n_leg ), sorted_ext_edge_list )
+
+  result_str *= "id FV($(momN),rho?) = ";
+  for edge in sorted_notN_ext_edge_list
+    mom = edge.attributes["momentum"]
+    inc_sign = edge_index(edge) <= n_inc ? 1 : (-1)
+    result_str *= "+($(inc_sign))*FV($(mom),rho)"
+  end # for edge
+  result_str *= ";\n"
+ 
+  result_str *= "id SP($(momN),rho?) = ";
+  for edge in sorted_notN_ext_edge_list
+    mom = edge.attributes["momentum"]
+    inc_sign = edge_index(edge) <= n_inc ? 1 : (-1)
+    result_str *= "+($(inc_sign))*SP($(mom),rho)"
+  end # for edge
+  result_str *= ";\n"
+
+  result_str *= 
+    "id FermionChain( Spinor1?ILSPSET(int1?!{,$(n_leg)},mom1?,ref1?,mass1?),"*
+    " ?vars1, GA($(momN)), ?vars2,"*
+    " Spinor2?IRSPSET(int2?!{,$(n_leg)},mom2?,ref2?,mass2?) ) = \n"
+  for edge in sorted_notN_ext_edge_list
+    mom = edge.attributes["momentum"]
+    inc_sign = edge_index(edge) <= n_inc ? 1 : (-1)
+    result_str *= 
+    "  +($(inc_sign))*FermionChain( Spinor1(int1,mom1,ref1,mass1), ?vars1, GA($(mom)), ?vars2, Spinor2(int2,mom2,ref2,mass2) )\n"
+  end # for edge
+  result_str *= ";\n"
+
+  #-------------------------------------------------------------
+  sorted_notNm1_ext_edge_list = filter( e_ -> ( edge_index(e_) != n_leg-1 ), sorted_ext_edge_list )
+  Nm1_sign = n_leg-1 <= n_inc ? (-1) : (+1)
+
+  result_str *=
+    "id FermionChain( Spinor?ILSPSET($(n_leg),mom?,ref?,mass?), ?vars1, GA($(momNm1)), ?vars2 ) = \n"
+  for edge in sorted_notNm1_ext_edge_list
+    mom = edge.attributes["momentum"]
+    inc_sign = edge_index(edge) <= n_inc ? 1*Nm1_sign : (-1)*Nm1_sign
+    result_str *=
+    "  +($(inc_sign))*FermionChain( Spinor($(n_leg),mom,ref,mass), ?vars1, GA($(mom)), ?vars2 )\n"
+  end # for edge
+  result_str *= ";\n"
+
+  result_str *=
+    "id FermionChain( ?vars1, GA($(momNm1)), ?vars2, Spinor?IRSPSET($(n_leg),mom?,ref?,mass?) ) = \n"
+  for edge in sorted_notNm1_ext_edge_list
+    mom = edge.attributes["momentum"]
+    inc_sign = edge_index(edge) <= n_inc ? 1*Nm1_sign : (-1)*Nm1_sign
+    result_str *=
+    "  +($(inc_sign))*FermionChain( ?vars1, GA($(mom)), ?vars2, Spinor($(n_leg),mom,ref,mass) )\n"
+  end # for edge
+  result_str *= ";\n"
+
+  #-------------------------------------------------------------
+  sorted_notNm2_ext_edge_list = filter( e_ -> ( edge_index(e_) != n_leg-2 ), sorted_ext_edge_list )
+  Nm2_sign = n_leg-2 <= n_inc ? (-1) : (+1)
+  
+  result_str *=
+    "id FermionChain( Spinor1?ILSPSET($(n_leg-1),mom1?,ref1?,mass1?), ?vars1, GA($(momNm2)), ?vars2, Spinor2?IRSPSET($(n_leg),mom2?,ref2?,mass2?) ) = \n"
+  for edge in sorted_notNm2_ext_edge_list
+    mom = edge.attributes["momentum"]
+    inc_sign = edge_index(edge) <= n_inc ? 1*Nm2_sign : (-1)*Nm2_sign
+    result_str *=
+    "  +($(inc_sign))*FermionChain( Spinor1($(n_leg-1),mom1,ref1,mass1), ?vars1, GA($(mom)), ?vars2, Spinor2($(n_leg),mom2,ref2,mass2) )\n"
+  end # for edge
+  result_str *= ";\n"
+
+  result_str *=
+    "id FermionChain( Spinor1?ILSPSET($(n_leg),mom1?,ref1?,mass1?), ?vars1, GA($(momNm2)), ?vars2, Spinor2?IRSPSET($(n_leg-1),mom2?,ref2?,mass2?) ) = \n"
+  for edge in sorted_notNm2_ext_edge_list
+    mom = edge.attributes["momentum"]
+    inc_sign = edge_index(edge) <= n_inc ? 1*Nm2_sign : (-1)*Nm2_sign
+    result_str *=
+    "  +($(inc_sign))*FermionChain( Spinor1($(n_leg),mom1,ref1,mass1), ?vars1, GA($(mom)), ?vars2, Spinor2($(n_leg=1),mom2,ref2,mass2) )\n"
+  end # for edge
+  result_str *= ";\n"
+
+  #-----------------------------------------------------------------------------------
+  result_str *=
+    "id FV($(momNm1),rho?)*VecEpsilon?{VecEps,VecEpsC}($(n_leg),rho?,$(momN),r$(n_leg)?,mass?) = \n"
+  for index in 1:(n_leg-2)
+    edge = sorted_ext_edge_list[index]
+    mom = edge.attributes["momentum"]
+    inc_sign = index <= n_inc ? (+1) : (-1)
+    result_str *=
+    "  ($(inc_sign))*FV($(mom),rho)*VecEpsilon($(n_leg),rho,$(momN),r$(n_leg),mass)\n"
+  end # for index
+  result_str *= 
+    ";\n"*
+    "id FV(mom?,rho?)*VecEpsilon?{VecEps,VecEpsC}(int?,rho?,mom?,ref?,mass?) = 0;\n"*
+    "\n"
+
+  return result_str
+
+end # function make_baseINC_script
+
+
+
+
+
+
+##############################################################################
+function make_amp_contraction_script( expr::Basic, file_name::String )::String
+##############################################################################
+
+  result_str = """
+#-
+
+Off Statistics;
+Off FinalStats;
+
+#include model_parameters.frm
+#include contractor.frm
+
+format nospaces;
+format maple;
+
+Local expression = $(expr);
+
+#call Simplification();
+
+#call contractDiracIndices();
+
+#call Simplification();
+
+#call orderingFermionChain();
+
+#call Simplification();
+
+#include kin_relation.frm
+.sort
+
+repeat;
+  id once FermionChain(?vars1, GA(mom?), ?vars2 ) = FV(mom,rho100)*FermionChain(?vars1, GA(rho100), ?vars2 );
+  sum rho100;
+endrepeat;
+
+
+id FV(mom?,rho?)*VecEpsilon?{VecEps,VecEpsC}(int?,rho?,mom?,ref?,mass?) = 0;
+.sort
+
+while( match(FermionChain(?vars1,GA(rho?NonEPSMU\$LORENTZ),?vars2)) );
+  sum \$LORENTZ;
+endwhile;
+.sort
+*
+* Replace system dummy indices Nm_? by our dummy indices dummyMU in case to read back to GiNaC.
+* We assume this should give the canonical form of FermionChain, 
+*   since it seems dummy indices Nm_? can make canonical form of an expression automatically.
+*
+
+repeat;
+if( match( SP(mom1?{q1,q2,q3}\$MOM1,mom2?\$MOM2) ) );
+  id once SP(\$MOM1,\$MOM2) = FV(\$MOM1,rho1)*FV(\$MOM2,rho2)*LMT(rho1,rho2);
+  sum rho1;
+  sum rho2;
+endif;
+endrepeat; 
+.sort
+
+
+#do MUIDX = 1, 20, 1
+  Multiply replace_(N`MUIDX'_?,dummyMU`MUIDX');
+#enddo
+.sort
+
+id FV(rho1?,rho2?) = FV(rho1,rho2);
+id SP(rho1?,rho2?) = SP(rho1,rho2);
+.sort
+
+#write <$(file_name).out> "%e", expression
+#close <$(file_name).out>
+.sort
+
+#system tr -d "[:space:]" < $(file_name).out > $(file_name).out.trim
+#system mv $(file_name).out.trim $(file_name).out
+.sort
+
+.end
+
+"""
+
+  return result_str
+
+end # function make_amp_contraction_script 

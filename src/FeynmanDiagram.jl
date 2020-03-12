@@ -397,7 +397,7 @@ end # function get_link_spinor
 function translate_lorentz_factor( one_lorentz::Basic, vert::ExVertex, g::GenericGraph, )::Basic
 ################################################################################################
 
-  @funs Metric LMT P FV Gamma GAij ProjP PR ProjM PL Identity ONEij 
+  @funs Metric LMT P FV Gamma GAij ProjP PRij ProjM PLij Identity ONEij 
 
   lorentz_str = string(one_lorentz)
   new_lorentz = one_lorentz
@@ -460,7 +460,7 @@ function translate_lorentz_factor( one_lorentz::Basic, vert::ExVertex, g::Generi
     sp1 = get_link_spinor( g, vert, link1_index )
     sp2 = get_link_spinor( g, vert, link2_index )
 
-    new_lorentz = subs( new_lorentz, Basic(one_ProjP_str), PR(sp1,sp2) )
+    new_lorentz = subs( new_lorentz, Basic(one_ProjP_str), PRij(sp1,sp2) )
   end # for one_ProjP_str
 
   range_list = findall( r"ProjM\([+-]*\d+, [+-]*\d+\)", lorentz_str )
@@ -472,7 +472,7 @@ function translate_lorentz_factor( one_lorentz::Basic, vert::ExVertex, g::Generi
     sp1 = get_link_spinor( g, vert, link1_index )
     sp2 = get_link_spinor( g, vert, link2_index )
 
-    new_lorentz = subs( new_lorentz, Basic(one_ProjM_str), PL(sp1,sp2) )
+    new_lorentz = subs( new_lorentz, Basic(one_ProjM_str), PLij(sp1,sp2) )
   end # for one_ProjM_str
 
   range_list = findall( r"Identity\([+-]*\d+, [+-]*\d+\)", lorentz_str )
@@ -835,7 +835,6 @@ function canonicalize_loop_PowDen( lorentz_expr_list::Vector{Basic}, model::Mode
     write( file, form_script_str )
     close(file)
 
-
     printstyled( "[ form $(file_name).frm ]\n", color=:yellow )
     run( pipeline( `form $(file_name).frm`, file_name*".log" ) )
 
@@ -846,15 +845,47 @@ function canonicalize_loop_PowDen( lorentz_expr_list::Vector{Basic}, model::Mode
 
     run( `rm $(file_name).frm $(file_name).out $(file_name).log` )
   end # for lorentz_expr
-  rm( "contractor.frm" )
 
   return new_lorentz_expr_list
 
 end # function canonicalize_loop_PowDen
 
 
+##################################################################################
+function contract_Dirac_indices( lorentz_expr_list::Vector{Basic}, graph::GenericGraph )::Vector{Basic}
+##################################################################################
 
+  # model_parameters.frm and contractor.frm have been created in canonicalize_loop_PowDen
 
+  file = open( "baseINC.frm", "w" )
+  write( file, make_baseINC_script( graph ) )
+  close(file)
+
+  new_lorentz_expr_list = Vector{Basic}( undef, length(lorentz_expr_list) )
+  for index in 1:length(lorentz_expr_list)
+    lorentz_expr = lorentz_expr_list[index]
+    file_name = "contract_lorentz_expr$(index)"
+    form_script_str = make_amp_contraction_script( lorentz_expr, file_name )
+
+    file = open( file_name*".frm", "w" )
+    write( file, form_script_str )
+    close(file)
+
+    printstyled( "[ form $(file_name).frm ]\n", color=:yellow )
+    run( pipeline( `form $(file_name).frm`, file_name*".log" ) )
+
+    file = open( file_name*".out", "r" )
+    result_str = read( file, String )
+    result_expr = Basic(result_str)
+    new_lorentz_expr_list[index] = result_expr
+
+    #run( `rm $(file_name).frm $(file_name).out $(file_name).log` )
+  end # for index
+  #rm( "contractor.frm" )
+
+  return new_lorentz_expr_list
+
+end # function contract_Dirac_indices
 
 
 
@@ -901,6 +932,7 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
 
     amp_color_list, amp_lorentz_list = assemble_amplitude( g, model )
     amp_lorentz_list = canonicalize_loop_PowDen( amp_lorentz_list, model )
+    amp_lorentz_list = contract_Dirac_indices( amp_lorentz_list, g )
 
     amp_list[index] = Amplitude( g, amp_color_list, amp_lorentz_list )
   end # for g

@@ -21,7 +21,10 @@ This is used to generate diagrams and amplitudes by using the previously generat
 -----------------------------------------------
 
 Here we use directly the UFO model files stored in `<model directory>`.
-And we need `QGRAF` package install, i.e. command `qgraf` is available.
+
+***NOTE: Since we are using UFO format, PyCall.jl needs to be compiled with Python2 instead of Python3.***
+
+And we need `QGRAF` and `FORM` packages installed.
 
 The results contains amplitude in file `amplitude.out` and the Feynman diagrams in file `visual_graphs.tex`.
 Explicitly one could use `lualatex visual_graphs.tex` to generate PDF file with `tikz-feynman.sty`.
