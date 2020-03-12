@@ -110,6 +110,10 @@ function generate_Feynman_diagram( model::Model, input::Dict{Any,Any} )
   run(`qgraf`)
   @assert isfile( "qgraf_out.dat" )
 
+  rm( "qgraf.dat" )
+  rm( "model.qgraf" )
+  rm( "miracle.sty" )
+
 end # function generate_Feynman_diagram
 
 
@@ -521,9 +525,18 @@ function convert_qgraf_TO_Graph( one_qgraf::Dict{Any,Any}, model::Model )::Union
   ## For filtering the "style"
   v0.attributes["style"] = ""
 
-  ## Add incoming vertices.
   qgraf_incoming_propagators = one_qgraf["incoming_propagators"]
   n_inc = length(qgraf_incoming_propagators)
+  qgraf_outgoing_propagators = one_qgraf["outgoing_propagators"]
+  n_out = length(qgraf_outgoing_propagators)
+
+  ## For distinguishing incoming and outgoing edges
+  v0.attributes["n_inc"] = n_inc
+  v0.attributes["n_out"] = n_out
+
+
+
+  ## Add incoming vertices.
   for one_inc in qgraf_incoming_propagators
     vert_idx = num_vertices(g) # There is v0 ahead already.
     inc_v = ExVertex( vert_idx, "v$vert_idx" )
@@ -540,8 +553,6 @@ function convert_qgraf_TO_Graph( one_qgraf::Dict{Any,Any}, model::Model )::Union
 
 
   # Add outgoing vertices.
-  qgraf_outgoing_propagators = one_qgraf["outgoing_propagators"]
-  n_out = length(qgraf_outgoing_propagators)
   for one_out in qgraf_outgoing_propagators
     vert_idx = num_vertices(g) # There is v0 ahead already.
     out_v = ExVertex( vert_idx, "v$vert_idx" )
@@ -718,7 +729,6 @@ function convert_qgraf_TO_Graph( one_qgraf::Dict{Any,Any}, model::Model )::Union
   # Now the structure of this graph has been digested into Graph.
   # Then we can evaluate color_row_list and couplings_lorentz_col_list for the internal or loop vertices.
   #-------------------------------------------------------------------
-# internal_vertex_list = filter_vertices( mg, :style, "Internal" )
   internal_vertex_list = filter( v_ -> v_.attributes["style"] == "Internal", vertices(g) )
   for vert in internal_vertex_list
     inter = vert.attributes["interaction"]
@@ -746,6 +756,7 @@ function convert_qgraf_TO_Graph( one_qgraf::Dict{Any,Any}, model::Model )::Union
   end # for vert 
 
   return g
+
 end # function convert_qgraf_TO_Graph
 
 
@@ -795,177 +806,72 @@ function assemble_amplitude( g::GenericGraph, model::Model )::Tuple{Vector{Basic
   end # for edge
 
   return amp_color_list, amp_couplings_lorentz_list;
+
 end # function assemble_amplitude
 
 
 
-#####################################################
-function get_line_style_str( part::Particle )::String
-#####################################################
-
- if part.spin == :scalar 
-   if is_not_majorana(part) && part.kf > 0 
-     return "charged scalar"
-   elseif is_not_majorana(part) && part.kf < 0 
-     return "anti charged scalar"
-   else
-     return "scalar"
-   end # if
- elseif part.spin == :fermion 
-   if is_not_majorana(part) && part.kf > 0 
-     return "fermion"
-   elseif is_not_majorana(part) && part.kf < 0 
-     return "anti fermion"
-   else
-     return "majorana"
-   end # if
- elseif part.spin == :vector
-   if is_gluon(part) 
-     return "gluon"
-   else
-     return "boson"
-   end # if
- elseif part.spin == :ghost 
-   return "ghost"
- else
-   @assert false
- end # if
-
-end # function get_line_style_str
 
 
+##################################################################################################
+function canonicalize_loop_PowDen( lorentz_expr_list::Vector{Basic}, model::Model )::Vector{Basic}
+##################################################################################################
 
-#######################################################################
-function generate_visual_graph( g::GenericGraph, model::Model )::String
-#######################################################################
+  file = open( "model_parameters.frm", "w" )
+  write( file, "symbol "*join( map( k_->string(k_), collect(keys(model.parameter_dict)) ), "," )*";\n" )
+  close(file)
 
-  v0 = vertex_from_label( "graph property", g )
+  file = open( "contractor.frm", "w" )
+  write( file, make_contractor_script() )
+  close(file)
 
-  result_str =
-    "\\begin{figure}[!htb] \n"*
-    "\\begin{center} \n"*
-    "\\feynmandiagram [large] { \n"*
-    "  %$(string(v0)) \n"
-  for att in v0.attributes
-    result_str *= 
-    "    %$(att[1]) => $(att[2]) \n"
-  end # for att
+  new_lorentz_expr_list = Vector{Basic}( undef, length(lorentz_expr_list) )
+  for index in 1:length(lorentz_expr_list)
+    lorentz_expr = lorentz_expr_list[index]
+    file_name = "lorentz_expr$(index)"
+    form_script_str = make_canonicalize_amplitude_script( lorentz_expr, file_name )
 
-  for edge in edges(g)
-    result_str *= 
-    "  %$(string(edge)) \n"
-    for att in edge.attributes
-      result_str *= 
-      "    %$(att[1]) => $(att[2]) \n"
-    end # for att
-  end # for edge
-
-  for vert in vertices(g)
-    result_str *= 
-    "  %$(string(vert)) \n"
-    for att in vert.attributes
-      result_str *= 
-      "    %$(att[1]) => $(att[2]) \n"
-    end # for att
-  end # for vert
-
-  QCDct_str_dict = Dict( 0 => "", 1 => " [crossed dot]", 2 => " [red, label = DOUBLE, crossed dot]" )
-
-  edge_list = edges(g)
-  for edge in edge_list
-    src_v = source(edge)
-    tgt_v = target(edge)
-
-    parallel_edge_list = filter( e_ -> (source(e_) == src_v && target(e_) == tgt_v), edge_list )
-
-    if length(parallel_edge_list) <= 1
-      half_circle_option = ""
-    else 
-      parallel_edge_mark_list = map( e_ -> e_.attributes["mark"], parallel_edge_list )   
-      max_mark = max(parallel_edge_mark_list)
-      min_mark = min(parallel_edge_mark_list)
-      if edge.attributes["mark"] == max_mark
-        half_circle_option = ", half left"
-      elseif edge.attributes["mark"] == min_mark
-        half_circle_option = ", half right"
-      else
-        @assert false
-      end # if
-    end # end if
-
-    src_QCDct_str = QCDct_str_dict[src_v.attributes["QCDct_order"]]
-    src_mark = src_v.attributes["mark"]
-
-    tgt_QCDct_str = QCDct_str_dict[tgt_v.attributes["QCDct_order"]]
-    tgt_mark = tgt_v.attributes["mark"]
-
-    edge_style_str = get_line_style_str(edge.attributes["particle"])
-
-    tadpole_option = ""
-    if src_mark == tgt_mark 
-      tadpole_option = ", loop, min distance=3cm"
-    end # if
-   
-    src_external_marking_str = ""
-    if src_v.attributes["style"] == "External"
-      src_external_marking_str = " [particle = \\($(src_mark)\\)]"
-    end # if
-    tgt_external_marking_str = ""
-    if tgt_v.attributes["style"] == "External"
-      tgt_external_marking_str = " [particle = \\($(tgt_mark)\\)]"
-    end # if
+    file = open( file_name*".frm", "w" )
+    write( file, form_script_str )
+    close(file)
 
 
-    particle_name = edge.attributes["particle"].name
-    particle_name = replace( particle_name, "plus" => "^{+}" )
-    particle_name = replace( particle_name, "minus" => "^{-}" )
-    particle_name = replace( particle_name, "ve" => "\\nu_{e}" )
-    particle_name = replace( particle_name, "vm" => "\\nu_{\\mu}" )
-    particle_name = replace( particle_name, "vt" => "\\nu_{\\tau}" )
-    particle_name = replace( particle_name, "mu" => "\\mu" )
-    particle_name = replace( particle_name, "ta" => "\\tau" )
-    particle_name = replace( particle_name, "^a" => "\\gamma" )
-    if length(particle_name) > 3 && particle_name[end-2:end] == "bar"
-      particle_name = "\\overline{"*particle_name[1,end-3]*"}"
-    end # if
+    printstyled( "[ form $(file_name).frm ]\n", color=:yellow )
+    run( pipeline( `form $(file_name).frm`, file_name*".log" ) )
 
-    mom_str = replace( string(edge.attributes["momentum"]), r"([Kk]+)(\d+)" => s"\1_{\2}" )
+    file = open( file_name*".out", "r" )
+    result_str = read( file, String )
+    result_expr = Basic(result_str)
+    new_lorentz_expr_list[index] = result_expr
 
-    result_str *= 
-      "$(src_v.label)$(src_QCDct_str)$(src_external_marking_str) -- [$(edge_style_str)$(half_circle_option)$(tadpole_option), edge label' = \\($(particle_name)\\), momentum = \\($(mom_str)\\) ] $(tgt_v.label)$(tgt_QCDct_str)$(tgt_external_marking_str), \n"
-  end # for edge
+    run( `rm $(file_name).frm $(file_name).out $(file_name).log` )
+  end # for lorentz_expr
+  rm( "contractor.frm" )
 
-  result_str *= 
-    "};\n"*
-    "\\end{center}\n"*
-    "\\caption{Diagram$(v0.attributes["diagram_index"]), Sign: $(v0.attributes["sign"]), Symmetry factor: $(v0.attributes["symmetry_factor"])}\n"*
-    "\\end{figure}\n"*
-    "\\newpage\n"*
-    "\n"
+  return new_lorentz_expr_list
 
-  return result_str
-end # function generate_visual_graph
+end # function canonicalize_loop_PowDen
 
 
 
-####################################################
-function generate_amplitude( model::Model )::Nothing
-####################################################
+
+
+
+
+
+##########################################################################
+function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
+##########################################################################
+
+  couplingfactor = Basic(input["couplingfactor"]) 
 
   qgraf_out = YAML.load( open("qgraf_out.dat") )
 
   qgraf_list = qgraf_out["FeynmanDiagrams"]
 
-  visual_file = open( "visual_graphs.tex", "w" )
-  write( visual_file,
-    "\\documentclass{article}\n"*
-    "\\usepackage{tikz-feynman}\n"*
-    "\n"*
-    "\\begin{document}\n"*
-    "\n" )
-
-  amp_file = open( "amplitude.out", "w" )
-
+  #------------------------------------------------  
+  # Convert qgraf to GenericGraph
+  graph_set = Set{GenericGraph}()
   for one_qgraf in qgraf_list 
 
     g = convert_qgraf_TO_Graph( one_qgraf, model )
@@ -973,27 +879,78 @@ function generate_amplitude( model::Model )::Nothing
       continue
     end # if
 
-    amp_color_list, amp_couplings_lorentz_list = assemble_amplitude( g, model )
+    push!( graph_set, g )
+  end # for one_qgraf
+  graph_list = sort( collect( graph_set ), by= g_->vertex_from_label("graph property",g_).attributes["diagram_index"] )
+
+
+  #------------------------------------------------  
+  # Generate Gauge choice
+  gauge_choice = generate_gauge_choice( graph_list )
+  # Generate kinematics relation
+  kin_relation = generate_kin_relation( graph_list, gauge_choice )
+  file = open( "kin_relation.frm", "w" )
+  write( file, join( map( ele_->"id $(ele_[1]) = $(ele_[2]);", collect(kin_relation) ), "\n" ) )
+  close(file)
+
+  #------------------------------------------------  
+  # Calculate amplitude for each graph
+  amp_list = Vector{Amplitude}( undef, length(graph_list) )
+  for index in 1:length(graph_list)
+    g = graph_list[index]
+
+    amp_color_list, amp_lorentz_list = assemble_amplitude( g, model )
+    amp_lorentz_list = canonicalize_loop_PowDen( amp_lorentz_list, model )
+
+    amp_list[index] = Amplitude( g, amp_color_list, amp_lorentz_list )
+  end # for g
+
+
+  #------------------------------------------------  
+  # Write out amplitude
+  printstyled( "[ Generate amplitude.out ]\u264e\n", color=:green, bold=true )
+  amp_file = open( "amplitude.out", "w" )
+  write( amp_file, 
+    "couplingfactor: $(couplingfactor)\n\n" )
+  for amp in amp_list
+    g = amp.graph
+
+    diagram_index = vertex_from_label("graph property",g).attributes["diagram_index"]
 
     write( amp_file, 
-      "Diagram #$(one_qgraf["diagram_index"]): \n"*
-      "  amp_color_list: \n" )
-    for one_color in amp_color_list
+      "Diagram #$(diagram_index): \n" )
+
+    for ii in 1:length(amp.color_list)
+      one_color = amp.color_list[ii]
       write( amp_file, 
+      "  amp_color #$(ii): \n"*
       "    $(one_color); \n" )
-    end # for one_color
-    write( amp_file, 
-      "  amp_couplings_lorentz_list: \n" )
-    for one_val in amp_couplings_lorentz_list
+    end # for ii
+
+    for ii in 1:length(amp.lorentz_list)
+      one_val = amp.lorentz_list[ii]
       write( amp_file, 
-      "    $(one_val); \n" )
-    end # for one_val
+      "  amp_couplings_lorentz #$(ii): \n"* 
+      "    $( one_val/couplingfactor ); \n" )
+    end # for ii
     write( amp_file, "\n\n" )
 
+  end # for g
+  close( amp_file )
+
+  #------------------------------------------------  
+  # Write out visual graph
+  printstyled( "[ Generate visual_graphs.tex ]\u264e\n", color=:green, bold=true )
+  visual_file = open( "visual_graphs.tex", "w" )
+  write( visual_file,
+    "\\documentclass{article}\n"*
+    "\\usepackage{tikz-feynman}\n"*
+    "\n"*
+    "\\begin{document}\n"*
+    "\n" )
+  for g in graph_list
     result_str = generate_visual_graph( g, model )
-
     write( visual_file, result_str ) 
-
   end # for one_qgraf
 
   write( visual_file, 
@@ -1001,13 +958,19 @@ function generate_amplitude( model::Model )::Nothing
     "\n" )
   close( visual_file )
 
-  close( amp_file )
 
-  println()
-  println( "Run \"lualatex visual_graphs.tex\" to generate PDF file." )
+  print( "\nRun \"lualatex visual_graphs.tex\" to generate PDF file.\n" )
   # run( `lualatex visual_graphs.tex` )
 
   return nothing
+
 end # function generate_amplitude
+
+
+
+
+
+
+
 
 

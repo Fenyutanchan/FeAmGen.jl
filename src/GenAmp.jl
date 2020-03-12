@@ -40,7 +40,7 @@ function generate_amp( proc_file::String, model_dir::String )::Nothing
 
   generate_Feynman_diagram( model, input )
 
-  generate_amplitude( model )
+  generate_amplitude( model, input )
 
   return nothing
 

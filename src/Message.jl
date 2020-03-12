@@ -68,7 +68,7 @@ function show_welcome_message()::Nothing
 
   println("""
 
-  Two functions are for user access.
+  Two functions are avaiable for user access.
 
   digest_seed_proc( "seed_proc.yaml", "../Models" )
 

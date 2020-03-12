@@ -41,8 +41,24 @@ struct Model
   particle_kf_dict::Dict{Int64,Particle}
   interaction_list::Vector{Interaction}
   sorted_kf_list_dict::Dict{Vector{Int64},Interaction}
+  parameter_dict::Dict{Basic,Basic}
 end # struct Model
 #########################
+
+
+
+#########################
+mutable struct Amplitude
+  graph::GenericGraph
+  color_list::Vector{Basic}
+  lorentz_list::Vector{Basic}
+end # struct Amplitude
+#########################
+
+
+
+
+
 
 
 # Function "is_anticommuting" is used for the sign in the calculation of fermion/ghost loop.
@@ -62,6 +78,7 @@ is_ghost( part::Particle )::Bool = abs(part.kf) == 9000005
 is_quark( part::Particle )::Bool = 1 <= abs(part.kf) <= 6
 is_colorful( part::Particle )::Bool = is_gluon(part) || is_quark(part) || is_ghost(part)
 is_not_colorful( part::Particle )::Bool = !is_colorful(part)
+is_massive_fermion( part::Particle )::Bool = part.mass != 0 && part.spin == :fermion
 ################################################
 
 

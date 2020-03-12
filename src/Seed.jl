@@ -63,8 +63,7 @@ function digest_seed_proc( seed_file::String, model_dir::String )::Nothing
   mkdir( parton_proc_str )
   cd( parton_proc_str ) 
 
-  print( "Writing subprocesses cards in " )
-  printstyled( parton_proc_str, "\n", color=:green )
+  printstyled( "[ Generate subprocesses cards in ", parton_proc_str, " ]\u264e\n", color=:green, bold=true )
   for proc_str in proc_set 
     write_card( proc_str, n_inc, input )
   end # for proc_str

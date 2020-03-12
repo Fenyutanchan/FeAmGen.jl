@@ -9,9 +9,8 @@ function check_has_yt( coupling_dict::Dict{Any,Any} )::Bool
   has_yt = occursin( "yt", value_list_str )
 
   return has_yt
-###########################################################
+
 end # function check_has_yt
-###########################################################
 
 
 
@@ -30,9 +29,8 @@ function extract_QCD_QED_order( coupling_dict::Dict{Any,Any} )::Tuple{Int64,Int6
   QED_order = first(QED_order_set)
 
   return QCD_order, QED_order
-##################################################################################
+
 end # function extract_QCD_QED_order
-##################################################################################
 
 
 #####################################################################################################
@@ -61,9 +59,8 @@ function calculate_CTcoeff( link_part_list::Vector{Particle}, has_yt::Bool, QCD_
   CTcoeff = series( CTcoeff, symbols("CTorder"), 0, 2 )
 
   return CTcoeff
-#####################################################################################################
+
 end # function calculate_CTcoeff
-#####################################################################################################
 
 
 
@@ -76,15 +73,14 @@ function extract_couplings_matrix(
   local couplings_matrix = zeros(Basic,color_dim,lorentz_dim)
   for ele_coup in couplings_dict
     key = ele_coup[1]
-    value_str = ele_coup[2].name
+    value_str = lowercase( ele_coup[2].name )
     # Since here key starts from (0,0) and in julia it should be (1,1)
     couplings_matrix[key.+1...] = Basic( value_str )*CTcoeff
   end # for ele_coup
 
   return couplings_matrix
-#####################################################################################################
+
 end # function extract_couplings_matrix
-#####################################################################################################
 
 
 
@@ -125,9 +121,8 @@ function generate_color_lorentz_couplings( part::Particle )::Tuple{Array{Basic,1
   end # if
 
   return color_row_list, lorentz_col_list, couplings_matrix
-################################################################################################################
+
 end # function generate_color_lorentz_couplings
-################################################################################################################
 
 
 
@@ -162,8 +157,8 @@ function readin_model( input::Dict{Any,Any}, model_dir::String )::Model
   for part in py_model.all_particles
     new_part = Particle( part.pdg_code, to_qgraf_name(part.name), to_qgraf_name(part.antiname),
                          spin_dict[part.spin], color_dict[part.color], charge_convert(part.charge),
-                         Basic(replace(part.mass.name,"ZERO"=>"0")), 
-                         Basic(replace(part.width.name,"ZERO"=>"0")) )
+                         Basic(lowercase(replace(part.mass.name,"ZERO"=>"0"))), 
+                         Basic(lowercase(replace(part.width.name,"ZERO"=>"0"))) )
     push!( particle_list, new_part )
     push!( particle_name_dict, to_qgraf_name(part.name) => new_part )
     push!( particle_kf_dict, part.pdg_code => new_part )
@@ -219,9 +214,31 @@ function readin_model( input::Dict{Any,Any}, model_dir::String )::Model
     push!( sorted_kf_list_dict, sorted_kf_list => new_interaction )
   end # for part
 
+
+  parameter_dict = Dict{Basic,Basic}() 
+  for param in py_model.all_parameters
+    param_name = lowercase( param.name )
+    if param_name == "zero" 
+      continue
+    end # if
+    param_value = lowercase(string( param.value ))
+
+    param_value = replace( param_value, "complex(0,1)" => "I" )
+    param_value = replace( param_value, "cmath.cos" => "cos" )
+    param_value = replace( param_value, "cmath.sin" => "sin" )
+    param_value = replace( param_value, "cmath.sqrt(2)" => "sqrt2" )
+    param_value = replace( param_value, "cmath.sqrt" => "sqrt" )
+    param_value = replace( param_value, "cmath.pi" => "pi" )
+    param_value = replace( param_value, "complexconjugate" => "conj" )
+    param_value = replace( param_value, "**" => "^" )
+
+    push!( parameter_dict, Basic(param_name) => Basic(param_value) )
+  end # for param
+
+
   #--------------------------------------
   # Universe Model instance
-  model = Model( model_name, input["unitary_gauge"]::Bool, particle_list, particle_name_dict, particle_kf_dict, interaction_list, sorted_kf_list_dict )
+  model = Model( model_name, input["unitary_gauge"]::Bool, particle_list, particle_name_dict, particle_kf_dict, interaction_list, sorted_kf_list_dict, parameter_dict )
   #--------------------------------------
 
   return model
