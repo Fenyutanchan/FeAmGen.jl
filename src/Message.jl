@@ -5,26 +5,6 @@
 function show_welcome_message()::Nothing
 ########################################
 
-  FEAMGEN_str = """
-  ######################################################################################
-  #                                                                                    #
-  #       '||''''|'||''''|     |    '||    ||'..|'''.|'||''''| '|.   '|'               #
-  #        ||  .   ||  .      |||    |||  |||.|'     ' ||  .    |'|   |                #
-  #        ||''|   ||''|     |  ||   |'|..'||||    ....||''|    | '|. |                #
-  #        ||      ||       .''''|.  | '|' ||'|.    || ||       |   |||                #
-  #       .||.    .||.....|.|.  .||..|. | .||.''|...'|.||.....|.|.   '|                #
-  #                                                                                    #
-  #     FeAmGen: Julia program for Feynman Amplitude Generation @ project MIRACLE      #
-  #                                                                                    #
-  #                                   Zhao  Li                                         #
-  #                                   IHEP-CAS                                         #
-  #                               zhaoli@ihep.ac.cn                                    #
-  #                                                                                    #
-  ######################################################################################
-  """
-
-  println(FEAMGEN_str)
-
   println("""
 
   Two functions are avaiable for user access.
@@ -36,6 +16,7 @@ function show_welcome_message()::Nothing
   """)
 
   return nothing
+
 end # function show_welcome_message
 
 

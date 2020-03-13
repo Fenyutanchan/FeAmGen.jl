@@ -879,9 +879,9 @@ function contract_Dirac_indices( lorentz_expr_list::Vector{Basic}, graph::Generi
     result_expr = Basic(result_str)
     new_lorentz_expr_list[index] = result_expr
 
-    #run( `rm $(file_name).frm $(file_name).out $(file_name).log` )
+    run( `rm $(file_name).frm $(file_name).out $(file_name).log` )
   end # for index
-  #rm( "contractor.frm" )
+  rm( "contractor.frm" )
 
   return new_lorentz_expr_list
 

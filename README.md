@@ -1,6 +1,18 @@
 # FeAmGen.jl
 
-Julia program for Feynman Amplitude Generation @ project MIRACLE 
+                                                                                    
+   '||''''|'||''''|     |    '||    ||'..|'''.|'||''''| '|.   '|'               
+    ||  .   ||  .      |||    |||  |||.|'     ' ||  .    |'|   |                
+    ||''|   ||''|     |  ||   |'|..'||||    ....||''|    | '|. |                
+    ||      ||       .''''|.  | '|' ||'|.    || ||       |   |||                
+   .||.    .||.....|.|.  .||..|. | .||.''|...'|.||.....|.|.   '|                
+                                                                                
+ FeAmGen: Julia program for Feynman Amplitude Generation @ project MIRACLE      
+                                                                                
+                               Zhao  Li                                         
+                               IHEP-CAS                                         
+                           zhaoli@ihep.ac.cn                                    
+                                                                                    
 
 -----------------------------------------------
 

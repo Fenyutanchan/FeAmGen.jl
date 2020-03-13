@@ -962,7 +962,6 @@ function make_baseINC_script( graph::GenericGraph )::String
   momNm1 = sorted_ext_edge_list[n_leg-1].attributes["momentum"]
   momNm2 = sorted_ext_edge_list[n_leg-2].attributes["momentum"]
 
-
   #-------------------------------------------------------------
   sorted_notN_ext_edge_list = filter( e_ -> ( edge_index(e_) != n_leg ), sorted_ext_edge_list )
 
@@ -1038,7 +1037,7 @@ function make_baseINC_script( graph::GenericGraph )::String
     mom = edge.attributes["momentum"]
     inc_sign = edge_index(edge) <= n_inc ? 1*Nm2_sign : (-1)*Nm2_sign
     result_str *=
-    "  +($(inc_sign))*FermionChain( Spinor1($(n_leg),mom1,ref1,mass1), ?vars1, GA($(mom)), ?vars2, Spinor2($(n_leg=1),mom2,ref2,mass2) )\n"
+    "  +($(inc_sign))*FermionChain( Spinor1($(n_leg),mom1,ref1,mass1), ?vars1, GA($(mom)), ?vars2, Spinor2($(n_leg-1),mom2,ref2,mass2) )\n"
   end # for edge
   result_str *= ";\n"
 
@@ -1050,7 +1049,7 @@ function make_baseINC_script( graph::GenericGraph )::String
     mom = edge.attributes["momentum"]
     inc_sign = index <= n_inc ? (+1) : (-1)
     result_str *=
-    "  ($(inc_sign))*FV($(mom),rho)*VecEpsilon($(n_leg),rho,$(momN),r$(n_leg),mass)\n"
+    "  +($(inc_sign))*FV($(mom),rho)*VecEpsilon($(n_leg),rho,$(momN),r$(n_leg),mass)\n"
   end # for index
   result_str *= 
     ";\n"*
