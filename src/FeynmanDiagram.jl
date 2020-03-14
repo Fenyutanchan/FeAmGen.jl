@@ -175,7 +175,7 @@ function get_outgoing_couplings_lorentz_list( part::Particle, mark::Int64, momen
   elseif part.spin == :scalar
     return [ Basic("1") ]
   else
-    printstyled( "We should have not considered ghost in external field.\n", color=:red )
+    error( "We should have not considered ghost in external field.\n" )
     exit()
   end # if
 
@@ -199,7 +199,7 @@ function get_remnant_couplings_lorentz_list( part::Particle, mark::Int64, moment
   elseif part.spin in [:scalar, :ghost]
     return [ Basic(" I*Den( $momentum, $(part.mass), $(part.width) ) ") ]
   else 
-    printstyled( "We should have not considered ghost in external field.\n", color=:red )
+    error( "We should have not considered ghost in external field.\n" )
     exit()
   end # if
 

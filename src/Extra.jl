@@ -13,7 +13,7 @@ function degree( expr::Basic, x::Basic; max_n::Int64=100 )::Int64
 
   end # for ii
 
-  printstyled( "Are you sure ",expr," is a polynomial of ",x,"? Or max_n = ",max_n," is too small?\n", color=:red )
+  error( "Are you sure ",expr," is a polynomial of ",x,"? Or max_n = ",max_n," is too small?\n" )
   exit()
 end # function degree
 
