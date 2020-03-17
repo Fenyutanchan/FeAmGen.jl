@@ -1093,7 +1093,7 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
   file = open( "generate_diagram_pdf.jl", "w" )
   write( file, "diagram_index_list = $(diagram_index_list)\n"*
                "for diagram_index in diagram_index_list\n"*
-               "  run( `lualatex visual_diagram\$(diagram_index_list)` )\n"*
+               "  run( `lualatex visual_diagram\$(diagram_index)` )\n"*
                "end\n" )
   close(file)
   printstyled( "\nUse script \"generate_diagram_pdf.jl\" to generate PDF files for all diagrams.\n\n", color=:green, bold=true )
