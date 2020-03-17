@@ -85,8 +85,8 @@ function generate_visual_graph( g::GenericGraph, model::Model )::String
       half_circle_option = ""
     else 
       parallel_edge_mark_list = map( e_ -> e_.attributes["mark"], parallel_edge_list )   
-      max_mark = max(parallel_edge_mark_list)
-      min_mark = min(parallel_edge_mark_list)
+      max_mark = max(parallel_edge_mark_list...)
+      min_mark = min(parallel_edge_mark_list...)
       if edge.attributes["mark"] == max_mark
         half_circle_option = ", half left"
       elseif edge.attributes["mark"] == min_mark

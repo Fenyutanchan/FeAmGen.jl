@@ -47,13 +47,6 @@ end # struct Model
 
 
 
-#########################
-mutable struct Amplitude
-  graph::GenericGraph
-  color_list::Vector{Basic}
-  lorentz_list::Vector{Basic}
-end # struct Amplitude
-#########################
 
 
 

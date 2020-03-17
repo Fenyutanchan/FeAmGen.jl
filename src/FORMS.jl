@@ -1,83 +1,4 @@
 
-#####################################################################################
-function make_canonicalize_amplitude_script( expr::Basic, file_name::String )::String
-#####################################################################################
-
-  result_str = """
-#-
-FunPowers nofunpowers;
-Off Statistics;
-
-format nospaces;
-format maple;
-
-#include model_parameters.frm
-#include contractor.frm
-
-symbol xq3, xq2, xq1;
-
-Local amplitude = $(expr);
-
-id FV(rho1?,rho2?) = FV(rho1,rho2);
-id SP(rho1?,rho2?) = SP(rho1,rho2);
-.sort
-
-#call Simplification()
-.sort
-
-#include kin_relation.frm
-argument;
-  #include kin_relation.frm
-endargument;
-.sort
-
-id Den(mom?,mass?,width?) = PowDen(mom,mass,width,1);
-repeat id PowDen(mom?,mass?,width?,int1?)*PowDen(mom?,mass?,width?,int2) = PowDen(mom,mass,width,int1+int2);
-.sort
-
-argument PowDen;
-  id q1 = xq1;
-  id q2 = xq2;
-  id q3 = xq3;
-endargument;
-.sort
-
-normalize (0) PowDen, 1;
-.sort
-
-argument PowDen;
-  id xq1 = q1;
-  id xq2 = q2;
-  id xq3 = q3;
-endargument;
-.sort
-
-
-repeat;
-  id once PowDen(mom?\$THEMOM,mass?,width?,int?) = PowDen(mom,mass,width,int,abs_(div_(\$THEMOM,q1))+abs_(div_(\$THEMOM,q2))+abs_(div_(\$THEMOM,q3)));
-endrepeat;
-.sort
-
-id PowDen(mom?,mass?,width?,int?,0) = Den(mom,mass,width)^int;
-id PowDen(mom?,mass?,width?,int1?,int2?!{,0}) = PowDen(mom,mass,0,int1);
-.sort
-
-#write <$(file_name).out> "%e", amplitude
-#close <$(file_name).out>
-.sort
-
-#system tr -d "[:space:]" < $(file_name).out > $(file_name).out.trim
-#system mv $(file_name).out.trim $(file_name).out
-.sort
-
-.end
-"""
-
-  return result_str 
-
-end # function make_canonicalize_amplitude_script
-
-
 
 #########################################
 function make_contractor_script()::String
@@ -106,7 +27,7 @@ set LOOPC: q1C,q2C,q3C;
 set NonLOOP: k1,...,k10,K1,...,K10,r1,...,r10,barK1,...,barK10;
 set ALLMOM: k1,...,k10,K1,...,K10,r1,...,r10,barK1,...,barK10,q1,q2,q3,q1C,q2C,q3C;
 
-symbol pi, I, sqrt2, shat;
+symbol pi, im, I, sqrt2, shat;
 auto symbol ver, gc;
 
 ***Dirac indices
@@ -615,321 +536,6 @@ endrepeat;
 
 #endprocedure
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-*---------------------------------------------
-#procedure orderingFermionChain()
-
-repeat;
-  id FV(mom?,rho?ALLLOR)*FermionChain(?vars1,GA(rho?ALLLOR),?vars2) = FermionChain(?vars1,GA(mom),?vars2);
-endrepeat;
-
-*
-* rearrange the sequence in FermionChain
-*
-repeat;
-#include baseINC.frm
-***pull momentum of right-side spinor to the relevant spinor
-  repeat;
-  id FermionChain( ?vars1, GA(mom?), GA(rho?ALLLOR), ?vars2, Spinor?IRSPSET(int?,mom?,ref?,mass?) )
-    = FermionChain( ?vars1, ?vars2, Spinor(int,mom,ref,mass) )*2*FV(mom,rho)
-     -FermionChain( ?vars1, GA(rho), GA(mom), ?vars2, Spinor(int,mom,ref,mass) );
-
-  id FermionChain( ?vars1, GA(mom1?kn[setint]), GA(rho?ALLLOR), ?vars2, Spinor?IRSPSET(int?,mom2?Kn[setint],ref?,mass?!{,0}) )
-    = FermionChain( ?vars1, ?vars2, Spinor(int,mom2,ref,mass) )*2*FV(mom1,rho)
-     -FermionChain( ?vars1, GA(rho), GA(mom1), ?vars2, Spinor(int,mom2,ref,mass) );
-
-  id FermionChain( ?vars1, GA(ref?), GA(rho?ALLLOR), ?vars2, Spinor?IRSPSET(int?,mom?Kn,ref?,mass?!{,0}) )
-    = FermionChain( ?vars1, ?vars2, Spinor(int,mom,ref,mass) )*2*FV(ref,rho)
-     -FermionChain( ?vars1, GA(rho), GA(ref), ?vars2, Spinor(int,mom,ref,mass) );
-
-  id FV(mom?,rho?ALLLOR)*FermionChain(?vars1,GA(rho?ALLLOR),?vars2) = FermionChain(?vars1,GA(mom),?vars2);
-
-  id FermionChain( ?vars1, GA(mom?), PR, ?vars2, Spinor?IRSPSET(int?,mom?,ref?,mass?) )
-    = FermionChain( ?vars1, PL, GA(mom), ?vars2, Spinor(int,mom,ref,mass) );
-
-  id FermionChain( ?vars1, GA(mom1?kn[setint]), PR, ?vars2, Spinor?IRSPSET(int?,mom2?Kn[setint],ref?,mass?!{,0}) )
-    = FermionChain( ?vars1, PL, GA(mom1), ?vars2, Spinor(int,mom2,ref,mass) );
-
-  id FermionChain( ?vars1, GA(ref?), PR, ?vars2, Spinor?IRSPSET(int?,mom?Kn,ref?,mass?!{,0}) )
-    = FermionChain( ?vars1, PL, GA(ref), ?vars2, Spinor(int,mom,ref,mass) );
-
-  id FermionChain( ?vars1, GA(mom?), PL, ?vars2, Spinor?IRSPSET(int?,mom?,ref?,mass?) )
-    = FermionChain( ?vars1, PR, GA(mom), ?vars2, Spinor(int,mom,ref,mass) );
-
-  id FermionChain( ?vars1, GA(mom1?kn[setint]), PL, ?vars2, Spinor?IRSPSET(int?,mom2?Kn[setint],ref?,mass?!{,0}) )
-    = FermionChain( ?vars1, PR, GA(mom1), ?vars2, Spinor(int,mom2,ref,mass) );
-
-  id FermionChain( ?vars1, GA(ref?), PL, ?vars2, Spinor?IRSPSET(int?,mom?Kn,ref?,mass?!{,0}) )
-    = FermionChain( ?vars1, PR, GA(ref), ?vars2, Spinor(int,mom,ref,mass) );
-
-  repeat id FermionChain( ?vars1, GA(mom?), GA(mom?), ?vars2 ) = FermionChain( ?vars1, ?vars2 )*SP(mom,mom);
-  id SP(mom?NULL,mom?NULL) = 0;
-
-  id FermionChain( ?vars1, GA(mom1?), GA(mom2?ALLMOM), ?vars2, Spinor?{U,V}(int?,mom1?,ref?,mass?) )
-    = FermionChain( ?vars1, ?vars2, Spinor(int,mom1,ref,mass) )*2*SP(mom1,mom2)
-     -FermionChain( ?vars1, GA(mom2), GA(mom1), ?vars2, Spinor(int,mom1,ref,mass) );
-
-  id FermionChain( ?vars1, GA(mom1?kn[setint]), GA(mom2?ALLMOM), ?vars2, Spinor?{U,V}(int?,mom3?Kn[setint],ref?,mass?!{,0}) )
-    = FermionChain( ?vars1, ?vars2, Spinor(int,mom3,ref,mass) )*2*SP(mom1,mom2)
-     -FermionChain( ?vars1, GA(mom2), GA(mom1), ?vars2, Spinor(int,mom3,ref,mass) );
-
-  id FermionChain( ?vars1, GA(ref?), GA(mom2?ALLMOM), ?vars2, Spinor?{U,V}(int?,mom1?Kn,ref?,mass?!{,0}) )
-    = FermionChain( ?vars1, ?vars2, Spinor(int,mom1,ref,mass) )*2*SP(ref,mom2)
-     -FermionChain( ?vars1, GA(mom2), GA(ref), ?vars2, Spinor(int,mom1,ref,mass) );
-
-  id FermionChain( ?vars, GA(mom?), U(int?,mom?,ref?,mass?) ) = mass*FermionChain( ?vars, U(int,mom,ref,mass) );
-  id FermionChain( ?vars, GA(mom?), V(int?,mom?,ref?,mass?) ) = -mass*FermionChain( ?vars, V(int,mom,ref,mass) );
-
-  endrepeat;
-
-***pull momentum of left-side spinor to the relevant spinor
-  repeat;
-  id FermionChain( Spinor?ILSPSET(int?,mom?,ref?,mass?), ?vars1, GA(rho?ALLLOR), GA(mom?), ?vars2 )
-    = FermionChain( Spinor(int,mom,ref,mass), ?vars1, ?vars2 )*2*FV(mom,rho)
-     -FermionChain( Spinor(int,mom,ref,mass), ?vars1, GA(mom), GA(rho), ?vars2 );
-
-  id FermionChain( Spinor?ILSPSET(int?,mom1?Kn[setint],ref?,mass?!{,0}), ?vars1, GA(rho?ALLLOR), GA(mom2?kn[setint]), ?vars2 )
-    = FermionChain( Spinor(int,mom1,ref,mass), ?vars1, ?vars2 )*2*FV(mom2,rho)
-     -FermionChain( Spinor(int,mom1,ref,mass), ?vars1, GA(mom2), GA(rho), ?vars2 );
-
-  id FermionChain( Spinor?ILSPSET(int?,mom?Kn,ref?,mass?!{,0}), ?vars1, GA(rho?ALLLOR), GA(ref?), ?vars2 )
-    = FermionChain( Spinor(int,mom,ref,mass), ?vars1, ?vars2 )*2*FV(ref,rho)
-     -FermionChain( Spinor(int,mom,ref,mass), ?vars1, GA(ref), GA(rho), ?vars2 );
-
-  id FV(mom?,rho?ALLLOR)*FermionChain(?vars1,GA(rho?ALLLOR),?vars2) = FermionChain(?vars1,GA(mom),?vars2);
-
-  id FermionChain( Spinor?ILSPSET(int?,mom?,ref?,mass?), ?vars1, PR, GA(mom?), ?vars2 )
-    = FermionChain( Spinor(int,mom,ref,mass), ?vars1, GA(mom), PL, ?vars2 );
-
-  id FermionChain( Spinor?ILSPSET(int?,mom1?Kn[setint],ref?,mass?!{,0}), ?vars1, PR, GA(mom2?kn[setint]), ?vars2 )
-    = FermionChain( Spinor(int,mom1,ref,mass), ?vars1, GA(mom2), PL, ?vars2 );
-
-  id FermionChain( Spinor?ILSPSET(int?,mom?Kn,ref?,mass?!{,0}), ?vars1, PR, GA(ref?), ?vars2 )
-    = FermionChain( Spinor(int,mom,ref,mass), ?vars1, GA(ref), PL, ?vars2 );
-
-  id FermionChain( Spinor?ILSPSET(int?,mom?,ref?,mass?), ?vars1, PL, GA(mom?), ?vars2 )
-    = FermionChain( Spinor(int,mom,ref,mass), ?vars1, GA(mom), PR, ?vars2 );
-
-  id FermionChain( Spinor?ILSPSET(int?,mom1?Kn[setint],ref?,mass?!{,0}), ?vars1, PL, GA(mom2?kn[setint]), ?vars2 )
-    = FermionChain( Spinor(int,mom1,ref,mass), ?vars1, GA(mom2), PR, ?vars2 );
-
-  id FermionChain( Spinor?ILSPSET(int?,mom?Kn,ref?,mass?!{,0}), ?vars1, PL, GA(ref?), ?vars2 )
-    = FermionChain( Spinor(int,mom,ref,mass), ?vars1, GA(ref), PR, ?vars2 );
-
-  repeat id FermionChain( ?vars1, GA(mom?), GA(mom?), ?vars2 ) = FermionChain( ?vars1, ?vars2 )*SP(mom,mom);
-  id SP(mom?NULL,mom?NULL) = 0;
-
-  id FermionChain( Spinor?ILSPSET(int?,mom1?,ref?,mass?), ?vars1, GA(mom2?ALLMOM), GA(mom1?), ?vars2 )
-    = FermionChain( Spinor(int,mom1,ref,mass), ?vars1, ?vars2 )*2*SP(mom1,mom2)
-     -FermionChain( Spinor(int,mom1,ref,mass), ?vars1, GA(mom1), GA(mom2), ?vars2 );
-
-  id FermionChain( Spinor?ILSPSET(int?,mom1?Kn[setint],ref?,mass?!{,0}), ?vars1, GA(mom2?ALLMOM), GA(mom3?kn[setint]), ?vars2 )
-    = FermionChain( Spinor(int,mom1,ref,mass), ?vars1, ?vars2 )*2*SP(mom3,mom2)
-     -FermionChain( Spinor(int,mom1,ref,mass), ?vars1, GA(mom3), GA(mom2), ?vars2 );
-
-  id FermionChain( Spinor?ILSPSET(int?,mom1?Kn,ref?,mass?!{,0}), ?vars1, GA(mom2?ALLMOM), GA(ref?), ?vars2 )
-    = FermionChain( Spinor(int,mom1,ref,mass), ?vars1, ?vars2 )*2*SP(ref,mom2)
-     -FermionChain( Spinor(int,mom1,ref,mass), ?vars1, GA(ref), GA(mom2), ?vars2 );
-
-  id FermionChain( UB(int?,mom?,ref?,mass?), GA(mom?), ?vars ) = mass*FermionChain( UB(int,mom,ref,mass), ?vars );
-  id FermionChain( VB(int?,mom?,ref?,mass?), GA(mom?), ?vars ) = -mass*FermionChain( VB(int,mom,ref,mass), ?vars );
-
-  endrepeat;
-
-***move PL and PR to left-side of FermionChain, right-side of spinor
-  repeat;
-  id FermionChain( ?vars1, PL, PR, ?vars2 ) = 0;
-  id FermionChain( ?vars1, PR, PL, ?vars2 ) = 0;
-  id FermionChain( ?vars1, PL, PL, ?vars2 ) = FermionChain( ?vars1, PL, ?vars2 );
-  id FermionChain( ?vars1, PR, PR, ?vars2 ) = FermionChain( ?vars1, PR, ?vars2 );
-
-  id FermionChain( ?vars1, GA(var?), PR, ?vars2 ) = FermionChain( ?vars1, PL, GA(var), ?vars2 );
-  id FermionChain( ?vars1, GA(var?), PL, ?vars2 ) = FermionChain( ?vars1, PR, GA(var), ?vars2 );
-  endrepeat;
-
-***move momentums to right-side of lorentz indices
-  repeat;
-  id FermionChain( ?vars1, GA(mom?ALLMOM), GA(mom?ALLMOM), ?vars2 ) = FermionChain(?vars1,?vars2)*SP(mom,mom);
-  id SP(mom?NULL,mom?NULL) = 0;
-
-  id FermionChain( ?vars1, GA(rho?ALLLOR), GA(rho?ALLLOR), ?vars2 ) = FermionChain(?vars1,?vars2)*diim;
-
-  id FermionChain( ?vars1, GA(mom?), GA(rho?ALLLOR), ?vars2 )
-    = 2*FV(mom,rho)*FermionChain(?vars1,?vars2)-FermionChain( ?vars1, GA(rho), GA(mom), ?vars2 );
-  id FV(mom?,rho?ALLLOR)*FermionChain(?vars1,GA(rho?ALLLOR),?vars2) = FermionChain(?vars1,GA(mom),?vars2);
-  endrepeat;
-
-endrepeat;
-.sort
-
-*
-* Substitute dummy indices (except epsMU) using system Nm_?, and look for largest number of dummy index Nm_? by iterating over each term
-*
-while( match(FermionChain(?vars1,GA(rho?NonEPSMU\$LORENTZ),?vars2)) );
-  sum \$LORENTZ;
-endwhile;
-.sort
-
-*
-*move epsMU to right-side of the other lorentz indices 
-*
-repeat;
-  id FermionChain(?vars1,GA(rho1?EPSMU),GA(rho2?dummyindices_),?vars2)
-    = 2*LMT(rho1,rho2)*FermionChain(?vars1,?vars2)-FermionChain(?vars1,GA(rho2),GA(rho1),?vars2);
-  id LMT(rho1?,rho2?)*FermionChain(?vars1,GA(rho2?),?vars2) = FermionChain(?vars1,GA(rho1),?vars2);
-endrepeat;
-.sort
-
-*
-* rearrange the sequence of epsMU in FermionChain
-* We assume epsMU is no more than 10
-*
-repeat;
-  #do MUIDX1 = 1, 9, 1 
-    #do MUIDX2 = `MUIDX1'+1, 10, 1 
-      id FermionChain(?vars1,GA(epsMU`MUIDX2'),GA(epsMU`MUIDX1'),?vars2)
-        = 2*LMT(epsMU`MUIDX1',epsMU`MUIDX2')*FermionChain(?vars1,?vars2)-FermionChain(?vars1,GA(epsMU`MUIDX1'),GA(epsMU`MUIDX2'),?vars2);
-    #enddo
-  #enddo
-endrepeat;
-.sort
-
-*
-* renumber the dummy indices Nm_? in order to have better format.
-* this may lead to some cost, but further check has to be made.
-*
-renumber 0;
-.sort
-
-*
-* rearrange the sequence of dummy Lorentz indices in FermionChain
-* We assume dummyindices_ no more than 20
-*
-repeat;
-  #do MUIDX1 = 1, 19, 1
-    #do MUIDX2 = `MUIDX1'+1, 20, 1
-      id FermionChain(?vars1,GA(N`MUIDX2'_?),GA(N`MUIDX1'_?),?vars2)
-        = 2*LMT(N`MUIDX1'_?,N`MUIDX2'_?)*FermionChain(?vars1,?vars2)-FermionChain(?vars1,GA(N`MUIDX1'_?),GA(N`MUIDX2'_?),?vars2);
-    #enddo
-  #enddo
-  id LMT(rho1?,rho2?)*FermionChain(?vars1,GA(rho1?),?vars2) = FermionChain(?vars1,GA(rho2),?vars2);
-endrepeat;
-.sort
-*
-* Replace system dummy indices Nm_? by our dummy indices dummyMU in case to read back to GiNaC.
-* We assume this should give the canonical form of FermionChain, 
-*   since it seems dummy indices Nm_? can make canonical form of an expression automatically.
-*
-#do MUIDX = 1, 20, 1
-  Multiply replace_(N`MUIDX'_?,dummyMU`MUIDX');
-#enddo
-.sort
-
-*
-* move loop momentums to right-side of other momentums in FermionChain
-*
-repeat;
-  id FermionChain(?vars1,GA(mom1?ALLLOOP),GA(mom2?NonLOOP),?vars2)
-    = FermionChain(?vars1,?vars2)*2*SP(mom1,mom2)-FermionChain(?vars1,GA(mom2),GA(mom1),?vars2);
-
-  id FermionChain(?vars1,GA(mom?NULL),GA(mom?NULL),?vars2) = 0;
-  id FermionChain(?vars1,GA(mom?ALLMOM),GA(mom?ALLMOM),?vars2) = FermionChain(?vars1,?vars2)*SP(mom,mom);
-endrepeat;
-.sort
-
-*
-* rearrange the order of loop momentums in FermionChain
-*
-repeat;
-  id FermionChain(?vars1,GA(q2),GA(q1),?vars2)
-    = FermionChain(?vars1,?vars2)*2*SP(q1,q2)-FermionChain(?vars1,GA(q1),GA(q2),?vars2);
-  id FermionChain(?vars1,GA(q2C),GA(q1C),?vars2)
-    = FermionChain(?vars1,?vars2)*2*SP(q1C,q2C)-FermionChain(?vars1,GA(q1C),GA(q2C),?vars2);
-  id FermionChain(?vars1,GA(mom?ALLMOM),GA(mom?ALLMOM),?vars2) = FermionChain(?vars1,?vars2)*SP(mom,mom);
-endrepeat;
-repeat;
-  id FermionChain(?vars1,GA(q3),GA(q1),?vars2)
-    = FermionChain(?vars1,?vars2)*2*SP(q1,q3)-FermionChain(?vars1,GA(q1),GA(q3),?vars2);
-  id FermionChain(?vars1,GA(q3C),GA(q1C),?vars2)
-    = FermionChain(?vars1,?vars2)*2*SP(q1C,q3C)-FermionChain(?vars1,(q1C),GA(q3C),?vars2);
-  id FermionChain(?vars1,GA(mom?ALLMOM),GA(mom?ALLMOM),?vars2) = FermionChain(?vars1,?vars2)*SP(mom,mom);
-endrepeat;
-repeat;
-  id FermionChain(?vars1,GA(q3),GA(q2),?vars2)
-    = FermionChain(?vars1,?vars2)*2*SP(q2,q3)-FermionChain(?vars1,GA(q2),GA(q3),?vars2);
-  id FermionChain(?vars1,GA(q3C),GA(q2C),?vars2)
-    = FermionChain(?vars1,?vars2)*2*SP(q2C,q3C)-FermionChain(?vars1,GA(q2C),GA(q3C),?vars2);
-  id FermionChain(?vars1,GA(mom?ALLMOM),GA(mom?ALLMOM),?vars2) = FermionChain(?vars1,?vars2)*SP(mom,mom);
-endrepeat;
-.sort
-
-*
-* move ki to the left of Ki in FermionChain
-*
-repeat;
-  id FermionChain(?vars1,GA(K1?MASSIVE),GA(k1?NULL),?vars2)
-    = 2*SP(k1,K1)*FermionChain(?vars1,?vars2) - FermionChain(?vars1,GA(k1),GA(K1),?vars2);
-endrepeat;
-*
-* Rearrange the sequence of ki in FermionChain
-* We assume no more than 10
-*
-repeat;
-  #do MOMIDX1 = 1, 9, 1
-    #do MOMIDX2 = `MOMIDX1'+1, 10, 1
-      id FermionChain(?vars1, GA(k`MOMIDX2'), GA(k`MOMIDX1'), ?vars2)
-        = 2*SP(k`MOMIDX1',k`MOMIDX2')*FermionChain(?vars1,?vars2)-FermionChain(?vars1,GA(k`MOMIDX1'),GA(k`MOMIDX2'),?vars2);
-    #enddo
-  #enddo
-endrepeat;
-*
-* Rearrange the sequence of Ki in FermionChain
-* We assume no more than 10
-*
-repeat;
-  #do MOMIDX1 = 1, 9, 1
-    #do MOMIDX2 = `MOMIDX1'+1, 10, 1
-      id FermionChain(?vars1, GA(K`MOMIDX2'), GA(K`MOMIDX1'), ?vars2)
-        = 2*SP(K`MOMIDX1',K`MOMIDX2')*FermionChain(?vars1,?vars2)-FermionChain(?vars1,GA(K`MOMIDX1'),GA(K`MOMIDX2'),?vars2);
-    #enddo
-  #enddo
-endrepeat;
-
-*
-* Contract adjacent momentum slash or lorent indices in FermionChain
-*
-repeat;
-  id FermionChain(?vars1,GA(mom?ALLMOM),GA(mom?ALLMOM),?vars2) = FermionChain(?vars1,?vars2)*SP(mom,mom);
-  id FermionChain(?vars1,GA(rho?ALLLOR),GA(rho?ALLLOR),?vars2) = FermionChain(?vars1,?vars2)*diim;
-endrepeat;
-.sort
-
-#call Simplification();
-.sort
-
-#endprocedure
-
-
 """
 
   return result_str
@@ -1089,10 +695,6 @@ Local expression = $(expr);
 
 #call Simplification();
 
-#call orderingFermionChain();
-
-#call Simplification();
-
 #include kin_relation.frm
 .sort
 
@@ -1134,7 +736,7 @@ id FV(rho1?,rho2?) = FV(rho1,rho2);
 id SP(rho1?,rho2?) = SP(rho1,rho2);
 .sort
 
-#write <$(file_name).out> "%e", expression
+#write <$(file_name).out> "%E", expression
 #close <$(file_name).out>
 .sort
 
@@ -1149,3 +751,199 @@ id SP(rho1?,rho2?) = SP(rho1,rho2);
   return result_str
 
 end # function make_amp_contraction_script 
+
+
+
+#########################################
+function make_color_script()::String
+#########################################
+
+  result_str = """
+CFunctions DeltaFun(symmetric), DeltaAdj(symmetric), SUNTrace(cyclesymmetric);
+CFunctions SUNT, SUNF, SUNTConj, sunTraceConj, sunTrace;
+CFunctions SUNTChain, SUNTraceChain;
+
+symbols cla0,...,cla100;
+symbols claC0,...,claC100;
+symbols claM0,...,claM100;
+symbols clb0,...,clb100;
+symbols clbC0,...,clbC100;
+symbols clbM0,...,clbM100;
+symbols clv0,...,clv10000;
+symbols clw0,...,clw10000;
+
+Symbols colorX, colorY;
+
+Symbols n0,...,n100;
+Symbols m0,...,m100;
+Symbols I, im, ca, cf;
+
+*----------------------------------------
+#procedure calc1_CF()
+**** we use the definition f(a,b,c) = -2*i*Tr(a,b,c)+2*i*Tr(c,b,a) as same as defined in MadGraph etc.
+
+repeat id SUNTConj(?n1,n2?,n3?) = SUNT(reverse_(?n1),n3,n2);
+repeat id sunTraceConj(?n0) = sunTrace(reverse_(?n0));
+.sort
+
+*
+* Trim the cyclesymmetric of SUNTrace
+* NB: But we should have replaced SUNTrace by sunTrace in MIRACLE master code.
+*multiply replace_(SUNTrace,sunTrace);
+*.sort
+
+repeat;
+  id SUNF(m1?,m2?,m3?) = -2*I*sunTrace(m1,m2,m3)+2*I*sunTrace(m3,m2,m1);
+  id SUNT(m0?,n1?,n2?)*SUNT(m0?,n3?,n4?) = 1/2*( DeltaFun(n1,n4)*DeltaFun(n2,n3)-1/ca*DeltaFun(n1,n2)*DeltaFun(n3,n4) );
+endrepeat;
+.sort
+
+repeat;
+  id DeltaFun(n1?,n0?)*SUNT(m0?,n0?,n2?) = SUNT(m0,n1,n2);
+
+  id DeltaFun(n1?,n0?)*DeltaFun(n0?,n2?) = DeltaFun(n1,n2);
+  id DeltaFun(n0?,n0?) = ca;
+  id DeltaAdj(n1?,n0?)*DeltaAdj(n0?,n2?) = DeltaAdj(n1,n2);
+  id DeltaAdj(n0?,n0?) = 2*ca*cf;
+
+  id DeltaAdj(m0?,m3?)*sunTrace(?m1,m0?,?m2) = sunTrace(?m1,m3,?m2);
+  id DeltaAdj(m0?,m3?)*SUNT(?m1,m0?,?m2,n1?,n2?) = SUNT(?m1,m3,?m2,n1,n2);
+
+  id SUNT(?m3,m0?,?m4,n1?,n2?)*sunTrace(?m1,m0?,?m2) = 1/2*( SUNT(?m3,?m2,?m1,?m4,n1,n2)-1/ca*SUNT(?m3,?m4,n1,n2)*sunTrace(?m2,?m1) );
+
+  id SUNT(?m1,m0?,?m2,n1?,n2?)*SUNT(?m3,m0?,?m4,n3?,n4?) 
+    = 1/2*( SUNT(?m1,?m4,n1,n4)*SUNT(?m3,?m2,n3,n2) -1/ca*SUNT(?m1,?m2,n1,n2)*SUNT(?m3,?m4,n3,n4) );
+  id SUNT(n1?,n2?) = DeltaFun(n1,n2);
+
+  id SUNT(?m1,n1?,n2?)*SUNT(?m2,n2?,n3?) = SUNT(?m1,?m2,n1,n3);
+  id SUNT(?m1,n1?,n1?) = sunTrace(?m1);
+  id SUNT(m0?,m0?,n1?,n2?) = cf*DeltaFun(n1,n2);
+  id SUNT(?m1,m0?,m0?,?m2,n1?,n2?) = cf*SUNT(?m1,?m2,n1,n2);
+
+  id SUNT(m0?,?m2,m0?,n1?,n2?) = 1/2*( DeltaFun(n1,n2)*sunTrace(?m2) - 1/ca*SUNT(?m2,n1,n2) );
+
+  id SUNT(?m1,m0?,?m2,m0?,?m3,n1?,n2?) = 1/2*( SUNT(?m1,?m3,n1,n2)*sunTrace(?m2) - 1/ca*SUNT(?m1,?m2,?m3,n1,n2) );
+  id sunTrace(m0?) = 0;
+
+  id sunTrace(m1?,m1?) = ca*cf;
+  id sunTrace(m1?,m2?) = 1/2*DeltaAdj(m1,m2);
+  id sunTrace(?m1,m0?,?m2)*sunTrace(?m3,m0?,?m4) = 1/2*( sunTrace(?m1,?m4,?m3,?m2)-1/ca*sunTrace(?m2,?m1)*sunTrace(?m4,?m3) );
+endrepeat;
+.sort
+
+*
+* Recover the cyclesymmetric of SUNTrace
+*
+multiply replace_(sunTrace,SUNTrace);
+.sort
+
+
+#endprocedure
+
+
+
+
+*----------------------------------------
+#procedure calc2_CF()
+
+*
+* Trim the cyclesymmetric of SUNTrace
+*
+multiply replace_(SUNTrace,sunTrace);
+.sort
+
+repeat id SUNF(m1?,m2?,m3?) = -2*I*sunTrace(m1,m2,m3)+2*I*sunTrace(m3,m2,m1);
+.sort
+
+repeat;
+  id DeltaAdj(m0?,m3?)*sunTrace(?m1,m0?) = sunTrace(?m1,m3);
+  id DeltaAdj(m0?,m3?)*sunTrace(?m1,m0?,?m2) = sunTrace(?m1,m3,?m2);
+  id DeltaAdj(m0?,m3?)*SUNT(?m1,m0?,?m2) = SUNT(?m1,m3,?m2);
+  id DeltaAdj(m3?,m0?)*SUNT(?m1,m0?,?m2) = SUNT(?m1,m3,?m2);
+
+  id SUNT(?m1,n1?,n2?)*DeltaFun(n2?,n3?) = SUNT(?m1,n1,n3);
+  id SUNT(?m1,n1?,n2?)*DeltaFun(n3?,n2?) = SUNT(?m1,n1,n3);
+
+  id DeltaFun(n1?,n2?)*DeltaFun(n2?,n3?) = DeltaFun(n1,n3);
+  id DeltaFun(n1?,n1?) = ca;
+  id DeltaAdj(n0?,n0?) = 2*ca*cf;
+
+  id SUNT(?m1,n1?,n2?)*SUNT(?m2,n2?,n3?) = SUNT(?m1,?m2,n1,n3);
+  id SUNT(?m0,m1?,n1?,n1?) = sunTrace(?m0,m1);
+
+  id sunTrace(m1?,m1?) = ca*cf;
+  id sunTrace(m1?,m2?) = 1/2*DeltaAdj(m1,m2);
+
+  id sunTrace(?m1,m0?,m0?,?m2) = cf*sunTrace(?m1,?m2);
+
+  id sunTrace(?m1,m0?,?m2,m0?,?m3) = 1/2*( sunTrace(?m1,?m3)*sunTrace(?m2) - 1/ca*sunTrace(?m1,?m2,?m3) );
+
+  id sunTrace(m0?) = 0;
+
+  id DeltaAdj(n1?,n0?)*DeltaAdj(n0?,n2?) = DeltaAdj(n1,n2);
+  id sunTrace(?m1,m0?,?m2)*sunTrace(?m3,m0?,?m4) = 1/2*( sunTrace(?m1,?m4,?m3,?m2)-1/ca*sunTrace(?m2,?m1)*sunTrace(?m4,?m3) );
+endrepeat;
+.sort
+
+id sunTrace() = ca;
+.sort
+
+*
+* Recover the cyclesymmetric of SUNTrace
+*
+multiply replace_(sunTrace,SUNTrace);
+.sort
+
+#endprocedure
+
+"""
+
+  return result_str
+
+end # function make_color_script 
+
+
+############################################################################################
+function make_simplify_color_factor_script( color_factor::Basic, file_name::String )::String
+############################################################################################
+
+  result_str = """
+#-
+Off Statistics;
+
+format nospaces;
+format maple;
+
+#include color.frm
+
+Local colorFactor = $(color_factor);
+
+#call calc1_CF();
+.sort 
+
+#call calc2_CF();
+.sort 
+
+#write <$(file_name).out> "%E", colorFactor
+#close <$(file_name).out>
+.sort
+
+#system tr -d "[:space:]" < $(file_name).out > $(file_name).out.trim
+#system mv $(file_name).out.trim $(file_name).out
+.sort
+
+.end
+"""
+
+  return result_str
+
+end # function make_simplify_color_factor_script
+
+
+
+
+
+
+
+
+

@@ -152,7 +152,7 @@ function get_incoming_couplings_lorentz_list( part::Particle, mark::Int64, momen
   elseif part.spin == :fermion && part.kf < 0
     return [ Basic(" SpVB( $mark, spb$mark, $momentum, r$mark, $(part.mass) ) ") ]
   elseif part.spin == :vector
-    return [ Basic(" VecEps( $mark, spb$mark, $momentum, r$mark, $(part.mass) ) ") ]
+    return [ Basic(" VecEps( $mark, mub$mark, $momentum, r$mark, $(part.mass) ) ") ]
   elseif part.spin == :scalar
     return [ Basic("1") ]
   else
@@ -171,12 +171,11 @@ function get_outgoing_couplings_lorentz_list( part::Particle, mark::Int64, momen
   elseif part.spin == :fermion && part.kf < 0
     return [ Basic(" SpV( $mark, spa$mark, $momentum, r$mark, $(part.mass) ) ") ]
   elseif part.spin == :vector
-    return [ Basic(" VecEpsC( $mark, spa$mark, $momentum, r$mark, $(part.mass) ) ") ]
+    return [ Basic(" VecEpsC( $mark, mua$mark, $momentum, r$mark, $(part.mass) ) ") ]
   elseif part.spin == :scalar
     return [ Basic("1") ]
   else
     error( "We should have not considered ghost in external field.\n" )
-    exit()
   end # if
 
 end # function get_outgoing_couplings_lorentz_list
@@ -200,7 +199,6 @@ function get_remnant_couplings_lorentz_list( part::Particle, mark::Int64, moment
     return [ Basic(" I*Den( $momentum, $(part.mass), $(part.width) ) ") ]
   else 
     error( "We should have not considered ghost in external field.\n" )
-    exit()
   end # if
 
 end # function get_remnant_couplings_lorentz_list
@@ -332,7 +330,7 @@ function translate_color_factor( one_color::Basic, vert::ExVertex, g::GenericGra
       color3 = get_link_color( g, vert, link3_index )
     end # if
     
-    new_color = subs( new_color, Basic(one_Tf_str), Basic("SUN"*one_Tf_str[1]*"($color1,$color2,$color3)") )
+    new_color = subs( new_color, Basic(one_Tf_str), Basic("SUN"*uppercase(one_Tf_str[1])*"($color1,$color2,$color3)") )
   end # for one_T_str
 
   return new_color
@@ -432,10 +430,9 @@ function translate_lorentz_factor( one_lorentz::Basic, vert::ExVertex, g::Generi
     args = get_args( Basic(one_P_str) )
     link1_index, link2_index = convert(Int64,args[1]), convert(Int64,args[2])
 
-    mom1 = get_link_momentum( g, vert, link1_index )
-    lor2 = get_link_lorentz( g, vert, link2_index )
-
-    new_lorentz = subs( new_lorentz, Basic(one_P_str), FV(mom1,lor2) )
+    lor1 = get_link_lorentz( g, vert, link1_index )
+    mom2 = get_link_momentum( g, vert, link2_index )
+    new_lorentz = subs( new_lorentz, Basic(one_P_str), FV(mom2,lor1) )
   end # for one_P_str
 
   range_list = findall( r"Gamma\([+-]*\d+, [+-]*\d+, [+-]*\d+\)", lorentz_str )
@@ -489,6 +486,50 @@ function translate_lorentz_factor( one_lorentz::Basic, vert::ExVertex, g::Generi
 
   return new_lorentz
 end # function translate_lorentz_factor
+
+
+
+
+###################################################
+function canonicalize_loop_mom( mom::Basic )::Basic
+###################################################
+
+  @vars q1, q2, q3
+
+  q1_coeff = coeff(mom,q1)
+  if q1_coeff == Basic(1)
+    return mom
+  end # if
+  if q1_coeff == Basic(-1)
+    return -mom
+  end # if
+
+  @assert q1_coeff == 0
+  q2_coeff = coeff(mom,q2)
+  if q2_coeff == Basic(1)
+    return mom
+  end # if
+  if q2_coeff == Basic(-1)
+    return -mom
+  end # if
+
+  @assert q2_coeff == 0
+  q3_coeff = coeff(mom,q3)
+  if q3_coeff == Basic(1)
+    return mom
+  end # if
+  if q3_coeff == Basic(-1)
+    return -mom
+  end # if
+
+  error( "This should not happen! mom is $(mom)" )
+
+  return mom
+
+end # function canonicalize_loop_mom
+
+
+
 
 
 
@@ -578,20 +619,16 @@ function convert_qgraf_TO_Graph( one_qgraf::Dict{Any,Any}, model::Model )::Union
     inter, QCDct_order = get_interaction( one_vert["fields"], model )
     
     #-----------------------------------------------------------------------------------------------
-    # Now we need to re-order the list "propagator_index_list" according to the vertex Feynman rule.
+    # Now we need to re-order the list "propagator_index_list" associated with one_vert["fields"] (source)
+    #     according to the vertex Feynman rule "inter.link_list" (destination).
     #-----------------------------------------------------------------------------------------------
-    # Combine "fields" and "propagator_index_list" in to Dict.
-    # Example:
-    #     "fields" => ["tbar", "b", "Wplus"] and "propagator_index_list" => [-4, -1, 1] 
-    #       convert into [(tbar,-4), (b,-1), (Wplus,1)], where "fields" are also converted into Particle type.
-    # Here the "fields" can contain "QCDct1" or "QCDct2".
-    # Then use Dict{Particle,Int64}( collect(xx) ) to convert.
-    link_index_pair_list = map( (s_, i_) -> (model.particle_name_dict[s_], i_), one_vert["fields"], one_vert["propagator_index_list"] )
-    link_index_dict = Dict{Particle,Int64}( collect(link_index_pair_list) )
-    # Then use Dict to find the relevant index list according to the particle order of Feynman rules vertex.
-    # # Example:
-    #     Dict(b=>-1, Wplus=>1, tbar=>-4) for the vertex [tbar,b,Wplus] should give index list [-4,-1,1].
-    feynrules_index_list = map( p_ -> link_index_dict[p_], inter.link_list )
+    src_part_name_list = one_vert["fields"] # source list of particle names
+    p_src = sortperm( src_part_name_list )
+    dst_part_name_list = map( p_ -> p_.name, inter.link_list ) # destination list of particle names
+    p_dst = sortperm( dst_part_name_list )
+    invp_dst = invperm( p_dst )
+    @assert src_part_name_list[p_src][invp_dst] == dst_part_name_list
+    feynrules_index_list = one_vert["propagator_index_list"][p_src][invp_dst] 
 
     # color_list and couplings_lorentz_list will be generated later.
     int_v.attributes = Dict(
@@ -695,6 +732,11 @@ function convert_qgraf_TO_Graph( one_qgraf::Dict{Any,Any}, model::Model )::Union
 
     momentum = sign(field_part.kf)*Basic(one_rem["momentum"])
 
+    style_str = findfirst("q",one_rem["momentum"]) == nothing ? "Internal" : "Loop"
+    if style_str == "Loop"
+      momentum = canonicalize_loop_mom(momentum)
+    end # if
+
     id_color_dict = Dict( :triplet => [ Basic(" DeltaFun(clb$mark,cla$mark) ") ], 
                           :octet   => [ Basic(" DeltaAdj(clb$mark,cla$mark) ") ],
                           :singlet => [ Basic("1") ] )
@@ -704,7 +746,7 @@ function convert_qgraf_TO_Graph( one_qgraf::Dict{Any,Any}, model::Model )::Union
     new_edge.attributes = Dict( 
       "mark" => mark,
       "particle" => model.particle_kf_dict[abs(field_part.kf)],
-      "style" => findfirst("q",one_rem["momentum"]) == nothing ? "Internal" : "Loop",
+      "style" => style_str,
       "propagator_index" => one_rem["propagator_index"], 
       "momentum" => momentum,
       "ref2_MOM" => Basic("0"),
@@ -787,7 +829,7 @@ end # function tensor_product
 """
 Now this graph can be evaluated according to the values of the propagators and vertices.
 """
-function assemble_amplitude( g::GenericGraph, model::Model )::Tuple{Vector{Basic},Vector{Basic}}
+function assemble_amplitude( g::GenericGraph )::Tuple{Vector{Basic},Vector{Basic}}
 ###################################################################
 
   amp_color_list = Basic[1]
@@ -810,67 +852,52 @@ function assemble_amplitude( g::GenericGraph, model::Model )::Tuple{Vector{Basic
 end # function assemble_amplitude
 
 
+################################################################################################################
+function factor_out_loop_den( g::GenericGraph, lorentz_list::Vector{Basic} )::Tuple{Vector{Basic},Vector{Basic}}
+################################################################################################################
+
+  @funs Den
+
+  loop_edge_list = filter( e_ -> e_.attributes["style"] == "Loop", edges(g) )
+
+  den_prod = Basic(1)
+  for one_edge in loop_edge_list
+    mom = one_edge.attributes["momentum"]
+    mass = one_edge.attributes["particle"].mass
+    # For now we only consider the width of loop propagator is zero.
+    den_prod *= Den( mom, mass, 0 ) 
+  end # for one_edge
+
+  new_lorentz_list = map( x_ -> expand(x_/den_prod), lorentz_list )
+
+  @assert SymEngine.get_symengine_class(den_prod) == :Mul
+  loop_den_list = get_args(den_prod)
+
+  return new_lorentz_list, loop_den_list
+
+end # function factor_out_loop_den
 
 
 
-##################################################################################################
-function canonicalize_loop_PowDen( lorentz_expr_list::Vector{Basic}, model::Model )::Vector{Basic}
-##################################################################################################
 
-  file = open( "model_parameters.frm", "w" )
-  write( file, "symbol "*join( map( k_->string(k_), collect(keys(model.parameter_dict)) ), "," )*";\n" )
-  close(file)
 
-  file = open( "contractor.frm", "w" )
-  write( file, make_contractor_script() )
-  close(file)
+##################################################################################
+function contract_Dirac_indices( g::GenericGraph, lorentz_expr_list::Vector{Basic} )::Vector{Basic}
+##################################################################################
+
+  diagram_index = vertex_from_label("graph property",g).attributes["diagram_index"]
 
   new_lorentz_expr_list = Vector{Basic}( undef, length(lorentz_expr_list) )
   for index in 1:length(lorentz_expr_list)
     lorentz_expr = lorentz_expr_list[index]
-    file_name = "lorentz_expr$(index)"
-    form_script_str = make_canonicalize_amplitude_script( lorentz_expr, file_name )
-
-    file = open( file_name*".frm", "w" )
-    write( file, form_script_str )
-    close(file)
-
-    printstyled( "[ form $(file_name).frm ]\n", color=:yellow )
-    run( pipeline( `form $(file_name).frm`, file_name*".log" ) )
-
-    file = open( file_name*".out", "r" )
-    result_str = read( file, String )
-    result_expr = Basic(result_str)
-    new_lorentz_expr_list[index] = result_expr
-
-    run( `rm $(file_name).frm $(file_name).out $(file_name).log` )
-  end # for lorentz_expr
-
-  return new_lorentz_expr_list
-
-end # function canonicalize_loop_PowDen
-
-
-##################################################################################
-function contract_Dirac_indices( lorentz_expr_list::Vector{Basic}, graph::GenericGraph )::Vector{Basic}
-##################################################################################
-
-  # model_parameters.frm and contractor.frm have been created in canonicalize_loop_PowDen
-
-  file = open( "baseINC.frm", "w" )
-  write( file, make_baseINC_script( graph ) )
-  close(file)
-
-  new_lorentz_expr_list = Vector{Basic}( undef, length(lorentz_expr_list) )
-  for index in 1:length(lorentz_expr_list)
-    lorentz_expr = lorentz_expr_list[index]
-    file_name = "contract_lorentz_expr$(index)"
+    file_name = "contract_lorentz_expr$(index)_diagram$(diagram_index)"
     form_script_str = make_amp_contraction_script( lorentz_expr, file_name )
 
     file = open( file_name*".frm", "w" )
     write( file, form_script_str )
     close(file)
 
+    #printstyled( "[ form $(file_name).frm in thread #$(Threads.threadid()) ]\n", color=:yellow )
     printstyled( "[ form $(file_name).frm ]\n", color=:yellow )
     run( pipeline( `form $(file_name).frm`, file_name*".log" ) )
 
@@ -881,11 +908,107 @@ function contract_Dirac_indices( lorentz_expr_list::Vector{Basic}, graph::Generi
 
     run( `rm $(file_name).frm $(file_name).out $(file_name).log` )
   end # for index
-  rm( "contractor.frm" )
 
   return new_lorentz_expr_list
 
 end # function contract_Dirac_indices
+
+
+
+###################################################################################################
+function simplify_color_factors( g::GenericGraph, color_factor_list::Vector{Basic} )::Vector{Basic}
+###################################################################################################
+
+  diagram_index = vertex_from_label("graph property",g).attributes["diagram_index"]
+
+  new_color_factor_list = Vector{Basic}( undef, length(color_factor_list) )
+  for index in 1:length(color_factor_list)
+    one_color_factor = color_factor_list[index]
+    file_name = "simplify_color_factor$(index)_diagram$(diagram_index)"
+    form_script_str = make_simplify_color_factor_script( one_color_factor, file_name )
+
+    file = open( file_name*".frm", "w" )
+    write( file, form_script_str )
+    close(file)
+
+    #printstyled( "[ form $(file_name).frm in thread #$(Threads.threadid()) ]\n", color=:yellow )
+    printstyled( "[ form $(file_name).frm ]\n", color=:yellow )
+    run( pipeline( `form $(file_name).frm`, file_name*".log" ) )
+
+    file = open( file_name*".out", "r" )
+    result_str = read( file, String )
+    result_expr = Basic(result_str)
+    new_color_factor_list[index] = result_expr
+
+    run( `rm $(file_name).frm $(file_name).out $(file_name).log` )
+  end # for index
+
+  return new_color_factor_list
+
+end # function simplify_color_factors
+
+
+
+###########################################################################################################
+function write_out_amplitude( diagram_index::Int64, couplingfactor::Basic, 
+    amp_color_list::Vector{Basic}, amp_lorentz_list::Vector{Basic}, loop_den_list::Vector{Basic} )::Nothing
+###########################################################################################################
+
+  printstyled( "[ Generate amplitude_diagram$(diagram_index).out ]\u264e\n", color=:green, bold=true )
+  amp_file = open( "amplitude_diagram$(diagram_index).out", "w" )
+  write( amp_file, 
+    "couplingfactor: $(couplingfactor)\n"*
+    "Diagram #$(diagram_index): \n"*
+    "  Denominators: \n" )
+  for one_den in loop_den_list
+    write( amp_file, 
+    "    $(one_den)\n" )
+  end # for one_den
+
+  for ii in 1:length(amp_color_list)
+    one_color = amp_color_list[ii]
+    write( amp_file, 
+    "  amp_color #$(ii): \n"*
+    "    $(one_color); \n" )
+  end # for ii
+
+  for ii in 1:length(amp_lorentz_list)
+    one_val = amp_lorentz_list[ii]
+    write( amp_file, 
+    "  amp_couplings_lorentz #$(ii): \n"* 
+    "    $( expand(one_val/couplingfactor) ); \n" )
+  end # for ii
+  write( amp_file, "\n\n" )
+
+  close( amp_file )
+
+
+end # function write_out_amplitude
+
+#########################################################################
+function write_out_visual_graph( g::GenericGraph, model::Model )::Nothing
+#########################################################################
+
+  diagram_index = vertex_from_label("graph property",g).attributes["diagram_index"]
+
+  graph_str = generate_visual_graph( g, model )
+
+  printstyled( "[ Generate visual_diagram$(diagram_index).tex ]\u264e\n", color=:green, bold=true )
+  visual_file = open( "visual_diagram$(diagram_index).tex", "w" )
+  write( visual_file,
+    "\\documentclass{article}\n"*
+    "\\usepackage{tikz-feynman}\n"*
+    "\n"*
+    "\\begin{document}\n"*
+    "\n"*
+    graph_str*
+    "\n"*
+    "\\end{document} \n"*
+    "\n" )
+  close( visual_file )
+
+
+end # function write_out_visual_graph
 
 
 
@@ -926,81 +1049,58 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
 
   #------------------------------------------------  
   # Calculate amplitude for each graph
-  amp_list = Vector{Amplitude}( undef, length(graph_list) )
-  for index in 1:length(graph_list)
-    g = graph_list[index]
 
-    amp_color_list, amp_lorentz_list = assemble_amplitude( g, model )
-    amp_lorentz_list = canonicalize_loop_PowDen( amp_lorentz_list, model )
-    amp_lorentz_list = contract_Dirac_indices( amp_lorentz_list, g )
+  file = open( "model_parameters.frm", "w" )
+  write( file, "symbol "*join( map( k_->string(k_), collect(keys(model.parameter_dict)) ), "," )*";\n" )
+  close(file)
 
-    amp_list[index] = Amplitude( g, amp_color_list, amp_lorentz_list )
-  end # for g
+  file = open( "contractor.frm", "w" )
+  write( file, make_contractor_script() )
+  close(file)
 
+  file = open( "color.frm", "w" )
+  write( file, make_color_script() )
+  close(file)
 
-  #------------------------------------------------  
-  # Write out amplitude
-  printstyled( "[ Generate amplitude.out ]\u264e\n", color=:green, bold=true )
-  amp_file = open( "amplitude.out", "w" )
-  write( amp_file, 
-    "couplingfactor: $(couplingfactor)\n\n" )
-  for amp in amp_list
-    g = amp.graph
-
+  now()
+  #Threads.@threads for g in graph_list
+  for g in graph_list
     diagram_index = vertex_from_label("graph property",g).attributes["diagram_index"]
 
-    write( amp_file, 
-      "Diagram #$(diagram_index): \n" )
+    file = open( "baseINC.frm", "w" )
+    write( file, make_baseINC_script( g ) )
+    close(file)
 
-    for ii in 1:length(amp.color_list)
-      one_color = amp.color_list[ii]
-      write( amp_file, 
-      "  amp_color #$(ii): \n"*
-      "    $(one_color); \n" )
-    end # for ii
+    amp_color_list, amp_lorentz_list = assemble_amplitude( g )
+    amp_lorentz_list, loop_den_list = factor_out_loop_den( g, amp_lorentz_list )
+    amp_lorentz_list = contract_Dirac_indices( g, amp_lorentz_list )
 
-    for ii in 1:length(amp.lorentz_list)
-      one_val = amp.lorentz_list[ii]
-      write( amp_file, 
-      "  amp_couplings_lorentz #$(ii): \n"* 
-      "    $( one_val/couplingfactor ); \n" )
-    end # for ii
-    write( amp_file, "\n\n" )
+    amp_color_list = simplify_color_factors( g, amp_color_list )
 
+    write_out_amplitude( diagram_index, couplingfactor, amp_color_list, amp_lorentz_list, loop_den_list )
+    write_out_visual_graph( g, model )
+
+    rm( "baseINC.frm" )
   end # for g
-  close( amp_file )
+  now()
 
-  #------------------------------------------------  
-  # Write out visual graph
-  printstyled( "[ Generate visual_graphs.tex ]\u264e\n", color=:green, bold=true )
-  visual_file = open( "visual_graphs.tex", "w" )
-  write( visual_file,
-    "\\documentclass{article}\n"*
-    "\\usepackage{tikz-feynman}\n"*
-    "\n"*
-    "\\begin{document}\n"*
-    "\n" )
-  for g in graph_list
-    result_str = generate_visual_graph( g, model )
-    write( visual_file, result_str ) 
-  end # for one_qgraf
-
-  write( visual_file, 
-    "\\end{document} \n"*
-    "\n" )
-  close( visual_file )
+  # remove intermediate files
+  rm( "contractor.frm" )
+  rm( "color.frm" )
 
 
-  print( "\nRun \"lualatex visual_graphs.tex\" to generate PDF file.\n" )
-  # run( `lualatex visual_graphs.tex` )
+  diagram_index_list = map( g_->vertex_from_label("graph property",g_).attributes["diagram_index"], graph_list )
+  file = open( "generate_diagram_pdf.jl", "w" )
+  write( file, "diagram_index_list = $(diagram_index_list)\n"*
+               "for diagram_index in diagram_index_list\n"*
+               "  run( `lualatex visual_diagram\$(diagram_index_list)` )\n"*
+               "end\n" )
+  close(file)
+  printstyled( "\nUse script \"generate_diagram_pdf.jl\" to generate PDF files for all diagrams.\n\n", color=:green, bold=true )
 
   return nothing
 
 end # function generate_amplitude
-
-
-
-
 
 
 
