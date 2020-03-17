@@ -26,6 +26,6 @@ Here we use directly the UFO model files stored in `<model directory>`.
 
 And we need `QGRAF` and `FORM` packages installed.
 
-The results contains amplitude in file `amplitude.out` and the Feynman diagrams in file `visual_graphs.tex`.
-Explicitly one could use `lualatex visual_graphs.tex` to generate PDF file with `tikz-feynman.sty`.
+The results contains amplitude in file `amplitude_diagram<number>.out` and the Feynman diagrams in file `visual_diagram<number>.tex`.
+Explicitly one could use `lualatex visual_diagram<number>.tex` to generate PDF file with `tikz-feynman.sty`.
 
