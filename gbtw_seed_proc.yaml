@@ -1,0 +1,47 @@
+# input file for calculation details
+# model related information
+
+# model name
+model_name: "sm_CKMdiag_Haa"
+
+# use unitary_gauge for internal vector boson
+unitary_gauge: true
+
+# content of "quark-parton", the "parton" will also contain gluon. Only for seed program.
+#const partons = Array{String,1}( [ "g", "u", "d", "ubar", "dbar", "s", "c", "b", "sbar", "cbar", "bbar" ] )   
+# for single top @ NNLO
+#const partons = Array{String,1}( [ "g", "u", "d", "ubar", "dbar", "b", "bbar" ] )   
+# for Higgs+Jet @ NLO
+partons: [ "g", "u", "ubar", "d", "dbar", "b", "bbar" ] 
+
+# only for seed program
+AllowLeptonNumberViolation: false
+AllowQuarkGenerationViolation: false
+
+# process information
+DropTadpole: true              # drop tadpole?
+DropWFcorrection: true         # drop WFcorrection?
+
+# number of loops
+n_loop: 2    
+# order of QCD counter-term vertices
+QCDCT_order: 0   
+
+# order of QCD coupling gs in the amplitude
+Amp_QCD_order: 5 
+# order of QED coupling ee in the amplitude
+Amp_QED_order: 1 
+
+# min eps power in the amplitude
+Amp_Min_Eps_Pow: -4
+# max eps power in the amplitude
+Amp_Max_Eps_Pow: 0
+
+# incoming and outgoing information
+incoming: [ "g", "b" ]          # incoming particles
+outgoing: [ "t", "Wminus" ]               # outgoing particles 
+
+
+
+
+
