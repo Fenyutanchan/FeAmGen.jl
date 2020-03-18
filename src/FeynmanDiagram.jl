@@ -852,6 +852,47 @@ function assemble_amplitude( g::GenericGraph )::Tuple{Vector{Basic},Vector{Basic
 end # function assemble_amplitude
 
 
+
+
+###############################################################
+function generate_scale2_list( kin_relation::Dict{Basic,Basic} )::Vector{Basic}
+###############################################################
+
+  ver_mass_list = Vector{Basic}()
+  for one_pair in kin_relation
+    if get_name( one_pair[1] ) == "Den"
+      continue
+    end # if
+    ver_mass_list = vcat( ver_mass_list, free_symbols( one_pair[2] ) )
+  end # for one_pair
+  unique!( ver_mass_list )
+
+  scale2_list = Vector{Basic}( undef, length(ver_mass_list) )
+  for index in 1:length(ver_mass_list)
+    ver_mass_str = string(ver_mass_list[index])
+    if ver_mass_str[1] == 'm'
+      scale2_list[index] = ver_mass_list[index]^2
+    else 
+      scale2_list[index] = ver_mass_list[index]
+    end # if
+  end # for index
+
+  return scale2_list
+
+end # function generate_scale2_list
+
+
+
+
+
+
+
+
+
+
+
+
+
 ################################################################################################################
 function factor_out_loop_den( g::GenericGraph, lorentz_list::Vector{Basic} )::Tuple{Vector{Basic},Vector{Basic}}
 ################################################################################################################
@@ -950,7 +991,7 @@ end # function simplify_color_factors
 
 
 ###########################################################################################################
-function write_out_amplitude( diagram_index::Int64, couplingfactor::Basic, 
+function write_out_amplitude( diagram_index::Int64, couplingfactor::Basic, ext_mom_list::Vector{Basic}, scale2_list::Vector{Basic},
     amp_color_list::Vector{Basic}, amp_lorentz_list::Vector{Basic}, loop_den_list::Vector{Basic} )::Nothing
 ###########################################################################################################
 
@@ -958,6 +999,8 @@ function write_out_amplitude( diagram_index::Int64, couplingfactor::Basic,
   amp_file = open( "amplitude_diagram$(diagram_index).out", "w" )
   write( amp_file, 
     "couplingfactor: $(couplingfactor)\n"*
+    "ext_mom_list: $(ext_mom_list)\n"*
+    "scale2_list: $(scale2_list)\n"*
     "Diagram #$(diagram_index): \n"*
     "  Denominators: \n" )
   for one_den in loop_den_list
@@ -1042,10 +1085,12 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
   # Generate Gauge choice
   gauge_choice = generate_gauge_choice( graph_list )
   # Generate kinematics relation
-  kin_relation = generate_kin_relation( graph_list, gauge_choice )
+  kin_relation = generate_kin_relation( graph_list )
   file = open( "kin_relation.frm", "w" )
   write( file, join( map( ele_->"id $(ele_[1]) = $(ele_[2]);", collect(kin_relation) ), "\n" ) )
   close(file)
+
+  ext_mom_list  = generate_ext_mom_list( graph_list )
 
   #------------------------------------------------  
   # Calculate amplitude for each graph
@@ -1071,13 +1116,15 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
     write( file, make_baseINC_script( g ) )
     close(file)
 
+    scale2_list = generate_scale2_list( kin_relation )
+
     amp_color_list, amp_lorentz_list = assemble_amplitude( g )
     amp_lorentz_list, loop_den_list = factor_out_loop_den( g, amp_lorentz_list )
     amp_lorentz_list = contract_Dirac_indices( g, amp_lorentz_list )
 
     amp_color_list = simplify_color_factors( g, amp_color_list )
 
-    write_out_amplitude( diagram_index, couplingfactor, amp_color_list, amp_lorentz_list, loop_den_list )
+    write_out_amplitude( diagram_index, couplingfactor, ext_mom_list, scale2_list, amp_color_list, amp_lorentz_list, loop_den_list )
     write_out_visual_graph( g, model )
 
     rm( "baseINC.frm" )

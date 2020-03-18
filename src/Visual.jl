@@ -78,8 +78,11 @@ function generate_visual_graph( g::GenericGraph, model::Model )::String
   for edge in edge_list
     src_v = source(edge)
     tgt_v = target(edge)
+    src_mark = src_v.attributes["mark"]
+    tgt_mark = tgt_v.attributes["mark"]
+    mark_pair_set = Set([src_mark,tgt_mark])
 
-    parallel_edge_list = filter( e_ -> (source(e_) == src_v && target(e_) == tgt_v), edge_list )
+    parallel_edge_list = filter( e_ -> Set([source(e_).attributes["mark"],target(e_).attributes["mark"]]) == mark_pair_set, edge_list )
 
     if length(parallel_edge_list) <= 1
       half_circle_option = ""
@@ -88,9 +91,9 @@ function generate_visual_graph( g::GenericGraph, model::Model )::String
       max_mark = max(parallel_edge_mark_list...)
       min_mark = min(parallel_edge_mark_list...)
       if edge.attributes["mark"] == max_mark
-        half_circle_option = ", half left"
+        half_circle_option = src_mark > tgt_mark ? ", half left" : ", half right"
       elseif edge.attributes["mark"] == min_mark
-        half_circle_option = ", half right"
+        half_circle_option = src_mark > tgt_mark ? ", half right" : ", half left"
       else
         @assert false
       end # if
