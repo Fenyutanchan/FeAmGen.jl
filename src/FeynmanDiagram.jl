@@ -991,7 +991,8 @@ end # function simplify_color_factors
 
 
 ###########################################################################################################
-function write_out_amplitude( diagram_index::Int64, couplingfactor::Basic, ext_mom_list::Vector{Basic}, scale2_list::Vector{Basic},
+function write_out_amplitude( diagram_index::Int64, couplingfactor::Basic, parameter_dict::Dict{Basic,Basic}, 
+    ext_mom_list::Vector{Basic}, scale2_list::Vector{Basic}, kin_relation::Dict{Basic,Basic}, 
     amp_color_list::Vector{Basic}, amp_lorentz_list::Vector{Basic}, loop_den_list::Vector{Basic} )::Nothing
 ###########################################################################################################
 
@@ -1008,6 +1009,15 @@ function write_out_amplitude( diagram_index::Int64, couplingfactor::Basic, ext_m
     "    $(one_den)\n" )
   end # for one_den
 
+  write( amp_file, 
+    "Kinematics Relations: \n" )
+  for one_pair in kin_relation
+    write( amp_file, 
+    "  "*string(one_pair)*"\n" )
+  end # for one_pair
+
+  write( amp_file, 
+    "Color Factors: \n" )
   for ii in 1:length(amp_color_list)
     one_color = amp_color_list[ii]
     write( amp_file, 
@@ -1015,16 +1025,38 @@ function write_out_amplitude( diagram_index::Int64, couplingfactor::Basic, ext_m
     "    $(one_color); \n" )
   end # for ii
 
+  write( amp_file, 
+    "Lorentz Factors: \n" )
   for ii in 1:length(amp_lorentz_list)
     one_val = amp_lorentz_list[ii]
     write( amp_file, 
-    "  amp_couplings_lorentz #$(ii): \n"* 
+    "  amp_lorentz #$(ii): \n"* 
     "    $( expand(one_val/couplingfactor) ); \n" )
   end # for ii
-  write( amp_file, "\n\n" )
+
+  write( amp_file, 
+    "Model Parameters: \n" )
+  for one_pair in parameter_dict
+    write( amp_file, 
+    "  "*string(one_pair)*"\n" )
+  end # for one_pair
 
   close( amp_file )
 
+  if isfile( "amplitude_diagram$(diagram_index).jld" )
+    rm( "amplitude_diagram$(diagram_index).jld" )
+  end # if
+
+  jldopen( "amplitude_diagram$(diagram_index).jld", "w" ) do file 
+    write( file, "couplingfactor", string(couplingfactor) )
+    write( file, "ext_mom_list", map( string, ext_mom_list ) )
+    write( file, "scale2_list", map( string, scale2_list ) )
+    write( file, "loop_den_list",  map( string, loop_den_list ) )
+    write( file, "kin_relation", map( p_->(string(p_[1]),string(p_[2])), collect(kin_relation) ) )
+    write( file, "model_parameter_dict", map( p_->(string(p_[1]),string(p_[2])), collect(parameter_dict) ) )
+    write( file, "amp_color_list",  map( string, amp_color_list ) )
+    write( file, "amp_lorentz_list",  map( string, amp_lorentz_list ) )
+  end # file
 
 end # function write_out_amplitude
 
@@ -1124,7 +1156,7 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
 
     amp_color_list = simplify_color_factors( g, amp_color_list )
 
-    write_out_amplitude( diagram_index, couplingfactor, ext_mom_list, scale2_list, amp_color_list, amp_lorentz_list, loop_den_list )
+    write_out_amplitude( diagram_index, couplingfactor, model.parameter_dict, ext_mom_list, scale2_list, kin_relation, amp_color_list, amp_lorentz_list, loop_den_list )
     write_out_visual_graph( g, model )
 
     rm( "baseINC.frm" )
@@ -1134,6 +1166,8 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
   # remove intermediate files
   rm( "contractor.frm" )
   rm( "color.frm" )
+  rm( "kin_relation.frm" )
+  rm( "model_parameters.frm" )
 
 
   diagram_index_list = map( g_->vertex_from_label("graph property",g_).attributes["diagram_index"], graph_list )
