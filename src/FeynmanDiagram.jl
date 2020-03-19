@@ -501,7 +501,7 @@ function canonicalize_loop_mom( mom::Basic )::Basic
     return mom
   end # if
   if q1_coeff == Basic(-1)
-    return -mom
+    return expand(-mom)
   end # if
 
   @assert q1_coeff == 0
@@ -510,7 +510,7 @@ function canonicalize_loop_mom( mom::Basic )::Basic
     return mom
   end # if
   if q2_coeff == Basic(-1)
-    return -mom
+    return expand(-mom)
   end # if
 
   @assert q2_coeff == 0
@@ -519,7 +519,7 @@ function canonicalize_loop_mom( mom::Basic )::Basic
     return mom
   end # if
   if q3_coeff == Basic(-1)
-    return -mom
+    return expand(-mom)
   end # if
 
   error( "This should not happen! mom is $(mom)" )
@@ -893,9 +893,9 @@ end # function generate_scale2_list
 
 
 
-################################################################################################################
-function factor_out_loop_den( g::GenericGraph, lorentz_list::Vector{Basic} )::Tuple{Vector{Basic},Vector{Basic}}
-################################################################################################################
+##############################################################################################################################
+function factor_out_loop_den( g::GenericGraph, lorentz_list::Vector{Basic} )::Tuple{Vector{Basic},Vector{Basic},Vector{Int64}}
+##############################################################################################################################
 
   @funs Den
 
@@ -912,9 +912,24 @@ function factor_out_loop_den( g::GenericGraph, lorentz_list::Vector{Basic} )::Tu
   new_lorentz_list = map( x_ -> expand(x_/den_prod), lorentz_list )
 
   @assert SymEngine.get_symengine_class(den_prod) == :Mul
-  loop_den_list = get_args(den_prod)
+  factor_list = get_args(den_prod)
+  n_factor = length(factor_list)
+  loop_den_list = Vector{Basic}( undef, n_factor )
+  loop_den_xpt_list = Vector{Int64}( undef, n_factor )
+  for index in 1:n_factor
+    one_factor = factor_list[index]
+    if SymEngine.get_symengine_class(one_factor) == :FunctionSymbol && get_name(one_factor) == "Den"
+      loop_den_list[index] = one_factor
+      loop_den_xpt_list[index] = 1
+    elseif SymEngine.get_symengine_class(one_factor) == :Pow && get_name(get_args(one_factor)[1]) == "Den"
+      loop_den_list[index] = get_args(one_factor)[1]
+      loop_den_xpt_list[index] = convert( Int64, get_args(one_factor)[2] )
+    else
+      error( "Not excpected: "*string(one_factor) )
+    end # if
+  end # for index
 
-  return new_lorentz_list, loop_den_list
+  return new_lorentz_list, loop_den_list, loop_den_xpt_list
 
 end # function factor_out_loop_den
 
@@ -993,7 +1008,8 @@ end # function simplify_color_factors
 ###########################################################################################################
 function write_out_amplitude( diagram_index::Int64, couplingfactor::Basic, parameter_dict::Dict{Basic,Basic}, 
     ext_mom_list::Vector{Basic}, scale2_list::Vector{Basic}, kin_relation::Dict{Basic,Basic}, 
-    amp_color_list::Vector{Basic}, amp_lorentz_list::Vector{Basic}, loop_den_list::Vector{Basic} )::Nothing
+    amp_color_list::Vector{Basic}, amp_lorentz_list::Vector{Basic}, 
+    loop_den_list::Vector{Basic}, loop_den_xpt_list::Vector{Int64} )::Nothing
 ###########################################################################################################
 
   printstyled( "[ Generate amplitude_diagram$(diagram_index).out ]\u264e\n", color=:green, bold=true )
@@ -1052,6 +1068,7 @@ function write_out_amplitude( diagram_index::Int64, couplingfactor::Basic, param
     write( file, "ext_mom_list", map( string, ext_mom_list ) )
     write( file, "scale2_list", map( string, scale2_list ) )
     write( file, "loop_den_list",  map( string, loop_den_list ) )
+    write( file, "loop_den_xpt_list", loop_den_xpt_list )
     write( file, "kin_relation", map( p_->(string(p_[1]),string(p_[2])), collect(kin_relation) ) )
     write( file, "model_parameter_dict", map( p_->(string(p_[1]),string(p_[2])), collect(parameter_dict) ) )
     write( file, "amp_color_list",  map( string, amp_color_list ) )
@@ -1151,12 +1168,13 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
     scale2_list = generate_scale2_list( kin_relation )
 
     amp_color_list, amp_lorentz_list = assemble_amplitude( g )
-    amp_lorentz_list, loop_den_list = factor_out_loop_den( g, amp_lorentz_list )
+    amp_lorentz_list, loop_den_list, loop_den_xpt_list = factor_out_loop_den( g, amp_lorentz_list )
     amp_lorentz_list = contract_Dirac_indices( g, amp_lorentz_list )
 
     amp_color_list = simplify_color_factors( g, amp_color_list )
 
-    write_out_amplitude( diagram_index, couplingfactor, model.parameter_dict, ext_mom_list, scale2_list, kin_relation, amp_color_list, amp_lorentz_list, loop_den_list )
+    write_out_amplitude( diagram_index, couplingfactor, model.parameter_dict, ext_mom_list, scale2_list, kin_relation, 
+                         amp_color_list, amp_lorentz_list, loop_den_list, loop_den_xpt_list )
     write_out_visual_graph( g, model )
 
     rm( "baseINC.frm" )

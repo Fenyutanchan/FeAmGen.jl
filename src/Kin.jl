@@ -166,6 +166,12 @@ function generate_kin_relation( n_inc::Int64, n_out::Int64, mom::Vector{Basic}, 
     end # for jj
   end # for ii
 
+  # on-shell conditions 
+  for ii in 1:nn
+    push!( kin_relation, SP(mom[ii],mom[ii]) => mass2[ii] )
+  end # for ii
+
+
   # (k_1\cdot k_2) = \frac{1}{2} (s-k_1^2-k_2^2)  
   push!( kin_relation, SP(mom[1],mom[2]) => k2_sign*half*( shat - mass2[1] - mass2[2] ) )
 
@@ -209,10 +215,18 @@ function generate_kin_relation( n_inc::Int64, n_out::Int64, mom::Vector{Basic}, 
 
   if nn == 4
     # (k_2\cdot k_3) = k_1\cdot k_2 + k_2^2 - k_2\cdot k_4
-    push!( kin_relation, SP(mom[2],mom[3]) => k2_sign*subs( k2_sign*SP(mom[1],mom[2]) + mass2[2] - k2_sign*SP(mom[2],mom[4]), kin_relation... ) )
+    push!( kin_relation, SP(mom[2],mom[3]) => k2_sign*(expand∘subs)( k2_sign*SP(mom[1],mom[2]) + mass2[2] - k2_sign*SP(mom[2],mom[4]), kin_relation... ) )
   else 
     # (k_2\cdot k_{n-1})=\frac{1}{2}(s_{n-4+(n-3)}-k_n^2-s_{n-4}+s_{n-3}),
     push!( kin_relation, SP(mom[2],mom[nn-1]) => k2_sign*half*Basic("ver$(nn-4+nn-3) - $(mass2[nn]) - ver$(nn-4) + ver$(nn-3)") )
+  end # if
+
+  if nn == 4
+    # (k_2\cdot k_3)=\frac{1}{2}(k_1^2+k_2^2+k_3^2+2k_1\cdot k_2-2k_1\cdot k_3-k_4^2)
+    push!( kin_relation, SP(mom[2],mom[3]) => k2_sign*half*(expand∘subs)( mass2[1] + mass2[2] + mass2[3] + k2_sign*2*SP(mom[1],mom[2]) - 2*SP(mom[1],mom[3]) - mass2[4], kin_relation... ) )
+  else 
+    # (k_2\cdot k_3)=\frac{1}{2}(k_1^2+k_2^2+k_3^2+2k_1\cdot k_2-2k_1\cdot k_3-s_{1+n-3})
+    push!( kin_relation, SP(mom[2],mom[3]) => k2_sign*half*(expand∘subs)( mass2[1] + mass2[2] + mass2[3] + k2_sign*2*SP(mom[1],mom[2]) - 2*SP(mom[1],mom[3]) - Basic("ver$(1+nn-3)"), kin_relation... ) )
   end # if
 
 
@@ -231,7 +245,7 @@ function generate_kin_relation( n_inc::Int64, n_out::Int64, mom::Vector{Basic}, 
     for jj in 4:(ii+2)
       rhs += (-2)*SP(mom[jj],mom[ii+3])
     end # for jj
-    push!( kin_relation, SP(mom[3],mom[ii+3]) => half*subs( rhs, kin_relation... ) )
+    push!( kin_relation, SP(mom[3],mom[ii+3]) => half*(expand∘subs)( rhs, kin_relation... ) )
   end # for ii
 
   # (k_3\cdot k_n) = k_3\cdot(k_1+k_2-k_3-\cdots-k_{n-1})
@@ -239,7 +253,7 @@ function generate_kin_relation( n_inc::Int64, n_out::Int64, mom::Vector{Basic}, 
   for ii in 4:(nn-1)
     rhs += (-1)*SP(mom[3],mom[ii])
   end # for ii
-  push!( kin_relation, SP(mom[3],mom[nn]) => (expand ∘ subs)( rhs, kin_relation... ) )
+  push!( kin_relation, SP(mom[3],mom[nn]) => (expand∘subs)( rhs, kin_relation... ) )
 
 
   if nn == 4 
@@ -256,7 +270,7 @@ function generate_kin_relation( n_inc::Int64, n_out::Int64, mom::Vector{Basic}, 
     for jj in (ii+4):(nn-1)
       rhs += (-2)*SP(mom[ii+3],mom[jj])
     end # for jj
-    push!( kin_relation, SP(mom[ii+3],mom[nn]) => half*subs( rhs, kin_relation... ) )
+    push!( kin_relation, SP(mom[ii+3],mom[nn]) => half*(expand∘subs)( rhs, kin_relation... ) )
   end # for ii
 
   return kin_relation
