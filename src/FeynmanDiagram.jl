@@ -1006,15 +1006,17 @@ end # function simplify_color_factors
 
 
 ###########################################################################################################
-function write_out_amplitude( diagram_index::Int64, couplingfactor::Basic, parameter_dict::Dict{Basic,Basic}, 
-    ext_mom_list::Vector{Basic}, scale2_list::Vector{Basic}, kin_relation::Dict{Basic,Basic}, 
+function write_out_amplitude( n_loop::Int64, diagram_index::Int64, couplingfactor::Basic, parameter_dict::Dict{Basic,Basic}, 
+    ext_mom_list::Vector{Basic}, scale2_list::Vector{Basic}, kin_relation::Dict{Basic,Basic}, baseINC_script_str::String, 
     amp_color_list::Vector{Basic}, amp_lorentz_list::Vector{Basic}, 
-    loop_den_list::Vector{Basic}, loop_den_xpt_list::Vector{Int64} )::Nothing
+    loop_den_list::Vector{Basic}, loop_den_xpt_list::Vector{Int64},
+    min_eps_xpt::Int64, max_eps_xpt::Int64 )::Nothing
 ###########################################################################################################
 
   printstyled( "[ Generate amplitude_diagram$(diagram_index).out ]\u264e\n", color=:green, bold=true )
   amp_file = open( "amplitude_diagram$(diagram_index).out", "w" )
   write( amp_file, 
+    "n_loop: $(n_loop)\n"*
     "couplingfactor: $(couplingfactor)\n"*
     "ext_mom_list: $(ext_mom_list)\n"*
     "scale2_list: $(scale2_list)\n"*
@@ -1064,12 +1066,16 @@ function write_out_amplitude( diagram_index::Int64, couplingfactor::Basic, param
   end # if
 
   jldopen( "amplitude_diagram$(diagram_index).jld", "w" ) do file 
+    write( file, "n_loop", n_loop )
+    write( file, "min_eps_xpt", min_eps_xpt )
+    write( file, "max_eps_xpt", max_eps_xpt )
     write( file, "couplingfactor", string(couplingfactor) )
     write( file, "ext_mom_list", map( string, ext_mom_list ) )
     write( file, "scale2_list", map( string, scale2_list ) )
     write( file, "loop_den_list",  map( string, loop_den_list ) )
     write( file, "loop_den_xpt_list", loop_den_xpt_list )
     write( file, "kin_relation", map( p_->(string(p_[1]),string(p_[2])), collect(kin_relation) ) )
+    write( file, "baseINC_script_str", baseINC_script_str )
     write( file, "model_parameter_dict", map( p_->(string(p_[1]),string(p_[2])), collect(parameter_dict) ) )
     write( file, "amp_color_list",  map( string, amp_color_list ) )
     write( file, "amp_lorentz_list",  map( string, amp_lorentz_list ) )
@@ -1109,6 +1115,7 @@ end # function write_out_visual_graph
 function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
 ##########################################################################
 
+  n_loop = input["n_loop"]
   couplingfactor = Basic(input["couplingfactor"]) 
 
   qgraf_out = YAML.load( open("qgraf_out.dat") )
@@ -1162,7 +1169,8 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
     diagram_index = vertex_from_label("graph property",g).attributes["diagram_index"]
 
     file = open( "baseINC.frm", "w" )
-    write( file, make_baseINC_script( g ) )
+    baseINC_script_str = make_baseINC_script( g, gauge_choice )
+    write( file, baseINC_script_str )
     close(file)
 
     scale2_list = generate_scale2_list( kin_relation )
@@ -1173,8 +1181,13 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
 
     amp_color_list = simplify_color_factors( g, amp_color_list )
 
-    write_out_amplitude( diagram_index, couplingfactor, model.parameter_dict, ext_mom_list, scale2_list, kin_relation, 
-                         amp_color_list, amp_lorentz_list, loop_den_list, loop_den_xpt_list )
+    #-------------------------------------------
+    perm = sortperm( amp_color_list, by=gen_mma_str )
+    amp_color_list = amp_color_list[perm]
+    amp_lorentz_list = amp_lorentz_list[perm]
+
+    write_out_amplitude( n_loop, diagram_index, couplingfactor, model.parameter_dict, ext_mom_list, scale2_list, kin_relation, baseINC_script_str,
+                         amp_color_list, amp_lorentz_list, loop_den_list, loop_den_xpt_list, input["Amp_Min_Eps_Xpt"], input["Amp_Max_Eps_Xpt"] )
     write_out_visual_graph( g, model )
 
     rm( "baseINC.frm" )

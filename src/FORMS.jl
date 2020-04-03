@@ -550,9 +550,9 @@ end # function make_contractor_script
 
 
 
-###############################################################################
-function make_baseINC_script( graph::GenericGraph )::String
-###############################################################################
+############################################################################################
+function make_baseINC_script( graph::GenericGraph, gauge_choice::Dict{Basic,Basic} )::String
+############################################################################################
 
   result_str = string()
 
@@ -648,19 +648,35 @@ function make_baseINC_script( graph::GenericGraph )::String
   result_str *= ";\n"
 
   #-----------------------------------------------------------------------------------
-  result_str *=
-    "id FV($(momNm1),rho?)*VecEpsilon?{VecEps,VecEpsC}($(n_leg),rho?,$(momN),r$(n_leg)?,mass?) = \n"
-  for index in 1:(n_leg-2)
-    edge = sorted_ext_edge_list[index]
-    mom = edge.attributes["momentum"]
-    inc_sign = index <= n_inc ? (+1) : (-1)
+  if sorted_ext_edge_list[n_leg].attributes["particle"].spin == :vector
     result_str *=
-    "  +($(inc_sign))*FV($(mom),rho)*VecEpsilon($(n_leg),rho,$(momN),r$(n_leg),mass)\n"
-  end # for index
+      "id FV($(momNm1),rho?)*VecEpsilon?{VecEps,VecEpsC}($(n_leg),rho?,$(momN),r$(n_leg)?,mass?) = \n"
+    for index in 1:(n_leg-2)
+      edge = sorted_ext_edge_list[index]
+      mom = edge.attributes["momentum"]
+      inc_sign = index <= n_inc ? (+1) : (-1)
+      result_str *=
+      "  +($(inc_sign))*FV($(mom),rho)*VecEpsilon($(n_leg),rho,$(momN),r$(n_leg),mass)\n"
+    end # for index
+  end # if
+
   result_str *= 
     ";\n"*
     "id FV(mom?,rho?)*VecEpsilon?{VecEps,VecEpsC}(int?,rho?,mom?,ref?,mass?) = 0;\n"*
-    "\n"
+    "\n"*
+    "***Gauge Choice: $(gauge_choice) \n"
+
+  
+  for one_edge in sorted_ext_edge_list
+    if one_edge.attributes["particle"].spin != :vector
+      continue
+    end # if
+    mark = one_edge.attributes["mark"]
+    mom = one_edge.attributes["momentum"]
+    ref_mom = one_edge.attributes["ref2_MOM"]
+    gauge_ref = subs( ref_mom, gauge_choice... )
+    result_str *= "id FV($(gauge_ref),rho?)*VecEpsilon?{VecEps,VecEpsC}($(mark),rho?,$(mom),ref?,mass?) = 0;\n"
+  end # for one_edge
 
   return result_str
 

@@ -30,8 +30,8 @@ function generate_amp( proc_file::String, model_dir::String )::Nothing
 
   green_message( "order of QED coupling gs in the amplitude: ", string(input["Amp_QED_order"]) )
 
-  green_message( "min eps power in the amplitude: ", string(input["Amp_Min_Eps_Pow"]) )
-  green_message( "max eps power in the amplitude: ", string(input["Amp_Max_Eps_Pow"]) )
+  green_message( "min eps power in the amplitude: ", string(input["Amp_Min_Eps_Xpt"]) )
+  green_message( "max eps power in the amplitude: ", string(input["Amp_Max_Eps_Xpt"]) )
 
   green_message( "incoming: ", string(input["incoming"]) )
   green_message( "outgoing: ", string(input["outgoing"]) )

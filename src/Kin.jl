@@ -161,81 +161,81 @@ function generate_kin_relation( n_inc::Int64, n_out::Int64, mom::Vector{Basic}, 
   ver_index = ver_index_pre + 1 
   for ii in 4:(nn-1)
     for jj in (ii+1):(nn-1)
-      push!( kin_relation, SP(mom[ii],mom[jj]) => Basic("ver$(ver_index)") )
+      push!( kin_relation, make_SP(mom[ii],mom[jj]) => Basic("ver$(ver_index)") )
       ver_index += 1
     end # for jj
   end # for ii
 
   # on-shell conditions 
   for ii in 1:nn
-    push!( kin_relation, SP(mom[ii],mom[ii]) => mass2[ii] )
+    push!( kin_relation, make_SP(mom[ii],mom[ii]) => mass2[ii] )
   end # for ii
 
 
   # (k_1\cdot k_2) = \frac{1}{2} (s-k_1^2-k_2^2)  
-  push!( kin_relation, SP(mom[1],mom[2]) => k2_sign*half*( shat - mass2[1] - mass2[2] ) )
+  push!( kin_relation, make_SP(mom[1],mom[2]) => k2_sign*half*( shat - mass2[1] - mass2[2] ) )
 
   # (k_1\cdot k_3) = \frac{1}{2}\left(k_1^2+k_3^2-s_1\right),
   @vars ver1 # s_1
-  push!( kin_relation, SP(mom[1],mom[3]) => half*( mass2[1] + mass2[3] - ver1 ) )
+  push!( kin_relation, make_SP(mom[1],mom[3]) => half*( mass2[1] + mass2[3] - ver1 ) )
 
   @vars ver2 # s_2
   if nn == 4
     # (k_1\cdot k_4) = \frac{1}{2}\left(shat-k_3^2-k_2^2+s_1\right),
-    push!( kin_relation, SP(mom[1],mom[4]) => half*( shat - mass2[3] - mass2[2] + ver1 ) )
+    push!( kin_relation, make_SP(mom[1],mom[4]) => half*( shat - mass2[3] - mass2[2] + ver1 ) )
   else 
     # (k_1\cdot k_4) = \frac{1}{2}\left(s_{1+2n-7}-k_3^2-s_2+s_1\right),
-    push!( kin_relation, SP(mom[1],mom[4]) => half*( Basic("ver$(1+2*nn-7)") - mass2[3] - ver2 + ver1 ) )
+    push!( kin_relation, make_SP(mom[1],mom[4]) => half*( Basic("ver$(1+2*nn-7)") - mass2[3] - ver2 + ver1 ) )
   end # if
 
   # (k_1\cdot k_{i+2}) = \frac{1}{2}\left(s_{i-1+2n-7}-s_{i-2+2n-7}-s_i+s_{i-1}\right),\quad \text{for}~~i=3,\dots,n-3
   for ii in 3:(nn-3)
-    push!( kin_relation, SP(mom[1],mom[ii+2]) => half*Basic("ver$(ii-1+2*nn-7) - ver$(ii-2+2*nn-7) - ver$(ii) + ver$(ii-1)") )
+    push!( kin_relation, make_SP(mom[1],mom[ii+2]) => half*Basic("ver$(ii-1+2*nn-7) - ver$(ii-2+2*nn-7) - ver$(ii) + ver$(ii-1)") )
   end # for ii
 
   if nn > 4
     # (k_1\cdot k_n) = k_1\cdot(k_1+k_2-k_3-\cdots-k_{n-1})
-    rhs = mass2[1] + k2_sign*SP(mom[1],mom[2]) # k_1\cdot k_1 + k_1\cdot k_2
+    rhs = mass2[1] + k2_sign*make_SP(mom[1],mom[2]) # k_1\cdot k_1 + k_1\cdot k_2
     for ii = 3:(nn-1)
-      rhs += (-1)*SP(mom[1],mom[ii])
+      rhs += (-1)*make_SP(mom[1],mom[ii])
     end # for ii
     rhs = subs( rhs, kin_relation... )
-    push!( kin_relation, SP(mom[1],mom[nn]) => rhs )
+    push!( kin_relation, make_SP(mom[1],mom[nn]) => rhs )
   end # if
 
 
 
   # (k_2\cdot k_{i+3})=\frac{1}{2}(s_{i+n-3}-s_{i+1+n-3}-s_i+s_{i+1}),\quad \text{for}~~i=1,\dots,n-5
   for ii in 1:(nn-5)
-    push!( kin_relation, SP(mom[2],mom[ii+3]) => k2_sign*half*Basic("ver$(ii+nn-3) - ver$(ii+1+nn-3) - ver$(ii) + ver$(ii+1)") )
+    push!( kin_relation, make_SP(mom[2],mom[ii+3]) => k2_sign*half*Basic("ver$(ii+nn-3) - ver$(ii+1+nn-3) - ver$(ii) + ver$(ii+1)") )
   end # for ii
 
   # (k_2\cdot k_n)=\frac{1}{2}(k_2^2+k_n^2-s_{n-3}),
-  push!( kin_relation, SP(mom[2],mom[nn]) => k2_sign*half*(mass2[2]+mass2[nn]-Basic("ver$(nn-3)")) )
+  push!( kin_relation, make_SP(mom[2],mom[nn]) => k2_sign*half*(mass2[2]+mass2[nn]-Basic("ver$(nn-3)")) )
 
   if nn == 4
     # (k_2\cdot k_3) = k_1\cdot k_2 + k_2^2 - k_2\cdot k_4
-    push!( kin_relation, SP(mom[2],mom[3]) => k2_sign*(expand∘subs)( k2_sign*SP(mom[1],mom[2]) + mass2[2] - k2_sign*SP(mom[2],mom[4]), kin_relation... ) )
+    push!( kin_relation, make_SP(mom[2],mom[3]) => k2_sign*(expand∘subs)( k2_sign*make_SP(mom[1],mom[2]) + mass2[2] - k2_sign*make_SP(mom[2],mom[4]), kin_relation... ) )
   else 
     # (k_2\cdot k_{n-1})=\frac{1}{2}(s_{n-4+(n-3)}-k_n^2-s_{n-4}+s_{n-3}),
-    push!( kin_relation, SP(mom[2],mom[nn-1]) => k2_sign*half*Basic("ver$(nn-4+nn-3) - $(mass2[nn]) - ver$(nn-4) + ver$(nn-3)") )
+    push!( kin_relation, make_SP(mom[2],mom[nn-1]) => k2_sign*half*Basic("ver$(nn-4+nn-3) - $(mass2[nn]) - ver$(nn-4) + ver$(nn-3)") )
   end # if
 
   if nn == 4
     # (k_2\cdot k_3)=\frac{1}{2}(k_1^2+k_2^2+k_3^2+2k_1\cdot k_2-2k_1\cdot k_3-k_4^2)
-    push!( kin_relation, SP(mom[2],mom[3]) => k2_sign*half*(expand∘subs)( mass2[1] + mass2[2] + mass2[3] + k2_sign*2*SP(mom[1],mom[2]) - 2*SP(mom[1],mom[3]) - mass2[4], kin_relation... ) )
+    push!( kin_relation, make_SP(mom[2],mom[3]) => k2_sign*half*(expand∘subs)( mass2[1] + mass2[2] + mass2[3] + k2_sign*2*make_SP(mom[1],mom[2]) - 2*make_SP(mom[1],mom[3]) - mass2[4], kin_relation... ) )
   else 
     # (k_2\cdot k_3)=\frac{1}{2}(k_1^2+k_2^2+k_3^2+2k_1\cdot k_2-2k_1\cdot k_3-s_{1+n-3})
-    push!( kin_relation, SP(mom[2],mom[3]) => k2_sign*half*(expand∘subs)( mass2[1] + mass2[2] + mass2[3] + k2_sign*2*SP(mom[1],mom[2]) - 2*SP(mom[1],mom[3]) - Basic("ver$(1+nn-3)"), kin_relation... ) )
+    push!( kin_relation, make_SP(mom[2],mom[3]) => k2_sign*half*(expand∘subs)( mass2[1] + mass2[2] + mass2[3] + k2_sign*2*make_SP(mom[1],mom[2]) - 2*make_SP(mom[1],mom[3]) - Basic("ver$(1+nn-3)"), kin_relation... ) )
   end # if
 
 
   if nn == 4
     # (k_3\cdot k_4)=\frac{1}{2}(shat-k_3^2-k_4^2).
-    push!( kin_relation, SP(mom[3],mom[4]) => half*( shat - mass2[3] - mass2[4] ) )
+    push!( kin_relation, make_SP(mom[3],mom[4]) => half*( shat - mass2[3] - mass2[4] ) )
   else 
     # (k_3\cdot k_4)=\frac{1}{2}(s_{1+(2n-7)}-k_3^2-k_4^2).
-    push!( kin_relation, SP(mom[3],mom[4]) => half*( Basic("ver$(1+2*nn-7)") - mass2[3] - mass2[4] ) )
+    push!( kin_relation, make_SP(mom[3],mom[4]) => half*( Basic("ver$(1+2*nn-7)") - mass2[3] - mass2[4] ) )
   end # if
 
 
@@ -243,34 +243,34 @@ function generate_kin_relation( n_inc::Int64, n_out::Int64, mom::Vector{Basic}, 
   for ii in 2:(nn-4)
     rhs = Basic("ver$(ii+2*nn-7) - ver$(ii-1+2*nn-7)") - mass2[ii+3]
     for jj in 4:(ii+2)
-      rhs += (-2)*SP(mom[jj],mom[ii+3])
+      rhs += (-2)*make_SP(mom[jj],mom[ii+3])
     end # for jj
-    push!( kin_relation, SP(mom[3],mom[ii+3]) => half*(expand∘subs)( rhs, kin_relation... ) )
+    push!( kin_relation, make_SP(mom[3],mom[ii+3]) => half*(expand∘subs)( rhs, kin_relation... ) )
   end # for ii
 
   # (k_3\cdot k_n) = k_3\cdot(k_1+k_2-k_3-\cdots-k_{n-1})
-  rhs = SP(mom[1],mom[3])+k2_sign*SP(mom[2],mom[3])-mass2[3]
+  rhs = make_SP(mom[1],mom[3])+k2_sign*make_SP(mom[2],mom[3])-mass2[3]
   for ii in 4:(nn-1)
-    rhs += (-1)*SP(mom[3],mom[ii])
+    rhs += (-1)*make_SP(mom[3],mom[ii])
   end # for ii
-  push!( kin_relation, SP(mom[3],mom[nn]) => (expand∘subs)( rhs, kin_relation... ) )
+  push!( kin_relation, make_SP(mom[3],mom[nn]) => (expand∘subs)( rhs, kin_relation... ) )
 
 
   if nn == 4 
     # (k_n\cdot k_{n-1}) =\frac{1}{2}\left(shat-k_n^2-k_{n-1}^2\right)
-    push!( kin_relation, SP(mom[nn-1],mom[nn]) => half*( shat - mass2[nn] - mass2[nn-1] ) )
+    push!( kin_relation, make_SP(mom[nn-1],mom[nn]) => half*( shat - mass2[nn] - mass2[nn-1] ) )
   else 
     # (k_n\cdot k_{n-1}) =\frac{1}{2}\left(s_{n-4+(n-3)}-k_n^2-k_{n-1}^2\right)
-    push!( kin_relation, SP(mom[nn-1],mom[nn]) => half*( Basic("ver$(nn-4+nn-3)") - mass2[n] - mass2[nn-1] ) )
+    push!( kin_relation, make_SP(mom[nn-1],mom[nn]) => half*( Basic("ver$(nn-4+nn-3)") - mass2[n] - mass2[nn-1] ) )
   end # if
 
   # (k_n\cdot k_{i+3}) = \frac{1}{2}\left[s_{i+(n-3)}-s_{i+1+(n-3)}-\left(\sum_{j=i+3}^{n-1}k_j\right)^2+\left(\sum_{j=i+4}^{n-1}k_j\right)^2\right],\quad \text{for}~~i=1,\dots,n-5
   for ii in 1:(nn-5)
     rhs = Basic("ver$(ii+nn-3) - ver$(ii+1+nn-3)") - mass2[ii+3]
     for jj in (ii+4):(nn-1)
-      rhs += (-2)*SP(mom[ii+3],mom[jj])
+      rhs += (-2)*make_SP(mom[ii+3],mom[jj])
     end # for jj
-    push!( kin_relation, SP(mom[ii+3],mom[nn]) => half*(expand∘subs)( rhs, kin_relation... ) )
+    push!( kin_relation, make_SP(mom[ii+3],mom[nn]) => half*(expand∘subs)( rhs, kin_relation... ) )
   end # for ii
 
   return kin_relation
