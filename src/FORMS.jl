@@ -212,6 +212,112 @@ repeat id Levi(var1?,var2?,var3?,mom?Kn[int])
 
 
 
+*----------------------------------------
+*** without expansion, we do not expand momentum in FV or GA.
+#procedure SimplificationNoExpand()
+
+id I^2 = -1;
+id sqrt2^2 = 2;
+id sqrt2^(-2) = 1/2;
+
+* FeynCalc has definition GA[6]=(1+GA[5])/2, GA[7]=(1-GA[5])/2
+* FORM has a little different g_(6)=1+g_(5), g_(7)=1-g_(5)
+* According to textbooks (Peskin's QFT etc.) PL=GA(7), PR=GA(6)
+* PR-->tagJ, (1+GA(5))/2, GA(6)
+* PL-->tagF, (1-GA(5))/2, GA(7)
+* Same as definition in FeynCalc
+*
+***id PR(spa1?,spa2?) = GA(spa1,spa2,6);
+***id PL(spa1?,spa2?) = GA(spa1,spa2,7);
+
+*
+* trivial Dirac indices contraction
+*
+repeat;
+  id ONEij(spa?,spa?) = 4;
+  id ONEij(spa1?,spa2?)*ONEij(spa2?,spa3?) = ONEij(spa1,spa3);
+
+  id GAij(spa1?,spa2?,rho?ALLLOR) * GAij(spa2?,spa3?,rho?ALLLOR) = diim*ONEij(spa1,spa3);
+  id GAij(spa1?,spa2?,mom?ALLMOM) * GAij(spa2?,spa3?,mom?ALLMOM) = SP(mom,mom)*ONEij(spa1,spa3);
+  id GAij(spa1?,spa2?,rho?)*ONEij(spa3?,spa2?) = GAij(spa1,spa3,rho);
+  id GAij(spa2?,spa1?,rho?)*ONEij(spa3?,spa2?) = GAij(spa3,spa1,rho);
+
+  id Spinor?SPSET(int?,spa1?,mom?,ref?,mass?)*ONEij(spa1?,spa2?) = Spinor(int,spa2,mom,ref,mass);
+endrepeat;
+.sort
+*
+* trivial Lorentz indices contraction
+*
+repeat;
+  id LMT(rho1?,rho1?) = diim;
+  id LMT(rho1?,rho2?)^2 = diim;
+  id LMT(rho1?,rho2?)*LMT(rho2?,rho3?) = LMT(rho1,rho3);
+
+  id LMT(rho1?,rho2?)*FV(mom1?,rho1?) = FV(mom1,rho2);
+  id LMT(rho1?,rho2?)*GAij(spa1?,spa2?,rho1?) = GAij(spa1,spa2,rho2);
+  id LMT(rho1?,rho2?)*Levi(rho1?,rho3?,rho4?,rho5?) = Levi(rho2,rho3,rho4,rho5);
+  id LMT(rho1?,rho2?)*VecEpsilon?{VecEps,VecEpsC}(int1?,rho2?,mom1?,ref1?,mass1?) = VecEpsilon(int1,rho1,mom1,ref1,mass1);
+endrepeat;
+
+id GAij(spa1?,spa2?,rho?)*FV(mom?,rho?) = GAij(spa1,spa2,mom);
+id FV(mom1?,rho?)*FV(mom2?,rho?) = SP(mom1,mom2);
+
+repeat;
+  id FV(mom?,rho?)*Levi(var1?,var2?,var3?,rho?) = Levi(var1,var2,var3,mom);
+  id LMT(rho1?,rho2?)*FermionChain(?vars1,GA(rho2?),?vars2) = FermionChain(?vars1,GA(rho1),?vars2);
+endrepeat;
+
+repeat id LMT(rho?NonEPSMU,rho0?)*VecEpsilon?{VecEps,VecEpsC}(int?,rho?NonEPSMU,?vars)
+  = LMT(EPSMU[int],rho0)*VecEpsilon(int,EPSMU[int],?vars);
+id GAij(spa1?,spa2?,rho?NonEPSMU)*VecEpsilon?{VecEps,VecEpsC}(int?,rho?NonEPSMU,?vars)
+  = GAij(spa1,spa2,EPSMU[int])*VecEpsilon(int,EPSMU[int],?vars);
+.sort
+
+*
+* vanishing 
+*
+id FV(mom?,rho?) * VecEpsilon?{VecEps,VecEpsC}(int?,rho?,mom?,ref?,mass?) = 0;
+id FV(ref?,rho?) * VecEpsilon?{VecEps,VecEpsC}(int?,rho?,mom?,ref?,mass?) = 0;
+.sort
+
+*
+* use EPSMU indices
+*
+id SP( FV(mom1?,0), VecEpsilon?{VecEps,VecEpsC}(int?,0,mom2?,ref?,mass?) )
+  = FV(mom1,EPSMU[int]) * VecEpsilon(int,EPSMU[int],mom2,ref,mass);
+id FV(mom1?,rho?) * VecEpsilon?{VecEps,VecEpsC}(int?,rho?,mom2?,ref?,mass?)
+  = FV(mom1,EPSMU[int]) * VecEpsilon(int,EPSMU[int],mom2,ref,mass);
+id VecEpsilon1?{VecEps,VecEpsC}(int1?, rho?, ?vars1) * VecEpsilon2?{VecEps,VecEpsC}(int2?, rho?, ?vars2)
+  = SP( VecEpsilon1(int1, 0, ?vars1), VecEpsilon2(int2, 0, ?vars2) );
+.sort
+
+*
+*Linearly expand momentum polynomial in FV and GA
+*
+***id FV(var?,rho?) = FV(var,rho);
+***id GAij(spa1?,spa2?,var?) = GAij(spa1,spa2,var);
+***id SP(rho1?,rho2?) = SP(rho1,rho2);
+***id Levi(rho1?,rho2?,rho3?,rho4?) = Levi(rho1,rho2,rho3,rho4);
+***.sort
+
+*
+* vanishing momentum scalar product also vanishes
+*
+id SP(mom?NULL,mom?NULL) = 0;
+
+*
+* Explain FermionLoopPow and GhostLoopPow
+*
+id FermionLoopPow(-1,int?) = (-1)^int;
+id GhostLoopPow(-1,int?) = (-1)^int;
+.sort
+
+repeat id Levi(var1?,var2?,var3?,mom?Kn[int])
+  = Levi(var1,var2,var3,kn[int]) + SP(Kn[int],Kn[int])/2/SP(kn[int],rn[int])*Levi(var1,var2,var3,rn[int]);
+.sort
+
+
+#endprocedure
 
 
 
@@ -421,8 +527,8 @@ repeat;
 endrepeat;
 .sort
 
-id GAij(spa1?,spa2?,var?) = GAij(spa1,spa2,var);
-.sort
+***id GAij(spa1?,spa2?,var?) = GAij(spa1,spa2,var);
+***.sort
 
 
 
@@ -535,6 +641,174 @@ endrepeat;
 .sort
 
 #endprocedure
+
+
+
+
+
+
+
+
+
+
+
+
+
+*----------------------------------------
+*** without expansion, the commutative relation between PL/PR and GA is uncertain, since GA[mom] may have mass*unity here.
+#procedure contractDiracIndicesNoExpand()
+
+* FeynCalc has definition GA[6]=(1+GA[5])/2, GA[7]=(1-GA[5])/2
+* FORM has a little different g_(6)=1+g_(5), g_(7)=1-g_(5)
+* According to textbooks (Peskin's QFT etc.) PL=GA(7), PR=GA(6)
+* PR-->tagJ, (1+GA(5))/2, GA(6)
+* PL-->tagF, (1-GA(5))/2, GA(7)
+* Same as definition in FeynCalc
+*
+***id PR(spa1?,spa2?) = GA(spa1,spa2,6);
+***id PL(spa1?,spa2?) = GA(spa1,spa2,7);
+
+*
+* trivial Dirac indices contraction
+*
+repeat;
+  id ONEij(spa?,spa?) = 4;
+  id ONEij(spa1?,spa2?)*ONEij(spa2?,spa3?) = ONEij(spa1,spa3);
+
+  id GAij(spa1?,spa2?,rho?ALLLOR) * GAij(spa2?,spa3?,rho?ALLLOR) = diim*ONEij(spa1,spa3);
+  id GAij(spa1?,spa2?,mom?ALLMOM) * GAij(spa2?,spa3?,mom?ALLMOM) = SP(mom,mom)*ONEij(spa1,spa3);
+  id GAij(spa1?,spa2?,rho?)*ONEij(spa3?,spa2?) = GAij(spa1,spa3,rho);
+  id GAij(spa2?,spa1?,rho?)*ONEij(spa3?,spa2?) = GAij(spa3,spa1,rho);
+
+  id PLij(spa1?,spa2?)*ONEij(spa2?,spa3?) = PLij(spa1,spa3);
+  id PRij(spa1?,spa2?)*ONEij(spa2?,spa3?) = PRij(spa1,spa3);
+
+  id PLij(spa1?,spa2?)*PLij(spa2?,spa3?) = PLij(spa1,spa3);
+  id PRij(spa1?,spa2?)*PRij(spa2?,spa3?) = PRij(spa1,spa3);
+
+  id PLij(spa1?,spa2?)*PRij(spa2?,spa3?) = 0;
+  id PRij(spa1?,spa2?)*PLij(spa2?,spa3?) = 0;
+
+
+  id Spinor?SPSET(int?,spa1?,mom?,ref?,mass?)*ONEij(spa1?,spa2?) = Spinor(int,spa2,mom,ref,mass);
+endrepeat;
+.sort
+
+***id GAij(spa1?,spa2?,var?) = GAij(spa1,spa2,var);
+***.sort
+
+
+
+*
+* now chainin the Dirac objects in FermionChain according to Dirac indices
+*
+***Here var? could be mom? or rho?
+id Spinor?LSPSET[setint](int?,spa1?,?vars)*GAij(spa1?,spa2?,mom?) = FermionChain( ILSPSET[setint](int,?vars), GA(mom), spa2 );
+id Spinor?LSPSET[setint](int?,spa1?,?vars)*GAij(spa1?,spa2?,rho?ALLLOR) = FermionChain( ILSPSET[setint](int,?vars), GA(rho), spa2 );
+id Spinor?LSPSET[setint](int?,spa1?,?vars)*PLij(spa1?,spa2?) = FermionChain( ILSPSET[setint](int,?vars), PL, spa2 );
+id Spinor?LSPSET[setint](int?,spa1?,?vars)*PRij(spa1?,spa2?) = FermionChain( ILSPSET[setint](int,?vars), PR, spa2 );
+
+***flip
+id Spinor?LSPSET[setint](int?,spa1?,?vars)*GAij(spa2?,spa1?,mom?) = -FermionChain( ILSPSET[setint](int,?vars), GA(mom), spa2 );
+id Spinor?LSPSET[setint](int?,spa1?,?vars)*GAij(spa2?,spa1?,rho?ALLLOR) = -FermionChain( ILSPSET[setint](int,?vars), GA(rho), spa2 );
+id Spinor?LSPSET[setint](int?,spa1?,?vars)*PLij(spa2?,spa1?) = FermionChain( ILSPSET[setint](int,?vars), PL, spa2 );
+id Spinor?LSPSET[setint](int?,spa1?,?vars)*PRij(spa2?,spa1?) = FermionChain( ILSPSET[setint](int,?vars), PR, spa2 );
+
+
+id Spinor1?LSPSET[setint1](int1?,spa?,?var1)*Spinor2?RSPSET[setint2](int2?,spa?,?var2) = FermionChain( ILSPSET[setint1](int1,?var1), IRSPSET[setint2](int2,?var2) );
+.sort
+
+repeat;
+***Here var? could be mom? or rho?
+  id FermionChain(?vars,spa1?)*GAij(spa1?,spa2?,?mom) = FermionChain( ?vars, GA(?mom), spa2 );
+  id FermionChain(?vars,spa1?)*GAij(spa1?,spa2?,rho?ALLLOR) = FermionChain( ?vars, GA(rho), spa2 );
+
+  id FermionChain(?vars,spa1?)*PLij(spa1?,spa2?) = FermionChain( ?vars, PL, spa2 );
+  id FermionChain(?vars,spa1?)*PRij(spa1?,spa2?) = FermionChain( ?vars, PR, spa2 );
+
+***flip
+  id FermionChain(?vars,spa1?)*GAij(spa2?,spa1?,?mom) = -FermionChain( ?vars, GA(?mom), spa2 );
+  id FermionChain(?vars,spa1?)*GAij(spa2?,spa1?,rho?ALLLOR) = -FermionChain( ?vars, GA(rho), spa2 );
+
+  id FermionChain(?vars,spa1?)*PLij(spa2?,spa1?) = FermionChain( ?vars, PL, spa2 );
+  id FermionChain(?vars,spa1?)*PRij(spa2?,spa1?) = FermionChain( ?vars, PR, spa2 );
+endrepeat;
+
+id FermionChain(?vars1,spa?)*Spinor?RSPSET[setint](int?,spa?,?vars2) = FermionChain( ?vars1, IRSPSET[setint](int,?vars2) );
+.sort
+
+
+*
+* Look for Trace
+*
+repeat;
+  id once, GAij(spa1?,spa2?,var?) = Trace(GA(var),spa1,spa2);
+  repeat;
+    id Trace(?vars,spa1?,spa2?)*GAij(spa2?,spa3?,?mom) = Trace(?vars,GA(?mom),spa1,spa3);
+    id Trace(?vars,spa1?,spa2?)*GAij(spa2?,spa3?,rho?ALLLOR) = Trace(?vars,GA(rho),spa1,spa3);
+    id Trace(?vars,spa1?,spa2?)*PLij(spa2?,spa3?) = Trace(?vars,PL,spa1,spa3);
+    id Trace(?vars,spa1?,spa2?)*PRij(spa2?,spa3?) = Trace(?vars,PR,spa1,spa3);
+
+    id Trace(?vars,spa1?,spa2?)*GAij(spa3?,spa2?,?mom) = -Trace(?vars,GA(?mom),spa1,spa3);
+    id Trace(?vars,spa1?,spa2?)*GAij(spa3?,spa2?,rho?ALLLOR) = -Trace(?vars,GA(rho),spa1,spa3);
+    id Trace(?vars,spa1?,spa2?)*PLij(spa3?,spa2?) = Trace(?vars,PL,spa1,spa3);
+    id Trace(?vars,spa1?,spa2?)*PRij(spa3?,spa2?) = Trace(?vars,PR,spa1,spa3);
+  endrepeat;
+  id Trace(?vars,spa?symbol_,spa?symbol_) = Trace(?vars);
+  id PLij(spa?symbol_,spa?symbol_) = 2;
+  id PRij(spa?symbol_,spa?symbol_) = 2; 
+  id ONEij(spa?symbol_,spa?symbol_) = 4;
+endrepeat;
+.sort
+
+*** #call ArrangeTrace();
+
+***move PL and PR to left-side of FermionChain, right-side of spinor
+repeat;
+  id FermionChain( ?vars1, PL, PR, ?vars2 ) = 0;
+  id FermionChain( ?vars1, PR, PL, ?vars2 ) = 0;
+  id FermionChain( ?vars1, PL, PL, ?vars2 ) = FermionChain( ?vars1, PL, ?vars2 );
+  id FermionChain( ?vars1, PR, PR, ?vars2 ) = FermionChain( ?vars1, PR, ?vars2 );
+
+**id FermionChain( ?vars1, GA(mom?), PL, ?vars2 ) = FermionChain( ?vars1, PR, GA(mom), ?vars2 );
+**id FermionChain( ?vars1, GA(mom?), PR, ?vars2 ) = FermionChain( ?vars1, PL, GA(mom), ?vars2 );
+
+**id FermionChain( ?vars1, GA(rho?ALLLOR), PL, ?vars2 ) = FermionChain( ?vars1, PR, GA(rho), ?vars2 );
+**id FermionChain( ?vars1, GA(rho?ALLLOR), PR, ?vars2 ) = FermionChain( ?vars1, PL, GA(rho), ?vars2 );
+endrepeat;
+.sort
+
+
+repeat;
+  id FV(mom?,rho?ALLLOR)*FermionChain(?vars1,GA(rho?ALLLOR),?vars2) = FermionChain(?vars1,GA(mom),?vars2);
+  id LMT(rho1?ALLLOR,rho2?ALLLOR)*FermionChain(?vars1,GA(rho1?ALLLOR),?vars2) = FermionChain(?vars1,GA(rho2),?vars2);
+endrepeat;
+.sort
+
+repeat;
+  id FermionChain(?vars1,GA(mom?),GA(mom?),?vars2) = SP(mom,mom)*FermionChain(?vars1,?vars2);
+  id SP(mom?NULL,mom?NULL) = 0;
+  id FermionChain(?vars1,GA(rho?ALLLOR),GA(rho?ALLLOR),?vars2) = diim*FermionChain(?vars1,?vars2);
+
+*** Dirac equation for U and V (UB and VB) 
+  id FermionChain( ?vars, GA(mom?), U(int?,mom?,ref?,0) ) = 0;
+  id FermionChain( ?vars, GA(mom?), V(int?,mom?,ref?,0) ) = 0;
+
+  id FermionChain( UB(int?,mom?,ref?,0), GA(mom?), ?vars ) = 0;
+  id FermionChain( VB(int?,mom?,ref?,0), GA(mom?), ?vars ) = 0;
+
+  id FermionChain( UB(int?,mom?,ref?,0), PL, GA(mom?), ?vars ) = 0;
+  id FermionChain( VB(int?,mom?,ref?,0), PL, GA(mom?), ?vars ) = 0;
+
+  id FermionChain( UB(int?,mom?,ref?,0), PR, GA(mom?), ?vars ) = 0;
+  id FermionChain( VB(int?,mom?,ref?,0), PR, GA(mom?), ?vars ) = 0;
+endrepeat;
+.sort
+
+#endprocedure
+
+
+
 
 """
 
@@ -704,6 +978,9 @@ format nospaces;
 format maple;
 
 Local expression = $(expr);
+.sort
+id GAij(spa1?,spa2?,mom?,mass?) = GAij(spa1,spa2,mom) + ONEij(spa1,spa2)*mass;
+.sort
 
 #call Simplification();
 
@@ -767,6 +1044,114 @@ id SP(rho1?,rho2?) = SP(rho1,rho2);
   return result_str
 
 end # function make_amp_contraction_script 
+
+
+
+
+
+
+
+##############################################################################
+function make_amp_contraction_noexpand_script( expr::Basic, file_name::String )::String
+##############################################################################
+
+  result_str = """
+#-
+
+Off Statistics;
+Off FinalStats;
+
+#include model_parameters.frm
+#include contractor.frm
+
+format nospaces;
+format maple;
+
+symbol unity;
+
+Local expression = $(expr);
+.sort
+id GAij(spa1?,spa2?,mom?,mass?) = GAij(spa1,spa2,mom+mass*unity);
+.sort
+
+#call SimplificationNoExpand();
+
+#call contractDiracIndicesNoExpand();
+
+#call SimplificationNoExpand();
+
+#include kin_relation.frm
+.sort
+
+repeat;
+  id once FermionChain(?vars1, GA(mom?), ?vars2 ) = FV(mom,rho100)*FermionChain(?vars1, GA(rho100), ?vars2 );
+  sum rho100;
+endrepeat;
+
+
+id FV(mom?,rho?)*VecEpsilon?{VecEps,VecEpsC}(int?,rho?,mom?,ref?,mass?) = 0;
+.sort
+
+while( match(FermionChain(?vars1,GA(rho?NonEPSMU\$LORENTZ),?vars2)) );
+  sum \$LORENTZ;
+endwhile;
+.sort
+*
+* Replace system dummy indices Nm_? by our dummy indices dummyMU in case to read back to GiNaC.
+* We assume this should give the canonical form of FermionChain, 
+*   since it seems dummy indices Nm_? can make canonical form of an expression automatically.
+*
+
+repeat;
+if( match( SP(mom1?{q1,q2,q3}\$MOM1,mom2?\$MOM2) ) );
+  id once SP(\$MOM1,\$MOM2) = FV(\$MOM1,rho1)*FV(\$MOM2,rho2)*LMT(rho1,rho2);
+  sum rho1;
+  sum rho2;
+endif;
+endrepeat; 
+.sort
+
+
+#do MUIDX = 1, 20, 1
+  Multiply replace_(N`MUIDX'_?,dummyMU`MUIDX');
+#enddo
+.sort
+
+***id FV(rho1?,rho2?) = FV(rho1,rho2);
+***id SP(rho1?,rho2?) = SP(rho1,rho2);
+***.sort
+
+#write <$(file_name).out> "%E", expression
+#close <$(file_name).out>
+.sort
+
+#system tr -d "[:space:]" < $(file_name).out > $(file_name).out.trim
+#system mv $(file_name).out.trim $(file_name).out
+.sort
+
+.end
+
+"""
+
+  return result_str
+
+end # function make_amp_contraction_noexpand_script 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

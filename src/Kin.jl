@@ -332,7 +332,20 @@ function generate_kin_relation( graph_list::Vector{GenericGraph} )::Dict{Basic,B
     ver_index += 1 
   end # for one_den
 
+  for g in graph_list
+    int_edge_list = filter( e_->e_.attributes["style"] == "Internal", edges(g) )
+    for edge in int_edge_list
+      den_mom = edge.attributes["momentum"]
+      den_mass = edge.attributes["particle"].mass
+      den_width = edge.attributes["particle"].width
 
+      subs_den_mom = subs( den_mom, mom[nn] => mom_n )
+      if den_mom != subs_den_mom
+        push!( kin_relation, Den(den_mom,den_mass,den_width) => Den(subs_den_mom,den_mass,den_width) )
+      end # if
+
+    end # for edge
+  end # for g
 
   return kin_relation
 

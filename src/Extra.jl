@@ -107,7 +107,8 @@ function gen_mma_str( expr::Basic )::String
   elseif expr_class == :Mul
     return "Times[ $(join( (sort∘map)( gen_mma_str, get_args(expr) ), "," )) ]"
   elseif expr_class == :FunctionSymbol
-    return "$(get_name(expr))[ $(join( map( gen_mma_str, get_args(expr) ), "," )) ]"
+    name = replace( get_name(expr), "Trace" => "DiracTrace" )
+    return "$(name)[ $(join( map( gen_mma_str, get_args(expr) ), "," )) ]"
   elseif expr_class == :Pow
     arglist = get_args(expr)
     return "Power[ $(gen_mma_str(arglist[1])), $(arglist[2]) ]"

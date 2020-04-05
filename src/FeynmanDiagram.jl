@@ -186,7 +186,8 @@ function get_remnant_couplings_lorentz_list( part::Particle, mark::Int64, moment
 ##########################################################################################################
 
   if part.spin == :fermion
-    return [ Basic(" I*( GAij(spb$mark,spa$mark,$momentum)+ONEij(spb$mark,spa$mark)*$(part.mass) )*Den($momentum,$(part.mass),$(part.width)) ") ]
+    #return [ Basic(" I*( GAij(spb$mark,spa$mark,$momentum)+ONEij(spb$mark,spa$mark)*$(part.mass) )*Den($momentum,$(part.mass),$(part.width)) ") ]
+    return [ Basic(" I*GAij(spb$mark,spa$mark,$momentum,$(part.mass))*Den($momentum,$(part.mass),$(part.width)) ") ]
   elseif part.spin == :vector && is_massless(part) == true 
     return [ Basic(" (-1)*I*LMT(mua$mark,mub$mark)*Den($momentum,0,0) ") ]
   elseif part.spin == :vector && is_massless(part) == false 
@@ -962,12 +963,194 @@ function contract_Dirac_indices( g::GenericGraph, lorentz_expr_list::Vector{Basi
     result_expr = Basic(result_str)
     new_lorentz_expr_list[index] = result_expr
 
-    run( `rm $(file_name).frm $(file_name).out $(file_name).log` )
+    #run( `rm $(file_name).frm $(file_name).out $(file_name).log` )
+
   end # for index
 
   return new_lorentz_expr_list
 
 end # function contract_Dirac_indices
+
+
+
+
+
+
+
+##################################################################################
+function contract_Dirac_indices_noexpand( g::GenericGraph, lorentz_expr_list::Vector{Basic} )::Vector{Basic}
+##################################################################################
+
+  diagram_index = vertex_from_label("graph property",g).attributes["diagram_index"]
+
+  new_lorentz_expr_list = Vector{Basic}( undef, length(lorentz_expr_list) )
+  for index in 1:length(lorentz_expr_list)
+    lorentz_expr = lorentz_expr_list[index]
+    file_name = "contract_lorentz_expr$(index)_diagram$(diagram_index)_noexpand"
+    form_script_str = make_amp_contraction_noexpand_script( lorentz_expr, file_name )
+
+    file = open( file_name*".frm", "w" )
+    write( file, form_script_str )
+    close(file)
+
+    #printstyled( "[ form $(file_name).frm in thread #$(Threads.threadid()) ]\n", color=:yellow )
+    printstyled( "[ form $(file_name).frm ]\n", color=:yellow )
+    run( pipeline( `form $(file_name).frm`, file_name*".log" ) )
+
+    file = open( file_name*".out", "r" )
+    result_str = read( file, String )
+    result_expr = Basic(result_str)
+    new_lorentz_expr_list[index] = result_expr
+
+    #run( `rm $(file_name).frm $(file_name).out $(file_name).log` )
+
+  end # for index
+
+  return new_lorentz_expr_list
+
+end # function contract_Dirac_indices_noexpand
+
+
+
+
+#####################################################################################################################################
+function check_consistency( lorentz_list::Vector{Basic}, lorentz_noexpand_list::Vector{Basic}, 
+                            ext_mom_list::Vector{Basic}, kin_relation::Dict{Basic,Basic} )::Nothing
+#####################################################################################################################################
+
+  @funs SP
+
+  sp_relation_list = filter( pair_ -> get_name(pair_[1]) == "SP", kin_relation )
+  n_sp_relation = length(sp_relation_list)
+  kin_relation_str_set = Set{String}()
+  for one_sp_relation ∈ sp_relation_list
+    sp = one_sp_relation[1]
+    mom1 = get_args(sp)[1]
+    mom2 = get_args(sp)[2]
+    sp_expr = one_sp_relation[2] 
+
+    push!( kin_relation_str_set, "SP[$(mom1),$(mom2)] -> $(sp_expr)" )
+    if mom1 != mom2 
+      push!( kin_relation_str_set, "SP[$(mom2),$(mom1)] -> $(sp_expr)" )
+    end # if
+  end # for one_mom
+
+  n_lorentz = length( lorentz_list )
+  @assert n_lorentz == length( lorentz_noexpand_list )
+
+  for lorentz_index ∈ 1:n_lorentz
+    one_lorentz = lorentz_list[lorentz_index]
+    one_lorentz_noexpand = lorentz_noexpand_list[lorentz_index]
+
+    file = open( "check.m", "w" )
+    write( file, """
+expr1 = $( gen_mma_str(one_lorentz) );
+expr2 = $( gen_mma_str(one_lorentz_noexpand) );
+
+
+MomList = {q1,q2,q3,$(join(map(string,ext_mom_list),","))};
+vanishing = Map[# :> 0 &, MomList];
+
+dummyList = {epsMU1,epsMU2,epsMU3,epsMU4,epsMU5,dummyMU1,dummyMU2,dummyMU3,dummyMU4,dummyMU5,dummyMU6,dummyMU7,dummyMU8,dummyMU9,dummyMU10};
+nuList = {NU1,NU2,NU3,NU4,NU5,NU6,NU7,NU8,NU10,NU12,NU13,NU14,NU15,NU16,NU17,NU18,NU19,NU20};
+muList = {MU1,MU2,MU3,MU4,MU5,MU6,MU7,MU8,MU10,MU12,MU13,MU14,MU15,MU16,MU17,MU18,MU19,MU20};
+
+makeSP[ mom1_, mom2_ ] := If[ AlphabeticOrder[ ToString[mom1], ToString[mom2] ] == 1, SP[mom1,mom2], SP[mom2,mom1] ];
+
+expr2 = expr2 //. DiracTrace[ x1___, GA[mom_/;Coefficient[mom,unity]=!=0], x2___ ] :> DiracTrace[x1,GA[mom/.unity:>0],x2] + Coefficient[mom,unity]*DiracTrace[x1,x2];
+expr2 = Expand[expr2] /. DiracTrace[ x__ ] :> If[ EvenQ[Length[{x}]], DiracTrace[x], 0 ];
+
+expr2 = expr2 //.{ DiracTrace[x1___, GA[mom_/;(mom/.vanishing) == 0], x2___] :> DiracTrace[x1,GA[nuList[[Length[{x1}]]]],x2]*FV[mom,nuList[[Length[{x1}]]]] };
+expr2 = expr2 /. { DiracTrace[ GA[mu1_], GA[mu2_] ] :> 4*LMT[mu1,mu2],
+                   DiracTrace[ GA[mu1_], GA[mu2_], GA[mu3_], GA[mu4_] ] :> 4*(LMT[mu1,mu4]*LMT[mu2,mu3]-LMT[mu1,mu3]*LMT[mu2,mu4]+LMT[mu1,mu2]*LMT[mu3,mu4]),
+                   DiracTrace[ GA[mu1_], GA[mu2_], GA[mu3_], GA[mu4_], GA[mu5_], GA[mu6_] ] :> 4*(LMT[mu1, mu6]*LMT[mu2, mu5]*LMT[mu3, mu4] - LMT[mu1, mu5]*LMT[mu2, mu6]*LMT[mu3, mu4] - LMT[mu1, mu6]*LMT[mu2, mu4]*LMT[mu3, mu5] + LMT[mu1, mu4]*LMT[mu2, mu6]*LMT[mu3, mu5] + LMT[mu1, mu5]*LMT[mu2, mu4]*LMT[mu3, mu6] - LMT[mu1, mu4]*LMT[mu2, mu5]*LMT[mu3, mu6] + LMT[mu1, mu6]*LMT[mu2, mu3]*LMT[mu4, mu5] - LMT[mu1, mu3]*LMT[mu2, mu6]*LMT[mu4, mu5] + LMT[mu1, mu2]*LMT[mu3, mu6]*LMT[mu4, mu5] - LMT[mu1, mu5]*LMT[mu2, mu3]*LMT[mu4, mu6] + LMT[mu1, mu3]*LMT[mu2, mu5]*LMT[mu4, mu6] - LMT[mu1, mu2]*LMT[mu3, mu5]*LMT[mu4, mu6] + LMT[mu1, mu4]*LMT[mu2, mu3]*LMT[mu5, mu6] - LMT[mu1, mu3]*LMT[mu2, mu4]*LMT[mu5, mu6] + LMT[mu1, mu2]*LMT[mu3, mu4]*LMT[mu5, mu6])
+                 };
+
+
+expr2 = Expand[expr2] //. { FermionChain[ x1__, GA[mu_], x2__ ] * FV[mom_,mu_] :> FermionChain[ x1, GA[mom], x2 ],
+                    FermionChain[ x1__, GA[mu1_], x2__ ] * LMT[mu1_,mu2_] :> FermionChain[ x1, GA[mu2], x2 ],
+                    FermionChain[ x1__, GA[mu1_], x2__ ] * LMT[mu2_,mu1_] :> FermionChain[ x1, GA[mu2], x2 ],
+                    FV[mom_,mu1_] * LMT[mu1_,mu2_] :> FV[mom,mu2],
+                    FV[mom_,mu1_] * LMT[mu2_,mu1_] :> FV[mom,mu2] };
+
+expr2 = expr2 //. FermionChain[ x1__, GA[mom_/;Coefficient[mom,unity]=!=0], x2__ ] :> FermionChain[x1,GA[mom/.unity:>0],x2] + Coefficient[mom,unity]*FermionChain[x1,x2];
+
+expr2 = expr2 //. FermionChain[x1__, GA[mom_ /; ! MemberQ[MomList, mom] && (mom /. vanishing) == 0], x2__] :> Map[FermionChain[x1, GA[#], x2] &, MomList].((Normal[CoefficientArrays[mom, MomList]])[[2]]);
+
+expr2 = expr2 //. FV[ mom_ /; ! MemberQ[MomList, mom] && (mom /. vanishing) == 0, mu_ ] :> Map[FV[#, mu] &, MomList].((Normal[CoefficientArrays[mom, MomList]])[[2]]);
+
+expr2 = expr2 //. SP[ mom1_ /; ! MemberQ[MomList, mom] && (mom1 /. vanishing) == 0, mom2_ ] :> Map[makeSP[#, mom2] &, MomList].((Normal[CoefficientArrays[mom1, MomList]])[[2]]);
+
+expr2 = expr2 //. SP[ mom1_, mom2_ /; ! MemberQ[MomList, mom] && (mom2 /. vanishing) == 0 ] :> Map[makeSP[mom1, #] &, MomList].((Normal[CoefficientArrays[mom2, MomList]])[[2]]);
+
+expr2 = expr2 //. { FermionChain[x1__, GA[mom_], PL, x2__] :> FermionChain[x1, PR, GA[mom], x2], 
+                    FermionChain[x1__, GA[mom_], PR, x2__] :> FermionChain[x1, PL, GA[mom], x2] };
+
+expr2 = Expand[expr2] //. { FermionChain[ x1__, GA[mom_/; MemberQ[MomList, mom]], GA[mom_/; MemberQ[MomList, mom]], x2__ ] :> SP[mom,mom]*FermionChain[x1,x2],
+                    FermionChain[ x1__, GA[mu_/; ! MemberQ[MomList, mu]], GA[mu_/; ! MemberQ[MomList, mu]], x2__ ] :> diim*FermionChain[x1,x2],
+                    FV[mom1_,mu_]*FV[mom2_,mu_] :> makeSP[mom1,mom2],
+                    FV[mom_,mu_]^2 :> SP[mom,mom] };
+
+expr2 = expr2 //. {$( join(collect(kin_relation_str_set),",") )};
+
+expr2 = expr2 //. { FV[mom_,mu_]*VecEps[int_, mu_, mom_, ref_, mass_] :> 0, FV[mom_,mu_]*VecEpsC[int_, mu_, mom_, ref_, mass_] :> 0,
+                    FermionChain[ x__, GA[mom_], U[int_,mom_,ref_,0] ] :> 0, FermionChain[ x__, GA[mom_], V[int_,mom_,ref_,0] ] :> 0,
+                    FermionChain[ UB[int_,mom_,ref_,0], PL, GA[mom_], x__ ] :> 0, FermionChain[ VB[int_,mom_,ref_,0], PL, GA[mom_], x__ ] :> 0, 
+                    FermionChain[ UB[int_,mom_,ref_,0], PR, GA[mom_], x__ ] :> 0, FermionChain[ VB[int_,mom_,ref_,0], PR, GA[mom_], x__ ] :> 0 };
+
+expr2 = expr2 //. FermionChain[ x1__, GA[mu_/; MemberQ[dummyList, mu]], x__, GA[mu_/; MemberQ[dummyList, mu]], x2__ ] :> FermionChain[ x1, GA[muList[[Length[{x1}]]]], x, GA[muList[[Length[{x1}]]]], x2 ];
+
+expr1 = expr1 //. { FermionChain[ x1__, GA[mu_], x2__ ] * FV[mom_,mu_] :> FermionChain[ x1, GA[mom], x2 ], 
+                    FermionChain[ x1__, GA[mu1_], x2__ ] * LMT[mu1_,mu2_] :> FermionChain[ x1, GA[mu2], x2 ],
+                    FermionChain[ x1__, GA[mu1_], x2__ ] * LMT[mu2_,mu1_] :> FermionChain[ x1, GA[mu2], x2 ],
+                    FV[mom_,mu1_] * LMT[mu1_,mu2_] :> FV[mom,mu2],
+                    FV[mom_,mu1_] * LMT[mu2_,mu1_] :> FV[mom,mu2],
+                    FV[mom1_,mu_]*FV[mom2_,mu_] :> makeSP[mom1,mom2],
+                    FV[mom_,mu_]^2 :> SP[mom,mom]
+                  };
+
+expr1 = expr1 //. { FermionChain[ x1__, GA[mom_/; MemberQ[MomList, mom]], GA[mom_/; MemberQ[MomList, mom]], x2__ ] :> SP[mom,mom]*FermionChain[x1,x2],
+                    FermionChain[ x1__, GA[mu_/; ! MemberQ[MomList, mu]], GA[mu_/; ! MemberQ[MomList, mu]], x2__ ] :> diim*FermionChain[x1,x2] };
+
+expr1 = expr1 //. {$( join(collect(kin_relation_str_set),",") )};
+
+expr1 = expr1 //. FermionChain[ x1__, GA[mu_/; MemberQ[dummyList, mu]], x__, GA[mu_/; MemberQ[dummyList, mu]], x2__ ] :> FermionChain[ x1, GA[muList[[Length[{x1}]]]], x, GA[muList[[Length[{x1}]]]], x2 ];
+
+diff = (expr1-expr2)//Expand;
+
+stream=OpenWrite["check.out"];
+Write[ stream, diff ];
+Close[stream];
+
+""" )
+    close(file)
+
+
+    printstyled( "  run MathKernel -script check.m ... \n", color=:green )
+    println( "  Start @", Dates.now() )
+    run( pipeline( `MathKernel -script check.m`, "check.log" ) )
+    println( "  Done @", Dates.now() )
+  
+    file = open( "check.out", "r" )
+    result_str = replace( read( file, String ), r"\s"=>"" )
+    close(file)
+
+    @assert Basic(result_str) == 0
+  
+    rm( "check.m" )
+    rm( "check.log" )
+    rm( "check.out" )
+
+  end # for lorentz_index
+
+
+
+end # function check_consistency
+
+
+
+
+
 
 
 
@@ -1084,27 +1267,70 @@ function write_out_amplitude( n_loop::Int64, diagram_index::Int64, couplingfacto
 end # function write_out_amplitude
 
 #########################################################################
-function write_out_visual_graph( g::GenericGraph, model::Model )::Nothing
+function write_out_visual_graph( g::GenericGraph, model::Model, 
+    couplingfactor::Basic, color_list::Vector{Basic}, lorentz_list::Vector{Basic},
+    ext_mom_list::Vector{Basic}, scale2_list::Vector{Basic} )::Nothing
 #########################################################################
 
   diagram_index = vertex_from_label("graph property",g).attributes["diagram_index"]
 
   graph_str = generate_visual_graph( g, model )
 
+  couplingfactor_str = convert_couplingfactor( couplingfactor )
+  color_str_list = convert_color_list( color_list )
+  lorentz_str_list = convert_lorentz_list( lorentz_list, ext_mom_list, scale2_list )
+
   printstyled( "[ Generate visual_diagram$(diagram_index).tex ]\u264e\n", color=:green, bold=true )
   visual_file = open( "visual_diagram$(diagram_index).tex", "w" )
   write( visual_file,
     "\\documentclass{article}\n"*
     "\\usepackage{tikz-feynman}\n"*
+    "\\usepackage{rotating}\n"*
     "\n"*
     "\\begin{document}\n"*
     "\n"*
     graph_str*
     "\n"*
+    "\\begin{sideways}\n"*
+    "\\parbox{\\textheight}{\n"*
+    "\n"*
+    "coupling factor: \n"*
+    "\\begin{equation}\n"*
+    "$(couplingfactor_str)\n"*
+    "\\end{equation}\n"*
+    "\n" )
+
+  n_color = length(color_str_list)
+  for color_index ∈ 1:n_color
+  write( visual_file,
+    "color factor \\#$(color_index):\n"*
+    "\\begin{equation}\n"*
+    "$(color_str_list[color_index])\n"*
+    "\\end{equation}\n"*
+    "color factor coefficient \\#$(color_index):\n"*
+    "\\begin{flushleft}\n"*
+    "\\linespread{2.5}\\selectfont\n"*
+    "\\leftskip=3em\n"*
+    "\\hspace*{-3em}\$\\displaystyle\n"*
+    "$(lorentz_str_list[color_index])\n"*
+    "\$\\end{flushleft}\n"*
+    "\n"*
+    "}\\end{sideways}\n"*
+    "\n" )
+  end # for color_index
+
+  write( visual_file,
+    "\n"*
+    "\n"*
     "\\end{document} \n"*
     "\n" )
   close( visual_file )
 
+  for color_index ∈ 1:n_color
+    file = open( "visual_diagram$(diagram_index)_color$(color_index).m" , "w" )
+    write( file, "expr = $(gen_mma_str(lorentz_list[color_index]));\n" )
+    close(file)
+  end # for color_index
 
 end # function write_out_visual_graph
 
@@ -1176,8 +1402,11 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
     scale2_list = generate_scale2_list( kin_relation )
 
     amp_color_list, amp_lorentz_list = assemble_amplitude( g )
-    amp_lorentz_list, loop_den_list, loop_den_xpt_list = factor_out_loop_den( g, amp_lorentz_list )
-    amp_lorentz_list = contract_Dirac_indices( g, amp_lorentz_list )
+    amp_lorentz_list_pre, loop_den_list, loop_den_xpt_list = factor_out_loop_den( g, amp_lorentz_list )
+    amp_lorentz_list = contract_Dirac_indices( g, amp_lorentz_list_pre )
+    amp_lorentz_noexpand_list = contract_Dirac_indices_noexpand( g, amp_lorentz_list_pre )
+
+    check_consistency( amp_lorentz_list, amp_lorentz_noexpand_list, ext_mom_list, kin_relation )
 
     amp_color_list = simplify_color_factors( g, amp_color_list )
 
@@ -1188,7 +1417,9 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
 
     write_out_amplitude( n_loop, diagram_index, couplingfactor, model.parameter_dict, ext_mom_list, scale2_list, kin_relation, baseINC_script_str,
                          amp_color_list, amp_lorentz_list, loop_den_list, loop_den_xpt_list, input["Amp_Min_Eps_Xpt"], input["Amp_Max_Eps_Xpt"] )
-    write_out_visual_graph( g, model )
+
+
+    write_out_visual_graph( g, model, couplingfactor, amp_color_list, amp_lorentz_noexpand_list, ext_mom_list, scale2_list )
 
     rm( "baseINC.frm" )
   end # for g
