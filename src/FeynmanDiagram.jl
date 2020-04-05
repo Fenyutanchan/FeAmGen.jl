@@ -963,7 +963,9 @@ function contract_Dirac_indices( g::GenericGraph, lorentz_expr_list::Vector{Basi
     result_expr = Basic(result_str)
     new_lorentz_expr_list[index] = result_expr
 
-    #run( `rm $(file_name).frm $(file_name).out $(file_name).log` )
+    rm( file_name*".frm" )
+    rm( file_name*".out" )
+    rm( file_name*".log" )
 
   end # for index
 
@@ -1002,7 +1004,9 @@ function contract_Dirac_indices_noexpand( g::GenericGraph, lorentz_expr_list::Ve
     result_expr = Basic(result_str)
     new_lorentz_expr_list[index] = result_expr
 
-    #run( `rm $(file_name).frm $(file_name).out $(file_name).log` )
+    rm( file_name*".frm" )
+    rm( file_name*".out" )
+    rm( file_name*".log" )
 
   end # for index
 
@@ -1057,6 +1061,9 @@ muList = {MU1,MU2,MU3,MU4,MU5,MU6,MU7,MU8,MU10,MU12,MU13,MU14,MU15,MU16,MU17,MU1
 
 makeSP[ mom1_, mom2_ ] := If[ AlphabeticOrder[ ToString[mom1], ToString[mom2] ] == 1, SP[mom1,mom2], SP[mom2,mom1] ];
 
+(*
+expr2 = expr2 //. d -> diim //. Subscript[S,P][x1_,x2_] -> SP[x1,x2];
+*)
 expr2 = expr2 //. DiracTrace[ x1___, GA[mom_/;Coefficient[mom,unity]=!=0], x2___ ] :> DiracTrace[x1,GA[mom/.unity:>0],x2] + Coefficient[mom,unity]*DiracTrace[x1,x2];
 expr2 = Expand[expr2] /. DiracTrace[ x__ ] :> If[ EvenQ[Length[{x}]], DiracTrace[x], 0 ];
 
@@ -1325,12 +1332,6 @@ function write_out_visual_graph( g::GenericGraph, model::Model,
     "\\end{document} \n"*
     "\n" )
   close( visual_file )
-
-  for color_index ∈ 1:n_color
-    file = open( "visual_diagram$(diagram_index)_color$(color_index).m" , "w" )
-    write( file, "expr = $(gen_mma_str(lorentz_list[color_index]));\n" )
-    close(file)
-  end # for color_index
 
 end # function write_out_visual_graph
 

@@ -170,13 +170,14 @@ vanishing = Map[# :> 0 &, MomList];
 
 expr = expr //. FermionChain[ x1__, GA[mu_], x2__ ] * FV[mom_,mu_] :> FermionChain[ x1, GA[mom], x2 ];
 expr = expr //. FermionChain[ x1__, GA[mom_/;Coefficient[mom,unity]=!=0], x2__ ] :> FermionChain[ x1, \\[Gamma][(mom/.unity:>0)]+Coefficient[mom,unity], x2 ];
+expr = expr //. DiracTrace[ x1___, GA[mom_/;Coefficient[mom,unity]=!=0], x2___ ] :> DiracTrace[ x1, \\[Gamma][(mom/.unity:>0)]+Coefficient[mom,unity], x2 ];
 expr = expr //. FermionChain[ x1__, GA[mom_/; (mom /. vanishing) == 0], x2__ ] :> FermionChain[ x1, \\[Gamma][mom], x2 ];
 
 expr = expr //. FermionChain[x__] :> Dot[x] //. { PR -> Subscript[P, R], PL -> Subscript[P, L], im -> I, 
                   UB[idx_, x__] -> Subscript[U, idx], U[idx_, x__] -> Subscript[u, idx], 
                   VB[idx_, x__] -> Subscript[V, idx], V[idx_, x__] -> Subscript[v, idx],
                   VecEps[idx_,mu_,x__] -> Superscript[Subscript[\\[Epsilon],idx],mu], VecEpsC[idx_,mu_,x__] -> Superscript[Subscript[\\[Epsilon],idx,c],mu],
-                  FV[k1_,mu1_]*FV[k2_,mu2_]*LMT[mu1_,mu2_] -> SP[k1.k2] };
+                  FV[k1_,mu1_]*FV[k2_,mu2_]*LMT[mu1_,mu2_] -> SP[k1,k2] };
 
 expr = expr //.{$(join(loop_mom_replace_str_list,","))} //.{$(join(ext_mom_replace_str_list,","))};
 
@@ -187,6 +188,7 @@ expr = expr //. {$(join(scale_replace_str_list,","))};
 expr = expr //. {$(join(ver_replace_str_list,","))};
 expr = expr //. GA[x_ /; MemberQ[MomList, x]] -> \\[Gamma].x;
 expr = expr //. GA[x_ /; ! MemberQ[MomList, x]] -> Subscript[\\[Gamma], x];
+expr = expr //. diim -> d //. SP[x1_,x2_] -> Subscript[S,P][x1,x2] //. DiracTrace[x__] -> Subscript[D,T][x] //. FV[mom_,mu_] -> Subscript[F,4][mom,mu];
 
 stream=OpenWrite["convert_lorentz.out"];
 WriteString[ stream, expr//TraditionalForm//TeXForm ];

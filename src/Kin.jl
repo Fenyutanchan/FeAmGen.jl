@@ -329,6 +329,13 @@ function generate_kin_relation( graph_list::Vector{GenericGraph} )::Dict{Basic,B
   ver_index = ver_index_pre + 1
   for one_den in den_set
     push!( kin_relation, one_den => Basic("ver$(ver_index)") )
+
+    arg_list = get_args(one_den)
+    den_mom = arg_list[1]
+    den_mass = arg_list[2]
+    den_width = arg_list[3]
+    push!( kin_relation, Den(expand(-den_mom),den_mass,den_width) => Basic("ver$(ver_index)") )
+
     ver_index += 1 
   end # for one_den
 
@@ -341,7 +348,8 @@ function generate_kin_relation( graph_list::Vector{GenericGraph} )::Dict{Basic,B
 
       subs_den_mom = subs( den_mom, mom[nn] => mom_n )
       if den_mom != subs_den_mom
-        push!( kin_relation, Den(den_mom,den_mass,den_width) => Den(subs_den_mom,den_mass,den_width) )
+        push!( kin_relation, Den(den_mom,den_mass,den_width) => subs(Den(subs_den_mom,den_mass,den_width),kin_relation...) )
+        push!( kin_relation, Den(expand(-den_mom),den_mass,den_width) => subs(Den(subs_den_mom,den_mass,den_width),kin_relation...) )
       end # if
 
     end # for edge
