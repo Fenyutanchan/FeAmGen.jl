@@ -720,14 +720,14 @@ id Spinor1?LSPSET[setint1](int1?,spa?,?var1)*Spinor2?RSPSET[setint2](int2?,spa?,
 
 repeat;
 ***Here var? could be mom? or rho?
-  id FermionChain(?vars,spa1?)*GAij(spa1?,spa2?,?mom) = FermionChain( ?vars, GA(?mom), spa2 );
+  id FermionChain(?vars,spa1?)*GAij(spa1?,spa2?,?expr) = FermionChain( ?vars, GA(?expr), spa2 );
   id FermionChain(?vars,spa1?)*GAij(spa1?,spa2?,rho?ALLLOR) = FermionChain( ?vars, GA(rho), spa2 );
 
   id FermionChain(?vars,spa1?)*PLij(spa1?,spa2?) = FermionChain( ?vars, PL, spa2 );
   id FermionChain(?vars,spa1?)*PRij(spa1?,spa2?) = FermionChain( ?vars, PR, spa2 );
 
 ***flip
-  id FermionChain(?vars,spa1?)*GAij(spa2?,spa1?,?mom) = -FermionChain( ?vars, GA(?mom), spa2 );
+  id FermionChain(?vars,spa1?)*GAij(spa2?,spa1?,?expr) = -FermionChain( ?vars, GA(?expr), spa2 );
   id FermionChain(?vars,spa1?)*GAij(spa2?,spa1?,rho?ALLLOR) = -FermionChain( ?vars, GA(rho), spa2 );
 
   id FermionChain(?vars,spa1?)*PLij(spa2?,spa1?) = FermionChain( ?vars, PL, spa2 );
@@ -742,14 +742,14 @@ id FermionChain(?vars1,spa?)*Spinor?RSPSET[setint](int?,spa?,?vars2) = FermionCh
 * Look for Trace
 *
 repeat;
-  id once, GAij(spa1?,spa2?,var?) = Trace(GA(var),spa1,spa2);
+  id once, GAij(spa1?,spa2?,?expr) = Trace(GA(?expr),spa1,spa2);
   repeat;
-    id Trace(?vars,spa1?,spa2?)*GAij(spa2?,spa3?,?mom) = Trace(?vars,GA(?mom),spa1,spa3);
+    id Trace(?vars,spa1?,spa2?)*GAij(spa2?,spa3?,?expr) = Trace(?vars,GA(?expr),spa1,spa3);
     id Trace(?vars,spa1?,spa2?)*GAij(spa2?,spa3?,rho?ALLLOR) = Trace(?vars,GA(rho),spa1,spa3);
     id Trace(?vars,spa1?,spa2?)*PLij(spa2?,spa3?) = Trace(?vars,PL,spa1,spa3);
     id Trace(?vars,spa1?,spa2?)*PRij(spa2?,spa3?) = Trace(?vars,PR,spa1,spa3);
 
-    id Trace(?vars,spa1?,spa2?)*GAij(spa3?,spa2?,?mom) = -Trace(?vars,GA(?mom),spa1,spa3);
+    id Trace(?vars,spa1?,spa2?)*GAij(spa3?,spa2?,?expr) = -Trace(?vars,GA(?expr),spa1,spa3);
     id Trace(?vars,spa1?,spa2?)*GAij(spa3?,spa2?,rho?ALLLOR) = -Trace(?vars,GA(rho),spa1,spa3);
     id Trace(?vars,spa1?,spa2?)*PLij(spa3?,spa2?) = Trace(?vars,PL,spa1,spa3);
     id Trace(?vars,spa1?,spa2?)*PRij(spa3?,spa2?) = Trace(?vars,PR,spa1,spa3);
