@@ -1061,9 +1061,6 @@ muList = {MU1,MU2,MU3,MU4,MU5,MU6,MU7,MU8,MU10,MU12,MU13,MU14,MU15,MU16,MU17,MU1
 
 makeSP[ mom1_, mom2_ ] := If[ AlphabeticOrder[ ToString[mom1], ToString[mom2] ] == 1, SP[mom1,mom2], SP[mom2,mom1] ];
 
-(*
-expr2 = expr2 //. d -> diim //. Subscript[S,P][x1_,x2_] -> SP[x1,x2];
-*)
 expr2 = expr2 //. DiracTrace[ x1___, GA[mom_/;Coefficient[mom,unity]=!=0], x2___ ] :> DiracTrace[x1,GA[mom/.unity:>0],x2] + Coefficient[mom,unity]*DiracTrace[x1,x2];
 expr2 = Expand[expr2] /. DiracTrace[ x__ ] :> If[ EvenQ[Length[{x}]], DiracTrace[x], 0 ];
 
@@ -1086,9 +1083,9 @@ expr2 = expr2 //. FermionChain[x1__, GA[mom_ /; ! MemberQ[MomList, mom] && (mom 
 
 expr2 = expr2 //. FV[ mom_ /; ! MemberQ[MomList, mom] && (mom /. vanishing) == 0, mu_ ] :> Map[FV[#, mu] &, MomList].((Normal[CoefficientArrays[mom, MomList]])[[2]]);
 
-expr2 = expr2 //. SP[ mom1_ /; ! MemberQ[MomList, mom] && (mom1 /. vanishing) == 0, mom2_ ] :> Map[makeSP[#, mom2] &, MomList].((Normal[CoefficientArrays[mom1, MomList]])[[2]]);
+expr2 = expr2 //. SP[ mom1_ /; ! MemberQ[MomList, mom1] && (mom1 /. vanishing) == 0, mom2_ ] :> Map[makeSP[#, mom2] &, MomList].((Normal[CoefficientArrays[mom1, MomList]])[[2]]);
 
-expr2 = expr2 //. SP[ mom1_, mom2_ /; ! MemberQ[MomList, mom] && (mom2 /. vanishing) == 0 ] :> Map[makeSP[mom1, #] &, MomList].((Normal[CoefficientArrays[mom2, MomList]])[[2]]);
+expr2 = expr2 //. SP[ mom1_, mom2_ /; ! MemberQ[MomList, mom2] && (mom2 /. vanishing) == 0 ] :> Map[makeSP[mom1, #] &, MomList].((Normal[CoefficientArrays[mom2, MomList]])[[2]]);
 
 expr2 = expr2 //. { FermionChain[x1__, GA[mom_], PL, x2__] :> FermionChain[x1, PR, GA[mom], x2], 
                     FermionChain[x1__, GA[mom_], PR, x2__] :> FermionChain[x1, PL, GA[mom], x2] };
