@@ -132,7 +132,7 @@ function generate_visual_graph( g::GenericGraph, model::Model )::String
     particle_name = replace( particle_name, "ta" => "\\tau" )
     particle_name = replace( particle_name, "^a" => "\\gamma" )
     if length(particle_name) > 3 && particle_name[end-2:end] == "bar"
-      particle_name = "\\overline{"*particle_name[1,end-3]*"}"
+      particle_name = "\\overline{"*particle_name[1:end-3]*"}"
     end # if
 
     mom_str = replace( string(edge.attributes["momentum"]), r"([Kk]+)(\d+)" => s"\1_{\2}" )

@@ -82,7 +82,7 @@ function convert_color_list( diagram_index::Int64, color_list::Vector{Basic} )::
     write( file, """
 expr = $(color_mma_str);
 expr = expr//.{$(join(replace_str_list,","))};
-expr = expr//.{im -> I, ca -> Subscript[C,A], cf -> Subscript[C,F], SUNT[x__] -> Subscript[T,x], SUNF[x__] -> Subscript[f,x] };
+expr = expr//.{im -> I, ca -> Subscript[C,A], cf -> Subscript[C,F], SUNT[x__] -> Subscript[T,x], SUNF[x__] -> Subscript[f,x], DeltaFun[x__]->\\[Delta][x], DeltaAdj[x__]->\\[Delta][x] };
 stream=OpenWrite["$(file_name).out"];
 WriteString[ stream, expr//TeXForm ];
 Close[stream];

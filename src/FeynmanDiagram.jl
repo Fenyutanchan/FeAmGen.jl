@@ -856,18 +856,32 @@ end # function assemble_amplitude
 
 
 ###############################################################
-function generate_scale2_list( kin_relation::Dict{Basic,Basic} )::Vector{Basic}
+function generate_scale2_list( g::GenericGraph, kin_relation::Dict{Basic,Basic} )::Vector{Basic}
 ###############################################################
 
   ver_mass_list = Vector{Basic}()
+  #-----------------------
   for one_pair in kin_relation
     if get_name( one_pair[1] ) == "Den"
       continue
     end # if
     ver_mass_list = vcat( ver_mass_list, free_symbols( one_pair[2] ) )
   end # for one_pair
+
+  #-----------------------
+  for one_edge in edges(g)
+    mass = one_edge.attributes["particle"].mass
+    if mass == 0
+      continue
+    end # if
+    ver_mass_list = vcat( ver_mass_list, mass )
+  end # for one_edge
+
+  #-----------------------
   unique!( ver_mass_list )
 
+
+  #-----------------------
   scale2_list = Vector{Basic}( undef, length(ver_mass_list) )
   for index in 1:length(ver_mass_list)
     ver_mass_str = string(ver_mass_list[index])
@@ -1419,7 +1433,7 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
   for g in graph_list
     diagram_index = vertex_from_label("graph property",g).attributes["diagram_index"]
 
-    scale2_list = generate_scale2_list( kin_relation )
+    scale2_list = generate_scale2_list( g, kin_relation )
 
     amp_color_list, amp_lorentz_list = assemble_amplitude( g )
     amp_lorentz_list_pre, loop_den_list, loop_den_xpt_list = factor_out_loop_den( g, amp_lorentz_list )
