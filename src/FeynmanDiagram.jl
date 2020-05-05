@@ -1018,7 +1018,7 @@ end # function contract_Dirac_indices_noexpand
 
 
 #####################################################################################################################################
-function check_consistency( lorentz_list::Vector{Basic}, lorentz_noexpand_list::Vector{Basic}, 
+function check_consistency( diagram_index::Int64, lorentz_list::Vector{Basic}, lorentz_noexpand_list::Vector{Basic}, 
                             ext_mom_list::Vector{Basic}, kin_relation::Dict{Basic,Basic} )::Nothing
 #####################################################################################################################################
 
@@ -1046,7 +1046,9 @@ function check_consistency( lorentz_list::Vector{Basic}, lorentz_noexpand_list::
     one_lorentz = lorentz_list[lorentz_index]
     one_lorentz_noexpand = lorentz_noexpand_list[lorentz_index]
 
-    file = open( "check.m", "w" )
+    file_name = "check_diagram$(diagram_index)_lorentz$(lorentz_index)"
+
+    file = open( file_name*".m", "w" )
     write( file, """
 expr1 = $( gen_mma_str(one_lorentz) );
 expr2 = $( gen_mma_str(one_lorentz_noexpand) );
@@ -1122,7 +1124,7 @@ expr1 = expr1 //. FermionChain[ x1__, GA[mu_/; MemberQ[dummyList, mu]], x__, GA[
 
 diff = (expr1-expr2)//Expand;
 
-stream=OpenWrite["check.out"];
+stream=OpenWrite["$(file_name).out"];
 Write[ stream, diff ];
 Close[stream];
 
@@ -1130,20 +1132,21 @@ Close[stream];
     close(file)
 
 
-    printstyled( "  run MathKernel -script check.m ... \n", color=:green )
-    println( "  Start @", Dates.now() )
-    run( pipeline( `MathKernel -script check.m`, "check.log" ) )
-    println( "  Done @", Dates.now() )
+    #printstyled( "  run MathKernel -script $(file_name).m ... \n", color=:green )
+    #println( "  Start @", Dates.now() )
+    run( pipeline( `MathKernel -script $(file_name).m`, file_name*".log" ) )
+    #println( "  Done @", Dates.now() )
+    printstyled( "  Done MathKernel -script $(file_name).m in thread #$(Threads.threadid()) \n", color=:green )
   
-    file = open( "check.out", "r" )
+    file = open( file_name*".out", "r" )
     result_str = replace( read( file, String ), r"\s"=>"" )
     close(file)
 
     @assert Basic(result_str) == 0
   
-    rm( "check.m" )
-    rm( "check.log" )
-    rm( "check.out" )
+    rm( file_name*".m" )
+    rm( file_name*".log" )
+    rm( file_name*".out" )
 
   end # for lorentz_index
 
@@ -1197,11 +1200,12 @@ function write_out_amplitude( n_loop::Int64, diagram_index::Int64, couplingfacto
     ext_mom_list::Vector{Basic}, scale2_list::Vector{Basic}, kin_relation::Dict{Basic,Basic}, baseINC_script_str::String, 
     amp_color_list::Vector{Basic}, amp_lorentz_list::Vector{Basic}, 
     loop_den_list::Vector{Basic}, loop_den_xpt_list::Vector{Int64},
-    min_eps_xpt::Int64, max_eps_xpt::Int64 )::Nothing
+    min_eps_xpt::Int64, max_eps_xpt::Int64, the_lock::ReentrantLock )::Nothing
 ###########################################################################################################
 
+
   printstyled( "[ Generate amplitude_diagram$(diagram_index).out ]\u264e\n", color=:green, bold=true )
-  amp_file = open( "amplitude_diagram$(diagram_index).out", "w" )
+  amp_file = open( "amplitudes/amplitude_diagram$(diagram_index).out", "w" )
   write( amp_file, 
     "n_loop: $(n_loop)\n"*
     "couplingfactor: $(couplingfactor)\n"*
@@ -1248,11 +1252,13 @@ function write_out_amplitude( n_loop::Int64, diagram_index::Int64, couplingfacto
 
   close( amp_file )
 
-  if isfile( "amplitude_diagram$(diagram_index).jld" )
-    rm( "amplitude_diagram$(diagram_index).jld" )
+  if isfile( "amplitudes/amplitude_diagram$(diagram_index).jld" )
+    rm( "amplitudes/amplitude_diagram$(diagram_index).jld" )
   end # if
 
-  jldopen( "amplitude_diagram$(diagram_index).jld", "w" ) do file 
+  ##lock( the_lock )
+
+  jldopen( "amplitudes/amplitude_diagram$(diagram_index).jld", "w" ) do file 
     write( file, "n_loop", n_loop )
     write( file, "min_eps_xpt", min_eps_xpt )
     write( file, "max_eps_xpt", max_eps_xpt )
@@ -1268,6 +1274,8 @@ function write_out_amplitude( n_loop::Int64, diagram_index::Int64, couplingfacto
     write( file, "amp_lorentz_list",  map( string, amp_lorentz_list ) )
   end # file
 
+  ##unlock( the_lock )
+
 end # function write_out_amplitude
 
 #########################################################################
@@ -1280,12 +1288,12 @@ function write_out_visual_graph( g::GenericGraph, model::Model,
 
   graph_str = generate_visual_graph( g, model )
 
-  couplingfactor_str = convert_couplingfactor( couplingfactor )
-  color_str_list = convert_color_list( color_list )
-  lorentz_str_list = convert_lorentz_list( lorentz_list, ext_mom_list, scale2_list )
+  couplingfactor_str = convert_couplingfactor( diagram_index, couplingfactor )
+  color_str_list = convert_color_list( diagram_index, color_list )
+  lorentz_str_list = convert_lorentz_list( diagram_index, lorentz_list, ext_mom_list, scale2_list )
 
   printstyled( "[ Generate visual_diagram$(diagram_index).tex ]\u264e\n", color=:green, bold=true )
-  visual_file = open( "visual_diagram$(diagram_index).tex", "w" )
+  visual_file = open( "visuals/visual_diagram$(diagram_index).tex", "w" )
   write( visual_file,
     "\\documentclass{article}\n"*
     "\\usepackage{tikz-feynman}\n"*
@@ -1387,15 +1395,29 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
   write( file, make_color_script() )
   close(file)
 
+  # baseINC only needs information from the external fields.
+  file = open( "baseINC.frm", "w" )
+  baseINC_script_str = make_baseINC_script( first(graph_list), gauge_choice )
+  write( file, baseINC_script_str )
+  close(file)
+
+  if isdir( "visuals" )
+    mv( "visuals", "visuals_$(now())" )
+  end # if
+  mkdir( "visuals" )
+  cp( "../tikz-feynman.sty", "visuals/tikz-feynman.sty" )
+
+  if isdir( "amplitudes" )
+    mv( "amplitudes", "amplitudes_$(now())" )
+  end # if
+  mkdir( "amplitudes" )
+
+  the_lock = ReentrantLock()
+
   now()
   #Threads.@threads for g in graph_list
   for g in graph_list
     diagram_index = vertex_from_label("graph property",g).attributes["diagram_index"]
-
-    file = open( "baseINC.frm", "w" )
-    baseINC_script_str = make_baseINC_script( g, gauge_choice )
-    write( file, baseINC_script_str )
-    close(file)
 
     scale2_list = generate_scale2_list( kin_relation )
 
@@ -1404,7 +1426,7 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
     amp_lorentz_list = contract_Dirac_indices( g, amp_lorentz_list_pre )
     amp_lorentz_noexpand_list = contract_Dirac_indices_noexpand( g, amp_lorentz_list_pre )
 
-    check_consistency( amp_lorentz_list, amp_lorentz_noexpand_list, ext_mom_list, kin_relation )
+    check_consistency( diagram_index, amp_lorentz_list, amp_lorentz_noexpand_list, ext_mom_list, kin_relation )
 
     amp_color_list = simplify_color_factors( g, amp_color_list )
 
@@ -1414,16 +1436,16 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
     amp_lorentz_list = amp_lorentz_list[perm]
 
     write_out_amplitude( n_loop, diagram_index, couplingfactor, model.parameter_dict, ext_mom_list, scale2_list, kin_relation, baseINC_script_str,
-                         amp_color_list, amp_lorentz_list, loop_den_list, loop_den_xpt_list, input["Amp_Min_Eps_Xpt"], input["Amp_Max_Eps_Xpt"] )
+                         amp_color_list, amp_lorentz_list, loop_den_list, loop_den_xpt_list, input["Amp_Min_Eps_Xpt"], input["Amp_Max_Eps_Xpt"], the_lock )
 
 
     write_out_visual_graph( g, model, couplingfactor, amp_color_list, amp_lorentz_noexpand_list, ext_mom_list, scale2_list )
 
-    rm( "baseINC.frm" )
   end # for g
   now()
 
   # remove intermediate files
+  rm( "baseINC.frm" )
   rm( "contractor.frm" )
   rm( "color.frm" )
   rm( "kin_relation.frm" )
@@ -1431,7 +1453,7 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
 
 
   diagram_index_list = map( g_->vertex_from_label("graph property",g_).attributes["diagram_index"], graph_list )
-  file = open( "generate_diagram_pdf.jl", "w" )
+  file = open( "visuals/generate_diagram_pdf.jl", "w" )
   write( file, "diagram_index_list = $(diagram_index_list)\n"*
                "for diagram_index in diagram_index_list\n"*
                "  run( `lualatex visual_diagram\$(diagram_index)` )\n"*

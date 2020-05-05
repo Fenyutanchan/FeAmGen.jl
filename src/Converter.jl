@@ -1,6 +1,6 @@
 
 ############################################################################################
-function convert_couplingfactor( couplingfactor::Basic )::String
+function convert_couplingfactor( diagram_index::Int64, couplingfactor::Basic )::String
 ############################################################################################
 
   symbol_list = free_symbols( couplingfactor )
@@ -22,27 +22,30 @@ function convert_couplingfactor( couplingfactor::Basic )::String
     end # if
   end # for symbol_index
 
-  file = open( "convert_couplingfactor.m", "w" )
+  file_name = "convert_couplingfactor_diagram$(diagram_index)"
+
+  file = open( file_name*".m", "w" )
   write( file, """
 expr = $(couplingfactor);
-stream=OpenWrite["convert_couplingfactor.out"];
+stream=OpenWrite["$(file_name).out"];
 WriteString[ stream, expr//.{$(join( replace_str_list, "," ))}//TeXForm ];
 Close[stream];
 """ )
   close(file)
 
-  printstyled( "  run MathKernel -script convert_couplingfactor.m ... \n", color=:green )
-  println( "  Start @", Dates.now() )
-  run( pipeline( `MathKernel -script convert_couplingfactor.m`, "convert_couplingfactor.log" ) )
-  println( "  Done @", Dates.now() )
+  #printstyled( "  run MathKernel -script $(file_name).m ... \n", color=:green )
+  #println( "  Start @", Dates.now() )
+  run( pipeline( `MathKernel -script $(file_name).m`, file_name*".log" ) )
+  #println( "  Done @", Dates.now() )
+  printstyled( "  Done MathKernel -script $(file_name).m in thread #$(Threads.threadid()) \n", color=:green )
 
-  file = open( "convert_couplingfactor.out", "r" )
+  file = open( file_name*".out", "r" )
   result_str = replace( read( file, String ), r"\s"=>"" )
   close(file)
 
-  rm( "convert_couplingfactor.m" )
-  rm( "convert_couplingfactor.log" )
-  rm( "convert_couplingfactor.out" )
+  rm( file_name*".m" )
+  rm( file_name*".log" )
+  rm( file_name*".out" )
 
   return result_str
 
@@ -58,7 +61,7 @@ end # function convert_couplingfactor
 
 
 ########################################################################
-function convert_color_list( color_list::Vector{Basic} )::Vector{String}
+function convert_color_list( diagram_index::Int64, color_list::Vector{Basic} )::Vector{String}
 ########################################################################
 
   n_color = length(color_list)
@@ -73,29 +76,32 @@ function convert_color_list( color_list::Vector{Basic} )::Vector{String}
 
     color_mma_str = gen_mma_str(one_color)
 
-    file = open( "convert_color.m", "w" )
+    file_name = "convert_color_diagram$(diagram_index)_color$(color_index)"
+
+    file = open( file_name*".m", "w" )
     write( file, """
 expr = $(color_mma_str);
 expr = expr//.{$(join(replace_str_list,","))};
 expr = expr//.{im -> I, ca -> Subscript[C,A], cf -> Subscript[C,F], SUNT[x__] -> Subscript[T,x], SUNF[x__] -> Subscript[f,x] };
-stream=OpenWrite["convert_color.out"];
+stream=OpenWrite["$(file_name).out"];
 WriteString[ stream, expr//TeXForm ];
 Close[stream];
 """ )
     close(file)
 
-    printstyled( "  run MathKernel -script convert_color.m ... \n", color=:green )
-    println( "  Start @", Dates.now() )
-    run( pipeline( `MathKernel -script convert_color.m`, "convert_color.log" ) )
-    println( "  Done @", Dates.now() )
+    #printstyled( "  run MathKernel -script $(file_name).m ... \n", color=:green )
+    #println( "  Start @", Dates.now() )
+    run( pipeline( `MathKernel -script $(file_name).m`, file_name*".log" ) )
+    #println( "  Done @", Dates.now() )
+    printstyled( "  Done MathKernel -script $(file_name).m in thread #$(Threads.threadid()) \n", color=:green )
   
-    file = open( "convert_color.out", "r" )
+    file = open( file_name*".out", "r" )
     result_str = replace( read( file, String ), r"\s"=>"" )
     close(file)
   
-    rm( "convert_color.m" )
-    rm( "convert_color.log" )
-    rm( "convert_color.out" )
+    rm( file_name*".m" )
+    rm( file_name*".log" )
+    rm( file_name*".out" )
 
     color_str_list[color_index] = result_str
 
@@ -109,7 +115,7 @@ end # function convert_color_list
 
 
 #####################################################################################################################################
-function convert_lorentz_list( lorentz_list::Vector{Basic}, ext_mom_list::Vector{Basic}, scale2_list::Vector{Basic} )::Vector{String}
+function convert_lorentz_list( diagram_index::Int64, lorentz_list::Vector{Basic}, ext_mom_list::Vector{Basic}, scale2_list::Vector{Basic} )::Vector{String}
 #####################################################################################################################################
 
 
@@ -160,7 +166,9 @@ function convert_lorentz_list( lorentz_list::Vector{Basic}, ext_mom_list::Vector
 
     lorentz_mma_str = gen_mma_str(one_lorentz)
 
-    file = open( "convert_lorentz.m", "w" )
+    file_name = "convert_lorentz_diagram$(diagram_index)_lorentz$(lorentz_index)"
+
+    file = open( file_name*".m", "w" )
     write( file, """
 
 expr = $(lorentz_mma_str);
@@ -190,24 +198,25 @@ expr = expr //. GA[x_ /; MemberQ[MomList, x]] -> \\[Gamma].x;
 expr = expr //. GA[x_ /; ! MemberQ[MomList, x]] -> Subscript[\\[Gamma], x];
 expr = expr //. diim -> d //. SP[x1_,x2_] -> Subscript[S,P][x1,x2] //. DiracTrace[x__] -> Subscript[D,T][x] //. FV[mom_,mu_] -> Subscript[F,4][mom,mu];
 
-stream=OpenWrite["convert_lorentz.out"];
+stream=OpenWrite["$(file_name).out"];
 WriteString[ stream, expr//TraditionalForm//TeXForm ];
 Close[stream];
 """ )
     close(file)
 
-    printstyled( "  run MathKernel -script convert_lorentz.m ... \n", color=:green )
-    println( "  Start @", Dates.now() )
-    run( pipeline( `MathKernel -script convert_lorentz.m`, "convert_lorentz.log" ) )
-    println( "  Done @", Dates.now() )
+    #printstyled( "  run MathKernel -script $(file_name).m ... \n", color=:green )
+    #println( "  Start @", Dates.now() )
+    run( pipeline( `MathKernel -script $(file_name).m`, file_name*".log" ) )
+    #println( "  Done @", Dates.now() )
+    printstyled( "  Done MathKernel -script $(file_name).m in thread #$(Threads.threadid()) \n", color=:green )
   
-    file = open( "convert_lorentz.out", "r" )
+    file = open( file_name*".out", "r" )
     result_str = replace( read( file, String ), r"\s"=>"" )
     close(file)
   
-    rm( "convert_lorentz.m" )
-    rm( "convert_lorentz.out" )
-    rm( "convert_lorentz.log" )
+    rm( file_name*".m" )
+    rm( file_name*".out" )
+    rm( file_name*".log" )
 
     result_str = replace( result_str, "U"=>"\\bar{u}" )
     result_str = replace( result_str, "V"=>"\\bar{v}" )
