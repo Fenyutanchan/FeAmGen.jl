@@ -1172,19 +1172,24 @@ expr2 = expr2 //. { FermionChain[x1__, GA[mom_], PL, x2__] :> FermionChain[x1, P
                   };
 
 expr2 = Expand[expr2] //. { FermionChain[ x1__, GA[mom_/; MemberQ[MomList, mom]], GA[mom_/; MemberQ[MomList, mom]], x2__ ] :> SP[mom,mom]*FermionChain[x1,x2],
-                    FermionChain[ x1__, GA[mu_/; ! MemberQ[MomList, mu]], GA[mu_/; ! MemberQ[MomList, mu]], x2__ ] :> diim*FermionChain[x1,x2],
-                    FV[mom1_,mu_]*FV[mom2_,mu_] :> makeSP[mom1,mom2],
-                    FV[mom_,mu_]^2 :> SP[mom,mom] };
+                            FermionChain[ x1__, GA[mu_/; ! MemberQ[MomList, mu]], GA[mu_/; ! MemberQ[MomList, mu]], x2__ ] :> diim*FermionChain[x1,x2],
+                            FermionChain[ x1__, GA[mu_/; ! MemberQ[MomList, mu]], GA[mom_], GA[mu_/; ! MemberQ[MomList, mu]], x2__ ] :> (2-diim)*FermionChain[x1,GA[mom],x2],
+                            FV[mom1_,mu_]*FV[mom2_,mu_] :> makeSP[mom1,mom2],
+                            FV[mom_,mu_]^2 :> SP[mom,mom] };
 
 expr2 = expr2 //. {$( join(collect(kin_relation_str_set),",") )};
+
+expr2 = expr2 //. FermionChain[ x1__, GA[mu_/; MemberQ[dummyList, mu]], x__, GA[mu_/; MemberQ[dummyList, mu]], x2__ ] :> FermionChain[ x1, GA[muList[[Length[{x1}]]]], x, GA[muList[[Length[{x1}]]]], x2 ];
 
 expr2 = expr2 //. { FV[mom_,mu_]*VecEps[int_, mu_, mom_, ref_, mass_] :> 0, FV[mom_,mu_]*VecEpsC[int_, mu_, mom_, ref_, mass_] :> 0,
                     FermionChain[ x__, GA[mom_], U[int_,mom_,ref_,0] ] :> 0, FermionChain[ x__, GA[mom_], V[int_,mom_,ref_,0] ] :> 0,
                     FermionChain[ UB[int_,mom_,ref_,0], PL, GA[mom_], x__ ] :> 0, FermionChain[ VB[int_,mom_,ref_,0], PL, GA[mom_], x__ ] :> 0, 
                     FermionChain[ UB[int_,mom_,ref_,0], PR, GA[mom_], x__ ] :> 0, FermionChain[ VB[int_,mom_,ref_,0], PR, GA[mom_], x__ ] :> 0,
-                    FermionChain[ UB[int_,mom_,ref_,0], GA[mom_], x__ ] :> 0, FermionChain[ VB[int_,mom_,ref_,0], GA[mom_], x__ ] :> 0 };
-
-expr2 = expr2 //. FermionChain[ x1__, GA[mu_/; MemberQ[dummyList, mu]], x__, GA[mu_/; MemberQ[dummyList, mu]], x2__ ] :> FermionChain[ x1, GA[muList[[Length[{x1}]]]], x, GA[muList[[Length[{x1}]]]], x2 ];
+                    FermionChain[ UB[int_,mom_,ref_,0], GA[mom_], x__ ] :> 0, FermionChain[ VB[int_,mom_,ref_,0], GA[mom_], x__ ] :> 0,
+                    FermionChain[ x__, GA[mom_], U[int_,mom_,ref_,0] ] :> 0, FermionChain[ x__, GA[mom_], V[int_,mom_,ref_,0] ] :> 0,
+                    FermionChain[ x__, GA[mom_], PL, U[int_,mom_,ref_,0] ] :> 0, FermionChain[ x__, GA[mom_], PL, V[int_,mom_,ref_,0] ] :> 0,
+                    FermionChain[ x__, GA[mom_], PR, U[int_,mom_,ref_,0] ] :> 0, FermionChain[ x__, GA[mom_], PR, V[int_,mom_,ref_,0] ] :> 0
+                   };
 
 expr1 = expr1 //. { FermionChain[ x1__, GA[mu_], x2__ ] * FV[mom_,mu_] :> FermionChain[ x1, GA[mom], x2 ], 
                     FermionChain[ x1__, GA[mu1_], x2__ ] * LMT[mu1_,mu2_] :> FermionChain[ x1, GA[mu2], x2 ],
@@ -1196,11 +1201,23 @@ expr1 = expr1 //. { FermionChain[ x1__, GA[mu_], x2__ ] * FV[mom_,mu_] :> Fermio
                   };
 
 expr1 = expr1 //. { FermionChain[ x1__, GA[mom_/; MemberQ[MomList, mom]], GA[mom_/; MemberQ[MomList, mom]], x2__ ] :> SP[mom,mom]*FermionChain[x1,x2],
-                    FermionChain[ x1__, GA[mu_/; ! MemberQ[MomList, mu]], GA[mu_/; ! MemberQ[MomList, mu]], x2__ ] :> diim*FermionChain[x1,x2] };
+                    FermionChain[ x1__, GA[mu_/; ! MemberQ[MomList, mu]], GA[mu_/; ! MemberQ[MomList, mu]], x2__ ] :> diim*FermionChain[x1,x2],
+                    FermionChain[ x1__, GA[mu_/; ! MemberQ[MomList, mu]], GA[mom_], GA[mu_/; ! MemberQ[MomList, mu]], x2__ ] :> (2-diim)*FermionChain[x1,GA[mom],x2]
+                  };
 
 expr1 = expr1 //. {$( join(collect(kin_relation_str_set),",") )};
 
 expr1 = expr1 //. FermionChain[ x1__, GA[mu_/; MemberQ[dummyList, mu]], x__, GA[mu_/; MemberQ[dummyList, mu]], x2__ ] :> FermionChain[ x1, GA[muList[[Length[{x1}]]]], x, GA[muList[[Length[{x1}]]]], x2 ];
+
+expr1 = expr1 //. { FV[mom_,mu_]*VecEps[int_, mu_, mom_, ref_, mass_] :> 0, FV[mom_,mu_]*VecEpsC[int_, mu_, mom_, ref_, mass_] :> 0,
+                    FermionChain[ x__, GA[mom_], U[int_,mom_,ref_,0] ] :> 0, FermionChain[ x__, GA[mom_], V[int_,mom_,ref_,0] ] :> 0,
+                    FermionChain[ UB[int_,mom_,ref_,0], PL, GA[mom_], x__ ] :> 0, FermionChain[ VB[int_,mom_,ref_,0], PL, GA[mom_], x__ ] :> 0, 
+                    FermionChain[ UB[int_,mom_,ref_,0], PR, GA[mom_], x__ ] :> 0, FermionChain[ VB[int_,mom_,ref_,0], PR, GA[mom_], x__ ] :> 0,
+                    FermionChain[ UB[int_,mom_,ref_,0], GA[mom_], x__ ] :> 0, FermionChain[ VB[int_,mom_,ref_,0], GA[mom_], x__ ] :> 0,
+                    FermionChain[ x__, GA[mom_], U[int_,mom_,ref_,0] ] :> 0, FermionChain[ x__, GA[mom_], V[int_,mom_,ref_,0] ] :> 0,
+                    FermionChain[ x__, GA[mom_], PL, U[int_,mom_,ref_,0] ] :> 0, FermionChain[ x__, GA[mom_], PL, V[int_,mom_,ref_,0] ] :> 0,
+                    FermionChain[ x__, GA[mom_], PR, U[int_,mom_,ref_,0] ] :> 0, FermionChain[ x__, GA[mom_], PR, V[int_,mom_,ref_,0] ] :> 0
+                   };
 
 Levi0[a__] := Signature[{a}] (Levi0 @@ Sort@{a}) /; ! OrderedQ[{a}];
 Levi0[a__] := 0 /; ! Unequal[a];
@@ -1230,12 +1247,13 @@ Close[stream];
     file = open( file_name*".out", "r" )
     result_str = replace( read( file, String ), r"\s"=>"" )
     close(file)
+    printstyled( "  $(file_name).out has length $(length(result_str))\n", color=:red )
 
-    @assert Basic(result_str) == 0
+    #@assert Basic(result_str) == 0
   
-    rm( file_name*".m" )
+    #rm( file_name*".m" )
     rm( file_name*".log" )
-    rm( file_name*".out" )
+    #rm( file_name*".out" )
 
   end # for lorentz_index
 
