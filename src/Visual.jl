@@ -126,16 +126,16 @@ function generate_visual_graph( g::GenericGraph, model::Model )::String
     particle_name = replace( particle_name, "plus" => "^{+}" )
     particle_name = replace( particle_name, "minus" => "^{-}" )
     particle_name = replace( particle_name, "ve" => "\\nu_{e}" )
-    particle_name = replace( particle_name, "vm" => "\\nu_{\\mu}" )
-    particle_name = replace( particle_name, "vt" => "\\nu_{\\tau}" )
     particle_name = replace( particle_name, "mu" => "\\mu" )
     particle_name = replace( particle_name, "ta" => "\\tau" )
+    particle_name = replace( particle_name, "vm" => "\\nu_{\\mu}" )
+    particle_name = replace( particle_name, "vt" => "\\nu_{\\tau}" )
     particle_name = replace( particle_name, "^a" => "\\gamma" )
     if length(particle_name) > 3 && particle_name[end-2:end] == "bar"
       particle_name = "\\overline{"*particle_name[1:end-3]*"}"
     end # if
 
-    mom_str = replace( string(edge.attributes["momentum"]), r"([Kk]+)(\d+)" => s"\1_{\2}" )
+    mom_str = replace( string(edge.attributes["momentum"]), r"([Kkq]+)(\d+)" => s"\1_{\2}" )
 
     result_str *= 
       "$(src_v.label)$(src_QCDct_str)$(src_external_marking_str) -- [$(edge_style_str)$(half_circle_option)$(tadpole_option), edge label' = \\($(particle_name)\\), momentum = \\($(mom_str)\\) ] $(tgt_v.label)$(tgt_QCDct_str)$(tgt_external_marking_str), \n"

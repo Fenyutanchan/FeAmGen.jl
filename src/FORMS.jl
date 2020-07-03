@@ -198,10 +198,6 @@ id FermionLoopPow(-1,int?) = (-1)^int;
 id GhostLoopPow(-1,int?) = (-1)^int;
 .sort
 
-repeat id Levi(var1?,var2?,var3?,mom?Kn[int])
-  = Levi(var1,var2,var3,kn[int]) + SP(Kn[int],Kn[int])/2/SP(kn[int],rn[int])*Levi(var1,var2,var3,rn[int]);
-.sort
-
 
 #endprocedure
 
@@ -312,10 +308,6 @@ id FermionLoopPow(-1,int?) = (-1)^int;
 id GhostLoopPow(-1,int?) = (-1)^int;
 .sort
 
-repeat id Levi(var1?,var2?,var3?,mom?Kn[int])
-  = Levi(var1,var2,var3,kn[int]) + SP(Kn[int],Kn[int])/2/SP(kn[int],rn[int])*Levi(var1,var2,var3,rn[int]);
-.sort
-
 
 #endprocedure
 
@@ -413,7 +405,7 @@ id VecEpsilon?{VecEps,VecEpsC}(int?,mom0?,mom?,ref?,mass?) = FV(mom0,EPSMU[int])
 id mom?NULL.mom?NULL = 0;
 id mom1?.mom2? = SP(mom1,mom2);
 id mom?(rho?ALLLOR) = FV(mom,rho);
-id e_(rho1?,rho2?,rho3?,rho4?) = I*Levi(rho1,rho2,rho3,rho4);
+id e_(rho1?,rho2?,rho3?,rho4?) = -I*Levi(rho1,rho2,rho3,rho4);
 .sort
 
 id d_(rho1?,rho2?) = LMT(rho1,rho2);

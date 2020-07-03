@@ -59,7 +59,7 @@ end # struct Model
 #is_anticommuting( part::Particle )::Bool = part.spin in [:fermion, :ghost] && part.name != part.antiname
 is_anticommuting( part::Particle )::Bool = part.spin in [:fermion, :ghost] 
 ################################################
-is_majorana( part::Particle )::Bool = part.name == part.antiname
+is_neutral( part::Particle )::Bool = part.name == part.antiname
 is_not_majorana( part::Particle )::Bool = part.name != part.antiname
 is_massless( part::Particle )::Bool = part.mass == 0
 is_massive( part::Particle )::Bool = part.mass != 0

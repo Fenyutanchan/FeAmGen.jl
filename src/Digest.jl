@@ -21,14 +21,18 @@ Extract the QCD and QED orders from the python model file
 """
 function extract_QCD_QED_order( coupling_dict::Dict{Any,Any} )::Tuple{Int64,Int64}
 ##################################################################################
-  QCD_order_set = Set{Int64}( map( v_ -> haskey(v_.order,"QCD") ? 1 : 0, values(coupling_dict) ) )
-  QED_order_set = Set{Int64}( map( v_ -> haskey(v_.order,"QED") || haskey(v_.order,"HIG") ? 1 : 0, values(coupling_dict) ) )
+  QCD_order_set = Set{Int64}( map( v_ -> haskey(v_.order,"QCD") ? v_.order["QCD"] : 0, values(coupling_dict) ) )
+  QED_order_set = Set{Int64}( map( v_ -> haskey(v_.order,"QED") ? v_.order["QED"] : 0, values(coupling_dict) ) )
+  HIG_order_set = Set{Int64}( map( v_ -> haskey(v_.order,"HIG") ? v_.order["HIG"] : 0, values(coupling_dict) ) )
+
   @assert length(QCD_order_set) == 1
   QCD_order = first(QCD_order_set)
   @assert length(QED_order_set) == 1
   QED_order = first(QED_order_set)
+  @assert length(HIG_order_set) == 1
+  HIG_order = first(HIG_order_set)
 
-  return QCD_order, QED_order
+  return QCD_order, max(QED_order,HIG_order)
 
 end # function extract_QCD_QED_order
 

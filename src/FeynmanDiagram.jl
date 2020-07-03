@@ -244,16 +244,31 @@ end # function vertex_from_label
 
 
 #################################################################################
-function get_link_color( g::GenericGraph, vert::ExVertex, link_index::Int64 )::Basic
+function get_link_color( g::GenericGraph, vert::ExVertex, link_index::Int64, part_list::Vector{Particle} )::Basic
 ################################################################################
 
   in_edge_list = in_edges( vert, g )
+  out_edge_list = out_edges( vert, g )
 
   if link_index < 0
     link_color = Basic("clv$(vert.attributes["mark"]*100+abs(link_index))")
   else 
     link_edge = edge_from_link_index( vert, link_index, g )
-    link_color = link_edge in in_edge_list ? link_edge.attributes["death_COLOR"] : link_edge.attributes["birth_COLOR"]
+    death_color = link_edge.attributes["death_COLOR"]
+    birth_color = link_edge.attributes["birth_COLOR"]
+
+    part = part_list[link_index]
+    # This is for W+/W- like, although in SM there is only gluon will have this kind of color factor.
+    link_color = link_edge in in_edge_list ? death_color : birth_color
+    # Then what if gluon or Z-like
+    if link_edge in in_edge_list && link_edge in out_edge_list 
+      link_color = part.kf > 0 ? death_color : birth_color
+      if is_neutral(part)
+        propagator_index = vert.attributes["propagator_index_list"][link_index]
+        first_pos = findfirst( x_ -> x_ == propagator_index,  vert.attributes["propagator_index_list"] )
+        link_color = first_pos == link_index ? death_color : birth_color
+      end # if
+    end # if
   end # if 
 
   return link_color
@@ -261,7 +276,7 @@ end # function get_link_color
 
 
 #########################################################################################
-function translate_color_factor( one_color::Basic, vert::ExVertex, g::GenericGraph, )::Basic
+function translate_color_factor( one_color::Basic, vert::ExVertex, g::GenericGraph, part_list::Vector{Particle} )::Basic
 #########################################################################################
 
   @funs Identity DeltaFun DeltaAdj T SUNT f SUNF
@@ -291,8 +306,8 @@ function translate_color_factor( one_color::Basic, vert::ExVertex, g::GenericGra
       color1, color2 = edge1or2.attributes["birth_COLOR"], edge1or2.attributes["death_COLOR"]
     # Then in the other case, we need to consider the case with dummy index.
     else
-      color1 = get_link_color( g, vert, link1_index )
-      color2 = get_link_color( g, vert, link2_index )
+      color1 = get_link_color( g, vert, link1_index, part_list )
+      color2 = get_link_color( g, vert, link2_index, part_list )
     end # if
     
     edge1or2_color = edge1or2.attributes["particle"].color
@@ -315,20 +330,20 @@ function translate_color_factor( one_color::Basic, vert::ExVertex, g::GenericGra
     if link1_index == link2_index
       edge12 = edge_from_link_index( vert, link1_index, g )
       color1, color2 = edge12.attributes["birth_COLOR"], edge12.attributes["death_COLOR"]
-      color3 = get_link_color( g, vert, link3_index )
+      color3 = get_link_color( g, vert, link3_index, part_list )
     elseif link1_index == link3_index
       edge13 = edge_from_link_index( vert, link1_index, g )
       color1, color3 = edge13.attributes["birth_COLOR"], edge13.attributes["death_COLOR"]
-      color2 = get_link_color( g, vert, link2_index )
+      color2 = get_link_color( g, vert, link2_index, part_list )
     elseif link2_index == link3_index
       edge23 = edge_from_link_index( vert, link2_index, g )
       color2, color3 = edge23.attributes["birth_COLOR"], edge23.attributes["death_COLOR"]
-      color1 = get_link_color( g, vert, link1_index )
+      color1 = get_link_color( g, vert, link1_index, part_list )
     # Then none of them are same.
     else
-      color1 = get_link_color( g, vert, link1_index )
-      color2 = get_link_color( g, vert, link2_index )
-      color3 = get_link_color( g, vert, link3_index )
+      color1 = get_link_color( g, vert, link1_index, part_list )
+      color2 = get_link_color( g, vert, link2_index, part_list )
+      color3 = get_link_color( g, vert, link3_index, part_list )
     end # if
     
     new_color = subs( new_color, Basic(one_Tf_str), Basic("SUN"*uppercase(one_Tf_str[1])*"($color1,$color2,$color3)") )
@@ -340,16 +355,31 @@ end # function translate_color_factor
 
 
 ######################################################################################
-function get_link_lorentz( g::GenericGraph, vert::ExVertex, link_index::Int64 )::Basic
+function get_link_lorentz( g::GenericGraph, vert::ExVertex, link_index::Int64, part_list::Vector{Particle} )::Basic
 ######################################################################################
 
   in_edge_list = in_edges( vert, g )
+  out_edge_list = out_edges( vert, g )
 
   if link_index < 0
     link_lor = Basic("muv$(vert.attributes["mark"]*100+abs(link_index))")
   else 
     link_edge = edge_from_link_index( vert, link_index, g )
-    link_lor = link_edge in in_edge_list ? link_edge.attributes["death_LORENTZ"] : link_edge.attributes["birth_LORENTZ"]
+    death_lor = link_edge.attributes["death_LORENTZ"]
+    birth_lor = link_edge.attributes["birth_LORENTZ"]
+
+    part = part_list[link_index]
+    # This is for W+/W-
+    link_lor = link_edge in in_edge_list ? death_lor : birth_lor
+    # Then what if gluon or Z
+    if link_edge in in_edge_list && link_edge in out_edge_list
+      link_lor = part.kf > 0 ? death_lor : birth_lor
+      if is_neutral(part)
+        propagator_index = vert.attributes["propagator_index_list"][link_index]
+        first_pos = findfirst( x_ -> x_ == propagator_index,  vert.attributes["propagator_index_list"] )
+        link_lor = first_pos == link_index ? death_lor : birth_lor
+      end # if
+    end # if
   end # if 
 
   return link_lor
@@ -393,7 +423,7 @@ end # function get_link_spinor
 
 
 ################################################################################################
-function translate_lorentz_factor( one_lorentz::Basic, vert::ExVertex, g::GenericGraph, )::Basic
+function translate_lorentz_factor( one_lorentz::Basic, vert::ExVertex, g::GenericGraph, part_list::Vector{Particle} )::Basic
 ################################################################################################
 
   @funs Metric LMT P FV Gamma GAij ProjP PRij ProjM PLij Identity ONEij 
@@ -418,8 +448,8 @@ function translate_lorentz_factor( one_lorentz::Basic, vert::ExVertex, g::Generi
     if link1_index == link2_index
       lor1, lor2 = edge1or2.attributes["birth_LORENTZ"], edge1or2.attributes["death_LORENTZ"]
     else
-      lor1 = get_link_lorentz( g, vert, link1_index )
-      lor2 = get_link_lorentz( g, vert, link2_index )
+      lor1 = get_link_lorentz( g, vert, link1_index, part_list )
+      lor2 = get_link_lorentz( g, vert, link2_index, part_list )
     end # if
 
     new_lorentz = subs( new_lorentz, Basic(one_Metric_str), LMT(lor1,lor2) )
@@ -431,7 +461,7 @@ function translate_lorentz_factor( one_lorentz::Basic, vert::ExVertex, g::Generi
     args = get_args( Basic(one_P_str) )
     link1_index, link2_index = convert(Int64,args[1]), convert(Int64,args[2])
 
-    lor1 = get_link_lorentz( g, vert, link1_index )
+    lor1 = get_link_lorentz( g, vert, link1_index, part_list )
     mom2 = get_link_momentum( g, vert, link2_index )
     new_lorentz = subs( new_lorentz, Basic(one_P_str), FV(mom2,lor1) )
   end # for one_P_str
@@ -442,7 +472,7 @@ function translate_lorentz_factor( one_lorentz::Basic, vert::ExVertex, g::Generi
     args = get_args( Basic(one_Gamma_str) )
     link1_index, link2_index, link3_index = convert(Int64,args[1]), convert(Int64,args[2]), convert(Int64,args[3])
 
-    lor1 = get_link_lorentz( g, vert, link1_index )
+    lor1 = get_link_lorentz( g, vert, link1_index, part_list )
     sp2 = get_link_spinor( g, vert, link2_index )
     sp3 = get_link_spinor( g, vert, link3_index )
 
@@ -776,9 +806,9 @@ function convert_qgraf_TO_Graph( one_qgraf::Dict{Any,Any}, model::Model )::Union
   for vert in internal_vertex_list
     inter = vert.attributes["interaction"]
 
-    new_color_row_list = map( color_ -> translate_color_factor(color_,vert,g), inter.color_row_list )
+    new_color_row_list = map( color_ -> translate_color_factor(color_,vert,g,inter.link_list), inter.color_row_list )
 
-    new_lorentz_col_list = map( lor_ -> translate_lorentz_factor(lor_,vert,g), inter.lorentz_col_list )
+    new_lorentz_col_list = map( lor_ -> translate_lorentz_factor(lor_,vert,g,inter.link_list), inter.lorentz_col_list )
 
     n_row, n_col = size( inter.couplings_matrix )
     new_couplings_lorentz_list = Array{Basic,1}(undef,n_row)
@@ -917,17 +947,23 @@ function factor_out_loop_den( g::GenericGraph, lorentz_list::Vector{Basic} )::Tu
   loop_edge_list = filter( e_ -> e_.attributes["style"] == "Loop", edges(g) )
 
   den_prod = Basic(1)
+  width_den_prod = Basic(1)
   for one_edge in loop_edge_list
     mom = one_edge.attributes["momentum"]
     mass = one_edge.attributes["particle"].mass
+    width = one_edge.attributes["particle"].width
     # For now we only consider the width of loop propagator is zero.
     den_prod *= Den( mom, mass, 0 ) 
+    width_den_prod *= Den( mom, mass, width ) 
   end # for one_edge
 
-  new_lorentz_list = map( x_ -> expand(x_/den_prod), lorentz_list )
+  new_lorentz_list = map( x_ -> expand(x_/width_den_prod), lorentz_list )
 
-  @assert SymEngine.get_symengine_class(den_prod) == :Mul
+  @assert SymEngine.get_symengine_class(den_prod) == :Mul || den_prod == 1 || get_name(den_prod) == "Den"
   factor_list = get_args(den_prod)
+  if SymEngine.get_symengine_class(den_prod) == :FunctionSymbol && get_name(den_prod) == "Den" 
+    factor_list = Basic[ den_prod ]
+  end # if
   n_factor = length(factor_list)
   loop_den_list = Vector{Basic}( undef, n_factor )
   loop_den_xpt_list = Vector{Int64}( undef, n_factor )
@@ -940,7 +976,7 @@ function factor_out_loop_den( g::GenericGraph, lorentz_list::Vector{Basic} )::Tu
       loop_den_list[index] = get_args(one_factor)[1]
       loop_den_xpt_list[index] = convert( Int64, get_args(one_factor)[2] )
     else
-      error( "Not excpected: "*string(one_factor) )
+      error( "Not expected: "*string(one_factor) )
     end # if
   end # for index
 
@@ -1078,12 +1114,36 @@ muList = {MU1,MU2,MU3,MU4,MU5,MU6,MU7,MU8,MU10,MU12,MU13,MU14,MU15,MU16,MU17,MU1
 makeSP[ mom1_, mom2_ ] := If[ AlphabeticOrder[ ToString[mom1], ToString[mom2] ] == 1, SP[mom1,mom2], SP[mom2,mom1] ];
 
 expr2 = expr2 //. DiracTrace[ x1___, GA[mom_/;Coefficient[mom,unity]=!=0], x2___ ] :> DiracTrace[x1,GA[mom/.unity:>0],x2] + Coefficient[mom,unity]*DiracTrace[x1,x2];
-expr2 = Expand[expr2] /. DiracTrace[ x__ ] :> If[ EvenQ[Length[{x}]], DiracTrace[x], 0 ];
 
-expr2 = expr2 //.{ DiracTrace[x1___, GA[mom_/;(mom/.vanishing) == 0], x2___] :> DiracTrace[x1,GA[nuList[[Length[{x1}]]]],x2]*FV[mom,nuList[[Length[{x1}]]]] };
+expr2 = expr2 //. { DiracTrace[ x___, PL, GA[mom_], y___ ] :> DiracTrace[ x, GA[mom], PR, y ],
+                    DiracTrace[ x___, PR, GA[mom_], y___ ] :> DiracTrace[ x, GA[mom], PL, y ],
+                    DiracTrace[ x___, PL, PL ] :> DiracTrace[ x, PL ],
+                    DiracTrace[ x___, PR, PR ] :> DiracTrace[ x, PR ],
+                    DiracTrace[ x___, PL, PR ] :> 0,
+                    DiracTrace[ x___, PR, PL ] :> 0
+                  };
+
+expr2 = expr2 //. { DiracTrace[ GA[mu1_], PL ] :> 0,
+                    DiracTrace[ GA[mu1_], PR ] :> 0,
+                    DiracTrace[ GA[mu1_], GA[mu2_], GA[mu3_], PL ] :> 0,
+                    DiracTrace[ GA[mu1_], GA[mu2_], GA[mu3_], PR ] :> 0,
+                    DiracTrace[ GA[mu1_], GA[mu2_], GA[mu3_], GA[mu4_], GA[mu5_], PL ] :> 0,
+                    DiracTrace[ GA[mu1_], GA[mu2_], GA[mu3_], GA[mu4_], GA[mu5_], PR ] :> 0,
+                    DiracTrace[ GA[mu1_] ] :> 0,
+                    DiracTrace[ GA[mu1_], GA[mu2_], GA[mu3_] ] :> 0,
+                    DiracTrace[ GA[mu1_], GA[mu2_], GA[mu3_], GA[mu4_], GA[mu5_] ] :> 0
+                  };
+
+expr2 = expr2 //.{ DiracTrace[x1___, GA[mom_/;(mom/.vanishing) == 0], x2___] :> DiracTrace[x1,GA[nuList[[Length[{x1}]+1]]],x2]*FV[mom,nuList[[Length[{x1}]+1]]] };
 expr2 = expr2 /. { DiracTrace[ GA[mu1_], GA[mu2_] ] :> 4*LMT[mu1,mu2],
                    DiracTrace[ GA[mu1_], GA[mu2_], GA[mu3_], GA[mu4_] ] :> 4*(LMT[mu1,mu4]*LMT[mu2,mu3]-LMT[mu1,mu3]*LMT[mu2,mu4]+LMT[mu1,mu2]*LMT[mu3,mu4]),
-                   DiracTrace[ GA[mu1_], GA[mu2_], GA[mu3_], GA[mu4_], GA[mu5_], GA[mu6_] ] :> 4*(LMT[mu1, mu6]*LMT[mu2, mu5]*LMT[mu3, mu4] - LMT[mu1, mu5]*LMT[mu2, mu6]*LMT[mu3, mu4] - LMT[mu1, mu6]*LMT[mu2, mu4]*LMT[mu3, mu5] + LMT[mu1, mu4]*LMT[mu2, mu6]*LMT[mu3, mu5] + LMT[mu1, mu5]*LMT[mu2, mu4]*LMT[mu3, mu6] - LMT[mu1, mu4]*LMT[mu2, mu5]*LMT[mu3, mu6] + LMT[mu1, mu6]*LMT[mu2, mu3]*LMT[mu4, mu5] - LMT[mu1, mu3]*LMT[mu2, mu6]*LMT[mu4, mu5] + LMT[mu1, mu2]*LMT[mu3, mu6]*LMT[mu4, mu5] - LMT[mu1, mu5]*LMT[mu2, mu3]*LMT[mu4, mu6] + LMT[mu1, mu3]*LMT[mu2, mu5]*LMT[mu4, mu6] - LMT[mu1, mu2]*LMT[mu3, mu5]*LMT[mu4, mu6] + LMT[mu1, mu4]*LMT[mu2, mu3]*LMT[mu5, mu6] - LMT[mu1, mu3]*LMT[mu2, mu4]*LMT[mu5, mu6] + LMT[mu1, mu2]*LMT[mu3, mu4]*LMT[mu5, mu6])
+                   DiracTrace[ GA[mu1_], GA[mu2_], GA[mu3_], GA[mu4_], GA[mu5_], GA[mu6_] ] :> 4*(LMT[mu1, mu6]*LMT[mu2, mu5]*LMT[mu3, mu4] - LMT[mu1, mu5]*LMT[mu2, mu6]*LMT[mu3, mu4] - LMT[mu1, mu6]*LMT[mu2, mu4]*LMT[mu3, mu5] + LMT[mu1, mu4]*LMT[mu2, mu6]*LMT[mu3, mu5] + LMT[mu1, mu5]*LMT[mu2, mu4]*LMT[mu3, mu6] - LMT[mu1, mu4]*LMT[mu2, mu5]*LMT[mu3, mu6] + LMT[mu1, mu6]*LMT[mu2, mu3]*LMT[mu4, mu5] - LMT[mu1, mu3]*LMT[mu2, mu6]*LMT[mu4, mu5] + LMT[mu1, mu2]*LMT[mu3, mu6]*LMT[mu4, mu5] - LMT[mu1, mu5]*LMT[mu2, mu3]*LMT[mu4, mu6] + LMT[mu1, mu3]*LMT[mu2, mu5]*LMT[mu4, mu6] - LMT[mu1, mu2]*LMT[mu3, mu5]*LMT[mu4, mu6] + LMT[mu1, mu4]*LMT[mu2, mu3]*LMT[mu5, mu6] - LMT[mu1, mu3]*LMT[mu2, mu4]*LMT[mu5, mu6] + LMT[mu1, mu2]*LMT[mu3, mu4]*LMT[mu5, mu6]), 
+                   DiracTrace[ PL ] :> 2,
+                   DiracTrace[ PR ] :> 2,
+                   DiracTrace[ GA[mu1_], GA[mu2_], PL ] :> 2*LMT[mu1,mu2],
+                   DiracTrace[ GA[mu1_], GA[mu2_], PR ] :> 2*LMT[mu1,mu2],
+                   DiracTrace[ GA[mu1_], GA[mu2_], GA[mu3_], GA[mu4_], PL ] :> 2*(LMT[mu1,mu4]*LMT[mu2,mu3]-LMT[mu1,mu3]*LMT[mu2,mu4]+LMT[mu1,mu2]*LMT[mu3,mu4]) + 2*im*Levi[mu1,mu2,mu3,mu4],
+                   DiracTrace[ GA[mu1_], GA[mu2_], GA[mu3_], GA[mu4_], PR ] :> 2*(LMT[mu1,mu4]*LMT[mu2,mu3]-LMT[mu1,mu3]*LMT[mu2,mu4]+LMT[mu1,mu2]*LMT[mu3,mu4]) - 2*im*Levi[mu1,mu2,mu3,mu4]
                  };
 
 
@@ -1104,7 +1164,12 @@ expr2 = expr2 //. SP[ mom1_ /; ! MemberQ[MomList, mom1] && (mom1 /. vanishing) =
 expr2 = expr2 //. SP[ mom1_, mom2_ /; ! MemberQ[MomList, mom2] && (mom2 /. vanishing) == 0 ] :> Map[makeSP[mom1, #] &, MomList].((Normal[CoefficientArrays[mom2, MomList]])[[2]]);
 
 expr2 = expr2 //. { FermionChain[x1__, GA[mom_], PL, x2__] :> FermionChain[x1, PR, GA[mom], x2], 
-                    FermionChain[x1__, GA[mom_], PR, x2__] :> FermionChain[x1, PL, GA[mom], x2] };
+                    FermionChain[x1__, GA[mom_], PR, x2__] :> FermionChain[x1, PL, GA[mom], x2],
+                    FermionChain[x1__, PL, PL, x2__ ] :> FermionChain[x1, PL, x2 ],
+                    FermionChain[x1__, PR, PR, x2__ ] :> FermionChain[x1, PR, x2 ],
+                    FermionChain[x1__, PL, PR, x2__ ] :> 0,
+                    FermionChain[x1__, PR, PL, x2__ ] :> 0
+                  };
 
 expr2 = Expand[expr2] //. { FermionChain[ x1__, GA[mom_/; MemberQ[MomList, mom]], GA[mom_/; MemberQ[MomList, mom]], x2__ ] :> SP[mom,mom]*FermionChain[x1,x2],
                     FermionChain[ x1__, GA[mu_/; ! MemberQ[MomList, mu]], GA[mu_/; ! MemberQ[MomList, mu]], x2__ ] :> diim*FermionChain[x1,x2],
@@ -1116,7 +1181,8 @@ expr2 = expr2 //. {$( join(collect(kin_relation_str_set),",") )};
 expr2 = expr2 //. { FV[mom_,mu_]*VecEps[int_, mu_, mom_, ref_, mass_] :> 0, FV[mom_,mu_]*VecEpsC[int_, mu_, mom_, ref_, mass_] :> 0,
                     FermionChain[ x__, GA[mom_], U[int_,mom_,ref_,0] ] :> 0, FermionChain[ x__, GA[mom_], V[int_,mom_,ref_,0] ] :> 0,
                     FermionChain[ UB[int_,mom_,ref_,0], PL, GA[mom_], x__ ] :> 0, FermionChain[ VB[int_,mom_,ref_,0], PL, GA[mom_], x__ ] :> 0, 
-                    FermionChain[ UB[int_,mom_,ref_,0], PR, GA[mom_], x__ ] :> 0, FermionChain[ VB[int_,mom_,ref_,0], PR, GA[mom_], x__ ] :> 0 };
+                    FermionChain[ UB[int_,mom_,ref_,0], PR, GA[mom_], x__ ] :> 0, FermionChain[ VB[int_,mom_,ref_,0], PR, GA[mom_], x__ ] :> 0,
+                    FermionChain[ UB[int_,mom_,ref_,0], GA[mom_], x__ ] :> 0, FermionChain[ VB[int_,mom_,ref_,0], GA[mom_], x__ ] :> 0 };
 
 expr2 = expr2 //. FermionChain[ x1__, GA[mu_/; MemberQ[dummyList, mu]], x__, GA[mu_/; MemberQ[dummyList, mu]], x2__ ] :> FermionChain[ x1, GA[muList[[Length[{x1}]]]], x, GA[muList[[Length[{x1}]]]], x2 ];
 
@@ -1136,7 +1202,16 @@ expr1 = expr1 //. {$( join(collect(kin_relation_str_set),",") )};
 
 expr1 = expr1 //. FermionChain[ x1__, GA[mu_/; MemberQ[dummyList, mu]], x__, GA[mu_/; MemberQ[dummyList, mu]], x2__ ] :> FermionChain[ x1, GA[muList[[Length[{x1}]]]], x, GA[muList[[Length[{x1}]]]], x2 ];
 
-diff = (expr1-expr2)//Expand;
+Levi0[a__] := Signature[{a}] (Levi0 @@ Sort@{a}) /; ! OrderedQ[{a}];
+Levi0[a__] := 0 /; ! Unequal[a];
+
+expr2 = expr2 //. { Levi[mu1_,mu2_,mu3_,mu4_]*FV[mom_,mu1_] :> Levi[mom,mu2,mu3,mu4],
+                    Levi[mu1_,mu2_,mu3_,mu4_]*FV[mom_,mu2_] :> Levi[mu1,mom,mu3,mu4],
+                    Levi[mu1_,mu2_,mu3_,mu4_]*FV[mom_,mu3_] :> Levi[mu1,mu2,mom,mu4],
+                    Levi[mu1_,mu2_,mu3_,mu4_]*FV[mom_,mu4_] :> Levi[mu1,mu2,mu3,mom]
+                   };
+
+diff = (expr1-expr2) //. Levi[a__] -> Levi0[a] //Expand;
 
 stream=OpenWrite["$(file_name).out"];
 Write[ stream, diff ];
@@ -1340,13 +1415,12 @@ function write_out_visual_graph( g::GenericGraph, model::Model,
     "\\hspace*{-3em}\$\\displaystyle\n"*
     "$(lorentz_str_list[color_index])\n"*
     "\$\\end{flushleft}\n"*
-    "\n"*
-    "}\\end{sideways}\n"*
     "\n" )
   end # for color_index
 
   write( visual_file,
     "\n"*
+    "}\\end{sideways}\n"*
     "\n"*
     "\\end{document} \n"*
     "\n" )
@@ -1440,8 +1514,6 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
     amp_lorentz_list = contract_Dirac_indices( g, amp_lorentz_list_pre )
     amp_lorentz_noexpand_list = contract_Dirac_indices_noexpand( g, amp_lorentz_list_pre )
 
-    check_consistency( diagram_index, amp_lorentz_list, amp_lorentz_noexpand_list, ext_mom_list, kin_relation )
-
     amp_color_list = simplify_color_factors( g, amp_color_list )
 
     #-------------------------------------------
@@ -1454,6 +1526,8 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
 
 
     write_out_visual_graph( g, model, couplingfactor, amp_color_list, amp_lorentz_noexpand_list, ext_mom_list, scale2_list )
+
+    check_consistency( diagram_index, amp_lorentz_list, amp_lorentz_noexpand_list, ext_mom_list, kin_relation )
 
   end # for g
   now()
