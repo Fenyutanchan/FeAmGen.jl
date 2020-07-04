@@ -94,8 +94,8 @@ function generate_visual_graph( g::GenericGraph, model::Model )::String
         half_circle_option = src_mark > tgt_mark ? ", half left" : ", half right"
       elseif edge.attributes["mark"] == min_mark
         half_circle_option = src_mark > tgt_mark ? ", half right" : ", half left"
-      else
-        @assert false
+      else # in the middle
+        half_circle_option = "" 
       end # if
     end # end if
 

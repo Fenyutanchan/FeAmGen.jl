@@ -5,7 +5,9 @@ function generate_amp( proc_file::String, model_dir::String )::Nothing
 
   #------------------------------------------------------------------
   @assert isfile(proc_file) "The first argument is not a file!"
-  input = YAML.load( open(proc_file) )
+  file_stream = open(proc_file)
+  input = YAML.load( file_stream )
+  close( file_stream )
   #------------------------------------------------------------------
 
 

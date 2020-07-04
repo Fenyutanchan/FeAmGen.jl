@@ -1010,6 +1010,7 @@ function contract_Dirac_indices( g::GenericGraph, lorentz_expr_list::Vector{Basi
 
     file = open( file_name*".out", "r" )
     result_str = read( file, String )
+    close( file )
     result_expr = Basic(result_str)
     new_lorentz_expr_list[index] = result_expr
 
@@ -1051,6 +1052,7 @@ function contract_Dirac_indices_noexpand( g::GenericGraph, lorentz_expr_list::Ve
 
     file = open( file_name*".out", "r" )
     result_str = read( file, String )
+    close( file )
     result_expr = Basic(result_str)
     new_lorentz_expr_list[index] = result_expr
 
@@ -1290,6 +1292,7 @@ function simplify_color_factors( g::GenericGraph, color_factor_list::Vector{Basi
 
     file = open( file_name*".out", "r" )
     result_str = read( file, String )
+    close( file )
     result_expr = Basic(result_str)
     new_color_factor_list[index] = result_expr
 
@@ -1363,8 +1366,6 @@ function write_out_amplitude( n_loop::Int64, diagram_index::Int64, couplingfacto
     rm( "amplitudes/amplitude_diagram$(diagram_index).jld" )
   end # if
 
-  ##lock( the_lock )
-
   jldopen( "amplitudes/amplitude_diagram$(diagram_index).jld", "w" ) do file 
     write( file, "n_loop", n_loop )
     write( file, "min_eps_xpt", min_eps_xpt )
@@ -1381,7 +1382,7 @@ function write_out_amplitude( n_loop::Int64, diagram_index::Int64, couplingfacto
     write( file, "amp_lorentz_list",  map( string, amp_lorentz_list ) )
   end # file
 
-  ##unlock( the_lock )
+  return nothing
 
 end # function write_out_amplitude
 
@@ -1444,6 +1445,8 @@ function write_out_visual_graph( g::GenericGraph, model::Model,
     "\n" )
   close( visual_file )
 
+  return nothing
+
 end # function write_out_visual_graph
 
 
@@ -1456,7 +1459,9 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
   n_loop = input["n_loop"]
   couplingfactor = Basic(input["couplingfactor"]) 
 
-  qgraf_out = YAML.load( open("qgraf_out.dat") )
+  file_stream = open("qgraf_out.dat")
+  qgraf_out = YAML.load( file_stream )
+  close( file_stream )
 
   qgraf_list = qgraf_out["FeynmanDiagrams"]
 
@@ -1549,6 +1554,7 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
 
   end # for g
   now()
+
 
   # remove intermediate files
   rm( "baseINC.frm" )

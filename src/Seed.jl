@@ -6,7 +6,9 @@ function digest_seed_proc( seed_file::String, model_dir::String )::Nothing
 
 
   #----------------------------------------------------------------------------------------------
-  input = YAML.load( open(seed_file) )
+  file_stream = open(seed_file)
+  input = YAML.load( file_stream )
+  close( file_stream )
   #----------------------------------------------------------------------------------------------
 
 

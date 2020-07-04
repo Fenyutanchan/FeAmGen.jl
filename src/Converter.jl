@@ -158,8 +158,8 @@ function convert_lorentz_list( diagram_index::Int64, lorentz_list::Vector{Basic}
       end # if
     end # for scale_index
 
-    ver_replace_str_list = Vector{String}( undef, 10 )
-    for ver_index ∈ 1:10
+    ver_replace_str_list = Vector{String}( undef, 32 )
+    for ver_index ∈ 1:32
       ver_replace_str_list[ver_index] = "ver$(ver_index) -> Subscript[s,$(ver_index)]"
     end # for ver_index
 
