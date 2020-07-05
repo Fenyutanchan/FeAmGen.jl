@@ -126,7 +126,7 @@ function convert_lorentz_list( diagram_index::Int64, lorentz_list::Vector{Basic}
   n_lorentz = length( lorentz_list )
 
   lorentz_str_list = Vector{String}( undef, n_lorentz )
-  for lorentz_index ∈ 1:n_lorentz
+  for lorentz_index in 1:n_lorentz
     one_lorentz = lorentz_list[lorentz_index]
 
     dummy_symbol_list = filter( s_ -> length(string(s_)) > 7 && string(s_)[1:7] == "dummyMU", free_symbols(one_lorentz) )
@@ -145,7 +145,7 @@ function convert_lorentz_list( diagram_index::Int64, lorentz_list::Vector{Basic}
     scale_str_list = map( string, scale_list )
     n_scale = length( scale_str_list )
     scale_replace_str_list = Vector{String}( undef, n_scale )
-    for scale_index ∈ 1:n_scale
+    for scale_index in 1:n_scale
       one_scale_str = scale_str_list[scale_index]
       if length(one_scale_str) > 3 && one_scale_str[1:3] == "ver"
         scale_replace_str_list[scale_index] = "$(one_scale_str) -> Subscript[s,$(one_scale_str[4:length(one_scale_str)])]"
@@ -159,9 +159,14 @@ function convert_lorentz_list( diagram_index::Int64, lorentz_list::Vector{Basic}
     end # for scale_index
 
     ver_replace_str_list = Vector{String}( undef, 32 )
-    for ver_index ∈ 1:32
+    for ver_index in 1:32
       ver_replace_str_list[ver_index] = "ver$(ver_index) -> Subscript[s,$(ver_index)]"
     end # for ver_index
+
+    muab_replace_str_list = Vector{String}( undef, 32 )
+    for index in 1:32
+      muab_replace_str_list[index] = "mua$(index) -> Subscript[\\[Mu],a$(index)], mub$(index) -> Subscript[\\[Mu],b$(index)]"
+    end # for index
 
 
     lorentz_mma_str = gen_mma_str(one_lorentz)
@@ -194,6 +199,7 @@ expr = expr //. {$(join(epsMu_symbol_replace_str_list,","))};
 expr = expr //. {$(join(gcsub_replace_str_list,","))};
 expr = expr //. {$(join(scale_replace_str_list,","))};
 expr = expr //. {$(join(ver_replace_str_list,","))};
+expr = expr //. {$(join(muab_replace_str_list,","))};
 expr = expr //. GA[x_ /; MemberQ[MomList, x]] -> \\[Gamma].x;
 expr = expr //. GA[x_ /; ! MemberQ[MomList, x]] -> Subscript[\\[Gamma], x];
 expr = expr //. diim -> d //. SP[x1_,x2_] -> Subscript[S,P][x1,x2] //. DiracTrace[x__] -> Subscript[D,T][x] //. FV[mom_,mu_] -> Subscript[F,4][mom,mu];
