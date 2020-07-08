@@ -428,6 +428,20 @@ function translate_lorentz_factor( one_lorentz::Basic, vert::ExVertex, g::Generi
 
   @funs Metric LMT P FV Gamma GAij ProjP PRij ProjM PLij Identity ONEij 
 
+  if one_lorentz == P(1, 2)*Metric(2, 3) - P(1, 3)*Metric(2, 3) - P(2, 1)*Metric(1, 3) + P(2, 3)*Metric(1, 3) + P(3, 1)*Metric(1, 2) - P(3, 2)*Metric(1, 2)
+    edge1 = edge_from_link_index( vert, 1, g )
+    edge2 = edge_from_link_index( vert, 2, g )
+    edge3 = edge_from_link_index( vert, 3, g )
+    lor1 = get_link_lorentz( g, vert, 1, part_list )
+    lor2 = get_link_lorentz( g, vert, 2, part_list )
+    lor3 = get_link_lorentz( g, vert, 3, part_list )
+    mom1 = get_link_momentum( g, vert, 1 )
+    mom2 = get_link_momentum( g, vert, 2 )
+    mom3 = get_link_momentum( g, vert, 3 )
+    new_lorentz = FV(mom2-mom3,lor1)*LMT(lor2,lor3) + FV(mom3-mom1,lor2)*LMT(lor3,lor1) + FV(mom1-mom2,lor3)*LMT(lor1,lor2)
+    return new_lorentz
+  end # if
+
   lorentz_str = string(one_lorentz)
   new_lorentz = one_lorentz
 
@@ -1046,7 +1060,6 @@ function contract_Dirac_indices_noexpand( g::GenericGraph, lorentz_expr_list::Ve
     write( file, form_script_str )
     close(file)
 
-    #printstyled( "[ form $(file_name).frm in thread #$(Threads.threadid()) ]\n", color=:yellow )
     printstyled( "[ form $(file_name).frm ]\n", color=:yellow )
     run( pipeline( `form $(file_name).frm`, file_name*".log" ) )
 
@@ -1403,47 +1416,39 @@ function write_out_visual_graph( g::GenericGraph, model::Model,
   printstyled( "[ Generate visual_diagram$(diagram_index).tex ]\u264e\n", color=:green, bold=true )
   visual_file = open( "visuals/visual_diagram$(diagram_index).tex", "w" )
   write( visual_file,
-    "\\documentclass{article}\n"*
+    "\\documentclass{revtex4}\n"*
     "\\usepackage{tikz-feynman}\n"*
     "\\usepackage{rotating}\n"*
+    "\\usepackage{breqn}\n"*
     "\n"*
     "\\begin{document}\n"*
     "\n"*
     graph_str*
     "\n"*
-    "\\begin{sideways}\n"*
-    "\\parbox{\\textheight}{\n"*
-    "\n"*
-    "coupling factor: \n"*
-    "\\begin{equation}\n"*
+    "\\end{document} \n"*
+    "\n" )
+  close( visual_file )
+
+
+  expression_file = open( "visuals/expression_diagram$(diagram_index).m", "w" ) 
+  write( expression_file, 
+    "(* coupling factor: *) \n"*
     "$(couplingfactor_str)\n"*
-    "\\end{equation}\n"*
     "\n" )
 
   n_color = length(color_str_list)
   for color_index ∈ 1:n_color
-  write( visual_file,
-    "color factor \\#$(color_index):\n"*
-    "\\begin{equation}\n"*
+  write( expression_file,
+    "(* color factor \\#$(color_index): *)\n"*
     "$(color_str_list[color_index])\n"*
-    "\\end{equation}\n"*
-    "color factor coefficient \\#$(color_index):\n"*
-    "\\begin{flushleft}\n"*
-    "\\linespread{2.5}\\selectfont\n"*
-    "\\leftskip=3em\n"*
-    "\\hspace*{-3em}\$\\displaystyle\n"*
+    "\n"*
+    "(* color factor coefficient \\#$(color_index): *)\n"*
+    "\n"*
     "$(lorentz_str_list[color_index])\n"*
-    "\$\\end{flushleft}\n"*
     "\n" )
   end # for color_index
 
-  write( visual_file,
-    "\n"*
-    "}\\end{sideways}\n"*
-    "\n"*
-    "\\end{document} \n"*
-    "\n" )
-  close( visual_file )
+  close( expression_file )
 
   return nothing
 

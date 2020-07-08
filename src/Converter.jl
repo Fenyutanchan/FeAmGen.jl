@@ -28,7 +28,7 @@ function convert_couplingfactor( diagram_index::Int64, couplingfactor::Basic )::
   write( file, """
 expr = $(couplingfactor);
 stream=OpenWrite["$(file_name).out"];
-WriteString[ stream, expr//.{$(join( replace_str_list, "," ))}//TeXForm ];
+WriteString[ stream, expr//.{$(join( replace_str_list, "," ))} ];
 Close[stream];
 """ )
   close(file)
@@ -84,7 +84,7 @@ expr = $(color_mma_str);
 expr = expr//.{$(join(replace_str_list,","))};
 expr = expr//.{im -> I, ca -> Subscript[C,A], cf -> Subscript[C,F], SUNT[x__] -> Subscript[T,x], SUNF[x__] -> Subscript[f,x], DeltaFun[x__]->\\[Delta][x], DeltaAdj[x__]->\\[Delta][x] };
 stream=OpenWrite["$(file_name).out"];
-WriteString[ stream, expr//TeXForm ];
+WriteString[ stream, expr ];
 Close[stream];
 """ )
     close(file)
@@ -165,7 +165,7 @@ function convert_lorentz_list( diagram_index::Int64, lorentz_list::Vector{Basic}
 
     muab_replace_str_list = Vector{String}( undef, 32 )
     for index in 1:32
-      muab_replace_str_list[index] = "mua$(index) -> Subscript[\\[Mu],a$(index)], mub$(index) -> Subscript[\\[Mu],b$(index)]"
+      muab_replace_str_list[index] = "mua$(index) -> Subscript[\\[Rho],$(index)], mub$(index) -> Subscript[\\[Sigma],$(index)]"
     end # for index
 
 
@@ -181,7 +181,10 @@ expr = $(lorentz_mma_str);
 MomList = {q1, q2, q3, $(join(map(string,ext_mom_list),","))};
 vanishing = Map[# :> 0 &, MomList];
 
+(*
 expr = expr //. FermionChain[ x1__, GA[mu_], x2__ ] * FV[mom_,mu_] :> FermionChain[ x1, GA[mom], x2 ];
+*)
+
 expr = expr //. FermionChain[ x1__, GA[mom_/;Coefficient[mom,unity]=!=0], x2__ ] :> FermionChain[ x1, \\[Gamma][(mom/.unity:>0)]+Coefficient[mom,unity], x2 ];
 expr = expr //. DiracTrace[ x1___, GA[mom_/;Coefficient[mom,unity]=!=0], x2___ ] :> DiracTrace[ x1, \\[Gamma][(mom/.unity:>0)]+Coefficient[mom,unity], x2 ];
 expr = expr //. FermionChain[ x1__, GA[mom_/; (mom /. vanishing) == 0], x2__ ] :> FermionChain[ x1, \\[Gamma][mom], x2 ];
@@ -205,7 +208,7 @@ expr = expr //. GA[x_ /; ! MemberQ[MomList, x]] -> Subscript[\\[Gamma], x];
 expr = expr //. diim -> d //. SP[x1_,x2_] -> Subscript[S,P][x1,x2] //. DiracTrace[x__] -> Subscript[D,T][x] //. FV[mom_,mu_] -> Subscript[F,4][mom,mu];
 
 stream=OpenWrite["$(file_name).out"];
-WriteString[ stream, expr//TraditionalForm//TeXForm ];
+WriteString[ stream, expr//InputForm ];
 Close[stream];
 """ )
     close(file)
@@ -219,7 +222,7 @@ Close[stream];
     file = open( file_name*".out", "r" )
     result_str = replace( read( file, String ), r"\s"=>"" )
     close(file)
-  
+
     rm( file_name*".m" )
     rm( file_name*".out" )
     rm( file_name*".log" )
