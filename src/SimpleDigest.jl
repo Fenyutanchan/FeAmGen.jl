@@ -1,5 +1,10 @@
 
 #################################################
+"""
+    electron_num( part::Particle )::Int64
+
+Count the electron number (lepton number in 1st generation ).
+"""
 function electron_num( part::Particle )::Int64
   if part.kf in [11,12]
     return 1
@@ -10,6 +15,11 @@ function electron_num( part::Particle )::Int64
   return 0
 end # function electron_num
 #################################################
+"""
+    mu_num( part::Particle )::Int64
+
+Count the muon number (lepton number in 2nd generation ).
+"""
 function mu_num( part::Particle )::Int64
   if part.kf in [13,14]
     return 1
@@ -20,6 +30,11 @@ function mu_num( part::Particle )::Int64
   return 0
 end # function mu_num
 #################################################
+"""
+    tau_num( part::Particle )::Int64
+
+Count the tauon number (lepton number in 3rd generation ).
+"""
 function tau_num( part::Particle )::Int64
   if part.kf in [15,16]
     return 1
@@ -33,6 +48,12 @@ end # function tau_num
 
 
 #################################################
+"""
+    quark1st_num( part::Particle )::Int64
+
+Count the quark flavor number in 1st generation.
+This is used for the case that has no flavor violation.
+"""
 function quark1st_num( part::Particle )::Int64
   if part.kf in [1,2]
     return 1
@@ -43,6 +64,12 @@ function quark1st_num( part::Particle )::Int64
   return 0
 end # function quark1st_num
 #################################################
+"""
+    quark2nd_num( part::Particle )::Int64
+
+Count the quark flavor number in 2nd generation.
+This is used for the case that has no flavor violation.
+"""
 function quark2nd_num( part::Particle )::Int64
   if part.kf in [3,4]
     return 1
@@ -53,6 +80,12 @@ function quark2nd_num( part::Particle )::Int64
   return 0
 end # function quark2nd_num
 #################################################
+"""
+    quark3rd_num( part::Particle )::Int64
+
+Count the quark flavor number in 3rd generation.
+This is used for the case that has no flavor violation.
+"""
 function quark3rd_num( part::Particle )::Int64
   if part.kf in [5,6]
     return 1
@@ -67,6 +100,12 @@ end # function quark3rd_num
 
 
 #################################################
+"""
+    filter_lepton_generations( proc_str::Union{String,Nothing}, n_inc::Int64, part_dict::Dict{String,Particle} )::Union{String,Nothing}
+
+This function is used when the option `AllowLeptonNumberViolation` is turned on.
+It will check if the process represented by the input `proc_str` has violation the lepton number.
+"""
 function filter_lepton_generations( 
     proc_str::Union{String,Nothing}, n_inc::Int64, 
     part_dict::Dict{String,Particle} )::Union{String,Nothing}

@@ -2,6 +2,12 @@
 
 
 ########################################
+"""
+    show_welcome_message()
+
+This function gives information for users.
+Return nothing.
+"""
 function show_welcome_message()::Nothing
 ########################################
 
@@ -24,6 +30,12 @@ end # function show_welcome_message
 
 
 #####################################################################
+"""
+    green_message( statement::String, message::String )::Nothing
+
+Print the `statement` in normal color and `message` in green.
+Return nothing.
+"""
 function green_message( statement::String, message::String )::Nothing
 #####################################################################
 

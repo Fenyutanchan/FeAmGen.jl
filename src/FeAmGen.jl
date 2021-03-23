@@ -1,5 +1,9 @@
 __precompile__()
 
+"""
+    module FeAmGen
+FeAmGen represents `Fe`ynman diagram and `Am`plitude `Gen`erator.
+"""
 module FeAmGen
 
 # for reading input YAML file "SeedProcess.yaml"

@@ -1,10 +1,41 @@
 
+"""
+    const Dict color_dict
+
+Dict( 1=>`:singlet`, 3=>`:triplet`, -3=>`:triplet`, 8=>`:octet` )
+"""
 const color_dict = Dict( 1=>:singlet, 3=>:triplet, -3=>:triplet, 8=>:octet )
+"""
+    const Dict spin_dict
+
+Dict( 1=>`:scalar`, -1=>`:ghost`, 2=>`:fermion`, 3=>`:vector` )
+"""
 const spin_dict = Dict( 1=>:scalar, -1=>:ghost, 2=>:fermion, 3=>:vector )
 
+
+"""
+    charge_convert( model_charge::Float64 )::Rational{Int64} 
+
+Convert the float number of charge in the model file into a rational number, especially the quark charge.
+"""
 charge_convert( model_charge::Float64 )::Rational{Int64} = round(Int64,model_charge*3)//3
 
+
 #########################
+"""
+    struct Particle
+
+```
+  kf::Int64
+  name::String
+  antiname::String
+  spin::Symbol
+  color::Symbol
+  charge::Rational{Int64}
+  mass::Basic
+  width::Basic
+```
+"""
 struct Particle
   kf::Int64
   name::String
@@ -20,6 +51,20 @@ end # struct Particle
 
 
 #########################
+"""
+    struct Interaction
+
+```
+  name::String
+  # UFO convention is outgoing particle, but in our convention is incoming
+  link_list::Vector{Particle}
+  color_row_list::Vector{Basic} # 1xN
+  lorentz_col_list::Vector{Basic} # Mx1
+  couplings_matrix::Array{Basic,2} # NxM
+  QCD_order::Int64
+  QED_order::Int64
+```
+"""
 struct Interaction
   name::String
   # UFO convention is outgoing particle, but in our convention is incoming
@@ -33,6 +78,20 @@ end # struct Interaction
 #########################
 
 #########################
+"""
+    struct Model
+
+```
+  name::String
+  unitary_gauge::Bool
+  particle_list::Vector{Particle}
+  particle_name_dict::Dict{String,Particle}
+  particle_kf_dict::Dict{Int64,Particle}
+  interaction_list::Vector{Interaction}
+  sorted_kf_list_dict::Dict{Vector{Int64},Interaction}
+  parameter_dict::Dict{Basic,Basic}
+```
+"""
 struct Model
   name::String
   unitary_gauge::Bool
@@ -54,28 +113,75 @@ end # struct Model
 
 
 
-# Function "is_anticommuting" is used for the sign in the calculation of fermion/ghost loop.
-# The problem is according to Paulo Nogueira, we can have our own definition for the sign of majorana loop.
-#is_anticommuting( part::Particle )::Bool = part.spin in [:fermion, :ghost] && part.name != part.antiname
+"""
+    is_anticommuting( part::Particle )::Bool
+
+Function "is_anticommuting" is used for the sign in the calculation of fermion/ghost loop.
+The problem is according to Paulo Nogueira, we can have our own definition for the sign of majorana loop.
+"""
 is_anticommuting( part::Particle )::Bool = part.spin in [:fermion, :ghost] 
 ################################################
+"""
+    is_neutral( part::Particle )::Bool
+"""
 is_neutral( part::Particle )::Bool = part.name == part.antiname
+"""
+    is_not_majorana( part::Particle )::Bool
+"""
 is_not_majorana( part::Particle )::Bool = part.name != part.antiname
+"""
+    is_massless( part::Particle )::Bool
+"""
 is_massless( part::Particle )::Bool = part.mass == 0
+"""
+    is_massive( part::Particle )::Bool
+"""
 is_massive( part::Particle )::Bool = part.mass != 0
+"""
+    is_gluon( part::Particle )::Bool
+"""
 is_gluon( part::Particle )::Bool = part.kf == 21
+"""
+    is_photon( part::Particle )::Bool
+"""
 is_photon( part::Particle )::Bool = part.kf == 22
+"""
+    is_massless_quark( part::Particle )::Bool
+"""
 is_massless_quark( part::Particle )::Bool = 1 <= abs(part.kf) <= 5
+"""
+    is_top_quark( part::Particle )::Bool
+"""
 is_top_quark( part::Particle )::Bool = abs(part.kf) == 6
+"""
+    is_ghost( part::Particle )::Bool
+"""
 is_ghost( part::Particle )::Bool = abs(part.kf) == 9000005
+"""
+    is_quark( part::Particle )::Bool 
+"""
 is_quark( part::Particle )::Bool = 1 <= abs(part.kf) <= 6
+"""
+    is_colorful( part::Particle )::Bool
+"""
 is_colorful( part::Particle )::Bool = is_gluon(part) || is_quark(part) || is_ghost(part)
+"""
+    is_not_colorful( part::Particle )::Bool
+"""
 is_not_colorful( part::Particle )::Bool = !is_colorful(part)
+"""
+    is_massive_fermion( part::Particle )::Bool
+"""
 is_massive_fermion( part::Particle )::Bool = part.mass != 0 && part.spin == :fermion
 ################################################
 
 
 ################################################
+"""
+    to_string( inter::Interaction )::String
+
+Convert Interaction to string for writing out.
+"""
 function to_string( inter::Interaction )::String
 ################################################
 
@@ -94,12 +200,13 @@ end # function to_string
 
 ############################################################################
 """
+    find_AC_pair_pos( part_list::Vector{Particle} )::Union{Tuple{Nothing,Nothing},Tuple{Int64,Int64}}
+
 This function is used to find the pair of anti-commuting particles/fields.
-This information will be inserted into QGRAF model, 
-  so that QGRAF can generate correct sign for anti-commuting particle loop.
+This information will be inserted into QGRAF model, so that QGRAF can generate correct sign for anti-commuting particle loop.
 For example, we should have extra minus sign for fermion loop and ghost loop.
 """
-function find_AC_pair_pos( part_list::Vector{Particle} )
+function find_AC_pair_pos( part_list::Vector{Particle} )::Union{Tuple{Nothing,Nothing},Tuple{Int64,Int64}}
 ############################################################################
 
   first_AC_pos = findfirst( p_ -> is_anticommuting(p_), part_list )
@@ -118,6 +225,8 @@ end # function find_AC_pair_pos
 
 ####################################################################################
 """
+    generate_ordered_link_list( part_list::Vector{Particle} )::Vector{Particle}
+
 This function is used to generate order particle list according to the rule of QGRAF.
 """
 function generate_ordered_link_list( part_list::Vector{Particle} )::Vector{Particle}
@@ -139,6 +248,11 @@ end # function generate_ordered_link_list
 
 
 #############################################################
+"""
+    to_qgraf_name( name_str::String )::String
+
+Change the particle name into the one that QGRAF can accept.
+"""
 function to_qgraf_name( name_str::String )::String
 #############################################################
   tail_char = name_str[end]
@@ -156,7 +270,12 @@ end # function to_qgraf_name
 
 
 ################################################
-function generate_QGRAF_model( model::Model )
+"""
+    generate_QGRAF_model( model::Model )::Nothing
+
+Write out the model file that can be used by QGRAF.
+"""
+function generate_QGRAF_model( model::Model )::Nothing
 ################################################
 
   file = open( "model.qgraf", "w" )
@@ -205,6 +324,8 @@ function generate_QGRAF_model( model::Model )
 
   close(file)
 
+  return nothing
+
 end # function generate_QGRAF_model
 
 
@@ -214,7 +335,12 @@ end # function generate_QGRAF_model
 
 
 ################################################
-function logging_model( model::Model )
+"""
+    logging_model( model::Model )::Nothing
+
+Write out model file that contains more detail.
+"""
+function logging_model( model::Model )::Nothing
 ################################################
 
   file = open( model.name*".log", "w" )
@@ -230,6 +356,8 @@ function logging_model( model::Model )
   end # for inter
 
   close(file)
+
+  return nothing
 
 end # function logging_model
 
