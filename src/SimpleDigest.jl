@@ -150,6 +150,12 @@ end #function filter_lepton_generations
 
 
 #################################################
+"""
+    filter_quark_generations( proc_str::Union{String,Nothing}, n_inc::Int64, part_dict::Dict{String,Particle} )::Union{String,Nothing}
+
+This function is used when the option `AllowQuarkGenerationViolation` is turned on.
+It will check if the process represented by the input `proc_str` has violation the quark flavor.
+"""
 function filter_quark_generations( 
     proc_str::Union{String,Nothing}, n_inc::Int64, 
     part_dict::Dict{String,Particle} )::Union{String,Nothing}
@@ -191,6 +197,11 @@ end #function filter_quark_generations
 
 
 #################################################
+"""
+    filter_charge( proc_str::Union{String,Nothing}, n_inc::Int64, part_dict::Dict{String,Particle} )::Union{String,Nothing}
+
+This function is used to check if the process represented by the input `proc_str` has violation the charge conservation.
+"""
 function filter_charge( 
     proc_str::Union{String,Nothing}, n_inc::Int64, 
     part_dict::Dict{String,Particle} )::Union{String,Nothing}
@@ -223,8 +234,9 @@ end #function filter_charge
 
 #############################################################
 """
-Read-in the model detail from python model file.
-For seed program, we only need particle list.
+    simple_readin_model( model_name::String, model_dir::String )::Dict{String,Particle}
+
+Read-in the model detail from python model file. For seed program, we only need particle list.
 """
 ############################################################################################
 function simple_readin_model( model_name::String, model_dir::String )::Dict{String,Particle}
@@ -256,6 +268,8 @@ end # function simple_readin_model
 
 ###########################################
 """
+    tensor_product( aa::Vector{String}, bb::Vector{String}, xx::Vector{String}... )::Vector{String} 
+
 Generalize tensor_product to multiple string lists/arrays.
 """
 function tensor_product( aa::Vector{String}, bb::Vector{String}, xx::Vector{String}... )::Vector{String} 
@@ -267,8 +281,9 @@ end # function tensor_product
 
 ###########################################
 """
-tensor_product( x, y )
-x and y are two string lists/arrays.
+    tensor_product( str_list1::Vector{String}, str_list2::Vector{String} )::Vector{String}
+
+Inside tensor_product( x, y ), x and y are two string lists/arrays.
 This function calculate the tensor production of two arrays.
 """
 function tensor_product( 

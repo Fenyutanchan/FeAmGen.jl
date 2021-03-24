@@ -6,6 +6,7 @@ CurrentModule = FeAmGen
 
 
 ```@contents
+Depth = 4
 ```
 
 ## FeAmGen Functions in Message.jl
@@ -64,6 +65,11 @@ tau_num
 quark1st_num
 quark2nd_num
 quark3rd_num
+filter_lepton_generations
+filter_quark_generations
+filter_charge
+simple_readin_model
+tensor_product
 ```
 
 ## Index
