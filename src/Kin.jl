@@ -1,5 +1,10 @@
 
 ####################################################################
+"""
+    generate_gauge_choice( graph_list::Vector{GenericGraph} )::Dict{Basic,Basic}
+
+Automatically prepare a gauge choice for this process.
+"""
 function generate_gauge_choice( graph_list::Vector{GenericGraph} )::Dict{Basic,Basic}
 ####################################################################
 
@@ -145,6 +150,11 @@ end # function generate_gauge_choice
 # \(k_2\).}
 #
 #########################################################################################################################
+"""
+    generate_kin_relation( n_inc::Int64, n_out::Int64, mom::Vector{Basic}, mass2::Vector{Basic} )::Dict{Basic,Basic}
+
+Generate the kinematic relations, e.g. Mandelstam variables, according to the external fields.
+"""
 function generate_kin_relation( n_inc::Int64, n_out::Int64, mom::Vector{Basic}, mass2::Vector{Basic} )::Dict{Basic,Basic}
 #########################################################################################################################
 
@@ -305,6 +315,11 @@ function generate_kin_relation( n_inc::Int64, n_out::Int64, mom::Vector{Basic}, 
 end # function generate_kin_relation
 
 ########################################################################################
+"""
+    generate_kin_relation( graph_list::Vector{GenericGraph} )::Dict{Basic,Basic}
+
+Generate the kinematic relations for this processes including the internal non-loop propagators.
+"""
 function generate_kin_relation( graph_list::Vector{GenericGraph} )::Dict{Basic,Basic}
 ########################################################################################
 
@@ -387,6 +402,11 @@ function generate_kin_relation( graph_list::Vector{GenericGraph} )::Dict{Basic,B
 end # function generate_kin_relation
 
 #################################################################################
+"""
+    generate_ext_mom_list( graph_list::Vector{GenericGraph} )::Vector{Basic}
+
+Generate the list of external momenta according to this process.
+"""
 function generate_ext_mom_list( graph_list::Vector{GenericGraph} )::Vector{Basic}
 #################################################################################
 

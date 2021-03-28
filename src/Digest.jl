@@ -1,6 +1,8 @@
 
 ###########################################################
 """
+    check_has_yt( coupling_dict::Dict{Any,Any} )::Bool
+
 Check if there is "yt" in the values of couplings in one "Vertex".
 """
 function check_has_yt( coupling_dict::Dict{Any,Any} )::Bool
@@ -16,6 +18,8 @@ end # function check_has_yt
 
 ##################################################################################
 """
+    extract_QCD_QED_order( coupling_dict::Dict{Any,Any} )::Tuple{Int64,Int64}
+
 Extract the QCD and QED orders from the python model file 
   for the "couplings" property in one "Vertex".
 """
@@ -38,6 +42,11 @@ end # function extract_QCD_QED_order
 
 
 #####################################################################################################
+"""
+    calculate_CTcoeff( link_part_list::Vector{Particle}, has_yt::Bool, QCD_order::Int64 )::Basic
+
+Generate the expression for the QCD counter-term coefficient up-to second order for this vertex.
+"""
 function calculate_CTcoeff( link_part_list::Vector{Particle}, has_yt::Bool, QCD_order::Int64 )::Basic
 #####################################################################################################
 
@@ -69,6 +78,11 @@ end # function calculate_CTcoeff
 
 
 #####################################################################################################
+"""
+    extract_couplings_matrix( couplings_dict::Dict{Any,Any}, color_dim::Int64, lorentz_dim::Int64, CTcoeff::Basic )::Array{Basic,2}
+
+Translate the coupling Dict into a two-dimensional matrix, which can be used later.
+"""
 function extract_couplings_matrix( 
     couplings_dict::Dict{Any,Any}, color_dim::Int64, lorentz_dim::Int64, 
     CTcoeff::Basic )::Array{Basic,2}
@@ -95,6 +109,11 @@ end # function extract_couplings_matrix
 
 
 ################################################################################################################
+"""
+    generate_color_lorentz_couplings( part::Particle )::Tuple{Array{Basic,1},Array{Basic,1},Array{Basic,2}}
+
+Manually generate the color and lorentz couplings for selfenergy line, which is indicated by `part::Particle`.
+"""
 function generate_color_lorentz_couplings( part::Particle )::Tuple{Array{Basic,1},Array{Basic,1},Array{Basic,2}}
 ################################################################################################################
 
@@ -139,10 +158,11 @@ end # function generate_color_lorentz_couplings
 
 #############################################################
 """
+    readin_model( input::Dict{Any,Any}, model_dir::String )::Model
+
 Read-in the model detail from python model file.
 In this seed program, we only need particle list.
 """
-#############################################################
 function readin_model( input::Dict{Any,Any}, model_dir::String )::Model
 #############################################################
 

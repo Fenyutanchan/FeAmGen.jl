@@ -238,7 +238,6 @@ end #function filter_charge
 
 Read-in the model detail from python model file. For seed program, we only need particle list.
 """
-############################################################################################
 function simple_readin_model( model_name::String, model_dir::String )::Dict{String,Particle}
 ############################################################################################
 
@@ -285,6 +284,18 @@ end # function tensor_product
 
 Inside tensor_product( x, y ), x and y are two string lists/arrays.
 This function calculate the tensor production of two arrays.
+
+# Examples
+```julia
+@testset "tensor_product" begin
+  target_in = Array{String}[ String["a","b","c"], String["d","e","f"] ]
+  target_out = String["a,d","a,e","a,f","b,d","b,e","b,f","c,d","c,e","c,f"]
+  @test FeAmGen.tensor_product( target_in... ) == target_out
+  target_in = Array{String}[ String["a","b"], String["c","d"], String["e","f"] ]
+  target_out = String["a,c,e","a,c,f","a,d,e","a,d,f","b,c,e","b,c,f","b,d,e","b,d,f"]
+  @test FeAmGen.tensor_product( target_in... ) == target_out
+end # @testset
+```
 """
 function tensor_product( 
     str_list1::Vector{String}, 
@@ -300,21 +311,25 @@ end # function tensor_product
 
 
 
+
+
+
+
 ###########################################
-@testset "tensor_product" begin
-  target_in = [ ["a","b","c"], ["d","e","f"] ]
-  target_out = ["a,d","a,e","a,f","b,d","b,e","b,f","c,d","c,e","c,f"]
-  @test tensor_product( target_in... ) == target_out
-  target_in = [ ["a","b"], ["c","d"], ["e","f"] ]
-  target_out = ["a,c,e","a,c,f","a,d,e","a,d,f","b,c,e","b,c,f","b,d,e","b,d,f"]
-  @test tensor_product( target_in... ) == target_out
+"""
+    expand_parton( inc_str_list::Vector{String}, out_str_list::Vector{String}, parton_str_list::Vector{String})::Vector{String}
+
+Sometimes we may use `parton` as one of the particles to represent the processes. 
+This function can expand `parton` to generate several specific processes.
+However, this expansion results are not checked for availability.
+
+# Examples
+```julia
+@testset "expand_parton" begin
+  @test FeAmGen.expand_parton( String["u","parton"], String["d","g"], String["u","d","g"] ) == String["u,u,d,g", "u,d,d,g", "u,g,d,g"]
 end # @testset
-###########################################
-
-
-
-
-###########################################
+```
+"""
 function expand_parton( 
     inc_str_list::Vector{String}, 
     out_str_list::Vector{String},
@@ -339,6 +354,18 @@ end # function expand_parton
 
 
 ################################################################
+"""
+    sort_proc_str( proc_str::Union{String,Nothing}, n_inc::Int64 )::Union{String,Nothing}
+
+Sort the process string in the lexicographic ordering for the incoming part and outgoing part respectively.
+
+# Examples
+```julia
+@testset "sort_proc_str" begin
+  @test FeAmGen.sort_proc_str( "u,d,g,d,u", 2 ) == "d,u,d,g,u"
+end # @testset
+```
+"""
 function sort_proc_str( proc_str::Union{String,Nothing}, n_inc::Int64 )::Union{String,Nothing}
 ################################################################
   if proc_str == nothing
@@ -357,6 +384,18 @@ end # function sort_proc_str
 
 
 ########################################################################
+"""
+    get_list_quoted_str( str_list::Vector{String} )::String
+
+Convert from a list of string into a string of quoted strings.
+
+# Examples 
+```julia
+@testset "get_list_quoted_str" begin
+  @test FeAmGen.get_list_quoted_str( String["a","b","c"] ) == "[ \"a\",\"b\",\"c\" ]"
+end # @testset
+```
+"""
 function get_list_quoted_str( str_list::Vector{String} )::String
 ########################################################################
 
@@ -367,6 +406,11 @@ end # function get_list_quoted_str
 
 
 ####################################################################################
+"""
+    write_card( proc_str::String, n_inc::Int64, input::Dict{Any,Any} )::Nothing
+
+Generate the YAML input card for the specific process.
+"""
 function write_card( proc_str::String, n_inc::Int64, input::Dict{Any,Any} )::Nothing
 ####################################################################################
 

@@ -344,6 +344,24 @@ end # function gen_mma_str
     gen_mma_str_old( expr::Basic )::String
 
 This is deprecated function for gen_mma_str.
+Mostly the new version has similar efficiency than this old one. 
+
+```julia
+@vars k1, k2, k3, k4, q1, q2
+test_mom = 2*k1+3*k2+k3+5*k4+6*q1+7*q2
+expr = expand(test_mom^3+test_mom)
+
+println( "FeAmGen.gen_mma_str(expr)" )
+@btime FeAmGen.gen_mma_str(expr)
+println( "FeAmGen.gen_mma_str_old(expr)" )
+@btime FeAmGen.gen_mma_str_old(expr)
+```
+
+FeAmGen.gen_mma_str(expr)
+  1.344 ms (2554 allocations: 115.23 KiB)
+FeAmGen.gen_mma_str_old(expr)
+  1.330 ms (2554 allocations: 115.23 KiB)
+
 """
 function gen_mma_str_old( expr::Basic )::String
 ###########################################
