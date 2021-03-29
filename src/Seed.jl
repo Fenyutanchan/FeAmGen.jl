@@ -1,5 +1,11 @@
 
 ##########################################################################
+"""
+    digest_seed_proc( seed_file::String, model_dir::String )::Nothing
+
+Read-in the card for seed process, and write-out the cards for the relevant specific processes.
+This function is one of the front-end functions in FeAmGen.jl.
+"""
 function digest_seed_proc( seed_file::String, model_dir::String )::Nothing
 ##########################################################################
 

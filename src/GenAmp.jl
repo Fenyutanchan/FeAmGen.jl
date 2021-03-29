@@ -1,5 +1,11 @@
 
 ######################################################################
+"""
+    generate_amp( proc_file::String, model_dir::String )::Nothing
+
+Read-in the card for the specific process and produce the relevant amplitude.
+This function is one of the front-end functions in FeAmGen.jl.
+"""
 function generate_amp( proc_file::String, model_dir::String )::Nothing
 ######################################################################
 

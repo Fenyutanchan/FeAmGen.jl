@@ -1,5 +1,10 @@
 
 ############################################################################################
+"""
+    convert_couplingfactor( diagram_index::Int64, couplingfactor::Basic )::String
+
+Convert the `couplingfactor` into a string, which will be used in the generation of tikz-feynman diagram, i.e. the visual graph.
+"""
 function convert_couplingfactor( diagram_index::Int64, couplingfactor::Basic )::String
 ############################################################################################
 
@@ -61,6 +66,11 @@ end # function convert_couplingfactor
 
 
 ########################################################################
+"""
+    convert_color_list( diagram_index::Int64, color_list::Vector{Basic} )::Vector{String}
+
+Convert the `color_list` into a list of strings, which will be used in the generation of tikz-feynman diagram, i.e. the visual graph.
+"""
 function convert_color_list( diagram_index::Int64, color_list::Vector{Basic} )::Vector{String}
 ########################################################################
 
@@ -115,6 +125,11 @@ end # function convert_color_list
 
 
 #####################################################################################################################################
+"""
+    convert_lorentz_list( diagram_index::Int64, lorentz_list::Vector{Basic}, ext_mom_list::Vector{Basic}, scale2_list::Vector{Basic} )::Vector{String}
+
+Convert the `lorentz_list` into a list of strings, which will be used in the generation of tikz-feynman diagram, i.e. the visual graph.
+"""
 function convert_lorentz_list( diagram_index::Int64, lorentz_list::Vector{Basic}, ext_mom_list::Vector{Basic}, scale2_list::Vector{Basic} )::Vector{String}
 #####################################################################################################################################
 

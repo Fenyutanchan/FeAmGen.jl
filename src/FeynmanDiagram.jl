@@ -1,5 +1,10 @@
 
 ################################################################
+"""
+    prepare_qgraf_dat( model::Model, input::Dict{Any,Any} )
+
+Prepare the model file for `QGRAF`.
+"""
 function prepare_qgraf_dat( model::Model, input::Dict{Any,Any} )
 ################################################################
 
@@ -96,6 +101,11 @@ end # function prepare_qgraf_dat
 
 
 #######################################################################
+"""
+    generate_Feynman_diagram( model::Model, input::Dict{Any,Any} )
+
+Interface to generating Feynman diagrams by using `QGRAF`.
+"""
 function generate_Feynman_diagram( model::Model, input::Dict{Any,Any} )
 #######################################################################
 
@@ -122,7 +132,9 @@ end # function generate_Feynman_diagram
 
 ###################################################################################################
 """
-Get the interaction according to the link field name list.
+    get_interaction( field_name_list::Vector{String}, model::Model )::Tuple{Interaction,Int64}
+
+Based on `model.particle_name_dict`, get the interaction according to the link field name list.
 """
 ###################################################################################################
 function get_interaction( field_name_list::Vector{String}, model::Model )::Tuple{Interaction,Int64}
@@ -144,6 +156,11 @@ end # function get_interaction
 
 
 ###########################################################################################################
+"""
+    get_incoming_couplings_lorentz_list( part::Particle, mark::Int64, momentum::Basic )::Vector{Basic}
+
+Produce the Basic expression for the incoming particles, which can be spinors or polarization vectors.
+"""
 function get_incoming_couplings_lorentz_list( part::Particle, mark::Int64, momentum::Basic )::Vector{Basic}
 ###########################################################################################################
 
@@ -163,6 +180,11 @@ end # function get_incoming_couplings_lorentz_list
 
 
 ###########################################################################################################
+"""
+    get_outgoing_couplings_lorentz_list( part::Particle, mark::Int64, momentum::Basic )::Vector{Basic}
+
+Produce the Basic expression for the outgoing particles, which can be spinors or polarization vectors.
+"""
 function get_outgoing_couplings_lorentz_list( part::Particle, mark::Int64, momentum::Basic )::Vector{Basic}
 ###########################################################################################################
 
@@ -182,6 +204,11 @@ end # function get_outgoing_couplings_lorentz_list
 
 
 ##########################################################################################################
+"""
+    get_remnant_couplings_lorentz_list( part::Particle, mark::Int64, momentum::Basic, use_unitary_gauge::Bool )::Vector{Basic}
+
+Produce the Basic expression for the internal/loop propagator particles.
+"""
 function get_remnant_couplings_lorentz_list( part::Particle, mark::Int64, momentum::Basic, use_unitary_gauge::Bool )::Vector{Basic}
 ##########################################################################################################
 
@@ -207,6 +234,11 @@ end # function get_remnant_couplings_lorentz_list
 
 
 ###########################################################################################
+"""
+    edge_from_link_index( vert::ExVertex, link_index::Int64, g::GenericGraph )::ExEdge
+
+Get the ExEdge according to the link_index in the ExVertex `vert` in the GenericGraph `g`.
+"""
 function edge_from_link_index( vert::ExVertex, link_index::Int64, g::GenericGraph )::ExEdge
 ###########################################################################################
 
@@ -220,6 +252,11 @@ end # function edge_from_link_index
 
 
 ###########################################################################################
+"""
+    vertex_from_mark( mark::Int64, g::GenericGraph )::ExVertex
+
+Get the ExVertex according to the `mark` in the GenericGraph `g`.
+"""
 function vertex_from_mark( mark::Int64, g::GenericGraph )::ExVertex
 ###########################################################################################
 
@@ -231,6 +268,11 @@ function vertex_from_mark( mark::Int64, g::GenericGraph )::ExVertex
 end # function vertex_from_mark
 
 ###########################################################################################
+"""
+    vertex_from_label( label::String, g::GenericGraph )::ExVertex
+
+Get the ExVertex according to the `label` in the GenericGraph `g`.
+"""
 function vertex_from_label( label::String, g::GenericGraph )::ExVertex
 ###########################################################################################
 
@@ -244,6 +286,11 @@ end # function vertex_from_label
 
 
 #################################################################################
+"""
+    get_link_color( g::GenericGraph, vert::ExVertex, link_index::Int64, part_list::Vector{Particle} )::Basic
+
+Generate the Basic expression symbol for the color index for the `link_index` in ExVertex `vert` in GenercGraph `g`.
+"""
 function get_link_color( g::GenericGraph, vert::ExVertex, link_index::Int64, part_list::Vector{Particle} )::Basic
 ################################################################################
 
@@ -276,6 +323,11 @@ end # function get_link_color
 
 
 #########################################################################################
+"""
+    translate_color_factor( one_color::Basic, vert::ExVertex, g::GenericGraph, part_list::Vector{Particle} )::Basic
+
+Combine the generic color `one_color` expression with the specific ExVertex `vert`, and produce the color factor for this vertex in this diagram.
+"""
 function translate_color_factor( one_color::Basic, vert::ExVertex, g::GenericGraph, part_list::Vector{Particle} )::Basic
 #########################################################################################
 
@@ -355,6 +407,11 @@ end # function translate_color_factor
 
 
 ######################################################################################
+"""
+    get_link_lorentz( g::GenericGraph, vert::ExVertex, link_index::Int64, part_list::Vector{Particle} )::Basic
+
+Generate the Basic expression symbol for the Lorentz index for the `link_index` in ExVertex `vert` in GenercGraph `g`.
+"""
 function get_link_lorentz( g::GenericGraph, vert::ExVertex, link_index::Int64, part_list::Vector{Particle} )::Basic
 ######################################################################################
 
@@ -387,6 +444,11 @@ end # function get_link_lorentz
 
 
 #######################################################################################
+"""
+    get_link_momentum( g::GenericGraph, vert::ExVertex, link_index::Int64 )::Basic
+
+Generate the Basic expression symbol for the momentum for the `link_index` in ExVertex `vert` in GenercGraph `g`.
+"""
 function get_link_momentum( g::GenericGraph, vert::ExVertex, link_index::Int64 )::Basic
 #######################################################################################
 
@@ -403,6 +465,11 @@ end # function get_link_momentum
 
 
 #####################################################################################
+"""
+    get_link_spinor( g::GenericGraph, vert::ExVertex, link_index::Int64 )::Basic
+
+Generate the Basic expression symbol for the external spinors for the `link_index` in ExVertex `vert` in GenercGraph `g`.
+"""
 function get_link_spinor( g::GenericGraph, vert::ExVertex, link_index::Int64 )::Basic
 #####################################################################################
 
@@ -423,6 +490,11 @@ end # function get_link_spinor
 
 
 ################################################################################################
+"""
+    translate_lorentz_factor( one_lorentz::Basic, vert::ExVertex, g::GenericGraph, part_list::Vector{Particle} )::Basic
+
+Combine the generic Lorentz factor `one_lorentz` expression with the specific ExVertex `vert`, and produce the Lorentz factor for this vertex in this diagram.
+"""
 function translate_lorentz_factor( one_lorentz::Basic, vert::ExVertex, g::GenericGraph, part_list::Vector{Particle} )::Basic
 ################################################################################################
 
@@ -536,6 +608,11 @@ end # function translate_lorentz_factor
 
 
 ###################################################
+"""
+    canonicalize_loop_mom( mom::Basic )::Basic
+
+Canonicalize the loop momenta.
+"""
 function canonicalize_loop_mom( mom::Basic )::Basic
 ###################################################
 
@@ -580,6 +657,11 @@ end # function canonicalize_loop_mom
 
 
 ######################################################################################################
+"""
+    convert_qgraf_TO_Graph( one_qgraf::Dict{Any,Any}, model::Model )::Union{GenericGraph,Nothing}
+
+Convert the diagram read from QGRAF into the GenericGraph in Julia.
+"""
 function convert_qgraf_TO_Graph( one_qgraf::Dict{Any,Any}, model::Model )::Union{GenericGraph,Nothing}
 ######################################################################################################
 
@@ -850,7 +932,9 @@ end # function convert_qgraf_TO_Graph
 
 ###########################################
 """
-tensor_product( x, y )
+    tensor_product( ex_list1::Union{Vector{Basic},Vector{Int64}}, ex_list2::Union{Vector{Basic},Vector{Int64}})::Vector{Basic}
+
+tensor_product( x, y ): 
 x and y are two string lists/arrays.
 This function calculate the tensor production of two arrays.
 """
@@ -872,6 +956,8 @@ end # function tensor_product
 
 ###################################################################
 """
+    assemble_amplitude( g::GenericGraph )::Tuple{Vector{Basic},Vector{Basic}}
+
 Now this graph can be evaluated according to the values of the propagators and vertices.
 """
 function assemble_amplitude( g::GenericGraph )::Tuple{Vector{Basic},Vector{Basic}}
@@ -900,6 +986,11 @@ end # function assemble_amplitude
 
 
 ###############################################################
+"""
+    generate_scale2_list( g::GenericGraph, kin_relation::Dict{Basic,Basic} )::Vector{Basic}
+
+Collect all the symbols that are the squares of scales.
+"""
 function generate_scale2_list( g::GenericGraph, kin_relation::Dict{Basic,Basic} )::Vector{Basic}
 ###############################################################
 
@@ -953,6 +1044,11 @@ end # function generate_scale2_list
 
 
 ##############################################################################################################################
+"""
+    factor_out_loop_den( g::GenericGraph, lorentz_list::Vector{Basic} )::Tuple{Vector{Basic},Vector{Basic},Vector{Int64}}
+
+Factorize out the loop propagator denominators, so that the `lorentz_list` can become shorter. And then they can be handled separately.
+"""
 function factor_out_loop_den( g::GenericGraph, lorentz_list::Vector{Basic} )::Tuple{Vector{Basic},Vector{Basic},Vector{Int64}}
 ##############################################################################################################################
 
@@ -1003,6 +1099,11 @@ end # function factor_out_loop_den
 
 
 ##################################################################################
+"""
+    contract_Dirac_indices( g::GenericGraph, lorentz_expr_list::Vector{Basic} )::Vector{Basic}
+
+Contract the Dirac indices in the `lorentz_expr_list` by using FORM scripts.
+"""
 function contract_Dirac_indices( g::GenericGraph, lorentz_expr_list::Vector{Basic} )::Vector{Basic}
 ##################################################################################
 
@@ -1045,6 +1146,11 @@ end # function contract_Dirac_indices
 
 
 ##################################################################################
+"""
+    contract_Dirac_indices_noexpand( g::GenericGraph, lorentz_expr_list::Vector{Basic} )::Vector{Basic}
+
+Contract the Dirac indices in the `lorentz_expr_list` by using FORM scripts, but do not expand the amplitudes.
+"""
 function contract_Dirac_indices_noexpand( g::GenericGraph, lorentz_expr_list::Vector{Basic} )::Vector{Basic}
 ##################################################################################
 
@@ -1083,6 +1189,11 @@ end # function contract_Dirac_indices_noexpand
 
 
 #####################################################################################################################################
+"""
+    check_consistency( diagram_index::Int64, lorentz_list::Vector{Basic}, lorentz_noexpand_list::Vector{Basic}, ext_mom_list::Vector{Basic}, kin_relation::Dict{Basic,Basic} )::Nothing
+
+Check if the contraction for the amplitude can be consistent with the results obtained from the Mathematica script.
+"""
 function check_consistency( diagram_index::Int64, lorentz_list::Vector{Basic}, lorentz_noexpand_list::Vector{Basic}, 
                             ext_mom_list::Vector{Basic}, kin_relation::Dict{Basic,Basic} )::Nothing
 #####################################################################################################################################
@@ -1284,6 +1395,11 @@ end # function check_consistency
 
 
 ###################################################################################################
+"""
+    simplify_color_factors( g::GenericGraph, color_factor_list::Vector{Basic} )::Vector{Basic}
+
+Simplify the color factors by using FORM scripts.
+"""
 function simplify_color_factors( g::GenericGraph, color_factor_list::Vector{Basic} )::Vector{Basic}
 ###################################################################################################
 
@@ -1319,6 +1435,11 @@ end # function simplify_color_factors
 
 
 ###########################################################################################################
+"""
+    write_out_amplitude( n_loop::Int64, diagram_index::Int64, couplingfactor::Basic, parameter_dict::Dict{Basic,Basic}, ext_mom_list::Vector{Basic}, scale2_list::Vector{Basic}, kin_relation::Dict{Basic,Basic}, baseINC_script_str::String, amp_color_list::Vector{Basic}, amp_lorentz_list::Vector{Basic}, loop_den_list::Vector{Basic}, loop_den_xpt_list::Vector{Int64}, min_eps_xpt::Int64, max_eps_xpt::Int64, the_lock::ReentrantLock )::Nothing
+
+Write out the amplitude information into the file that can be read easily.
+"""
 function write_out_amplitude( n_loop::Int64, diagram_index::Int64, couplingfactor::Basic, parameter_dict::Dict{Basic,Basic}, 
     ext_mom_list::Vector{Basic}, scale2_list::Vector{Basic}, kin_relation::Dict{Basic,Basic}, baseINC_script_str::String, 
     amp_color_list::Vector{Basic}, amp_lorentz_list::Vector{Basic}, 
@@ -1400,6 +1521,11 @@ function write_out_amplitude( n_loop::Int64, diagram_index::Int64, couplingfacto
 end # function write_out_amplitude
 
 #########################################################################
+"""
+    write_out_visual_graph( g::GenericGraph, model::Model, couplingfactor::Basic, color_list::Vector{Basic}, lorentz_list::Vector{Basic}, ext_mom_list::Vector{Basic}, scale2_list::Vector{Basic} )::Nothing
+
+Write out the diagrams into the file that can be complied or read easily.
+"""
 function write_out_visual_graph( g::GenericGraph, model::Model, 
     couplingfactor::Basic, color_list::Vector{Basic}, lorentz_list::Vector{Basic},
     ext_mom_list::Vector{Basic}, scale2_list::Vector{Basic} )::Nothing
@@ -1458,6 +1584,11 @@ end # function write_out_visual_graph
 
 
 ##########################################################################
+"""
+    generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
+
+Generate amplitudes after `model` has been prepared.
+"""
 function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
 ##########################################################################
 

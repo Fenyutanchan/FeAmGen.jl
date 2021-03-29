@@ -1,43 +1,52 @@
 
-
 #####################################################
+"""
+    get_line_style_str( part::Particle )::String `(used only in generate_visual_graph)`
+
+Explain the particle as a string in the relevant propagator.
+"""
 function get_line_style_str( part::Particle )::String
 #####################################################
 
- if part.spin == :scalar 
-   if is_not_majorana(part) && part.kf > 0 
-     return "charged scalar"
-   elseif is_not_majorana(part) && part.kf < 0 
-     return "anti charged scalar"
-   else
-     return "scalar"
-   end # if
- elseif part.spin == :fermion 
-   if is_not_majorana(part) && part.kf > 0 
-     return "fermion"
-   elseif is_not_majorana(part) && part.kf < 0 
-     return "anti fermion"
-   else
-     return "majorana"
-   end # if
- elseif part.spin == :vector
-   if is_gluon(part) 
-     return "gluon"
-   else
-     return "boson"
-   end # if
- elseif part.spin == :ghost 
-   return "ghost"
- else
-   printstyled( "Spin exception!\n" )
-   exit()
- end # if
+  if part.spin == :scalar 
+    if is_not_majorana(part) && part.kf > 0 
+      return "charged scalar"
+    elseif is_not_majorana(part) && part.kf < 0 
+      return "anti charged scalar"
+    else
+      return "scalar"
+    end # if
+  elseif part.spin == :fermion 
+    if is_not_majorana(part) && part.kf > 0 
+      return "fermion"
+    elseif is_not_majorana(part) && part.kf < 0 
+      return "anti fermion"
+    else
+      return "majorana"
+    end # if
+  elseif part.spin == :vector
+    if is_gluon(part) 
+      return "gluon"
+    else
+      return "boson"
+    end # if
+  elseif part.spin == :ghost 
+    return "ghost"
+  else
+    printstyled( "Spin exception!\n" )
+    exit()
+  end # if
 
 end # function get_line_style_str
 
 
 
 #######################################################################
+"""
+    generate_visual_graph( g::GenericGraph, model::Model )::String
+
+Generate the string representing the relevant graph `g` in the tizk-feynamn syntax.
+"""
 function generate_visual_graph( g::GenericGraph, model::Model )::String
 #######################################################################
 

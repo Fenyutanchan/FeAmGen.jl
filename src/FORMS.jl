@@ -1,6 +1,11 @@
 
 
 #########################################
+"""
+    make_contractor_script()::String
+
+Prepare the FORM script including the generic functions for the amplitude contraction.
+"""
 function make_contractor_script()::String
 #########################################
   result_str = """
@@ -817,6 +822,11 @@ end # function make_contractor_script
 
 
 ############################################################################################
+"""
+    make_baseINC_script( graph::GenericGraph, gauge_choice::Dict{Basic,Basic} )::String
+
+Prepare the baseINC script for containing kinematic relations.
+"""
 function make_baseINC_script( graph::GenericGraph, gauge_choice::Dict{Basic,Basic} )::String
 ############################################################################################
 
@@ -954,6 +964,11 @@ end # function make_baseINC_script
 
 
 ##############################################################################
+"""
+    make_amp_contraction_script( expr::Basic, file_name::String )::String
+
+Prepare the FORM script for the amplitude contraction.
+"""
 function make_amp_contraction_script( expr::Basic, file_name::String )::String
 ##############################################################################
 
@@ -1044,6 +1059,11 @@ end # function make_amp_contraction_script
 
 
 ##############################################################################
+"""
+    make_amp_contraction_noexpand_script( expr::Basic, file_name::String )::String
+
+Prepare the FORM script for the amplitude contraction, but do not do the expansion for the amplitude.
+"""
 function make_amp_contraction_noexpand_script( expr::Basic, file_name::String )::String
 ##############################################################################
 
@@ -1148,6 +1168,11 @@ end # function make_amp_contraction_noexpand_script
 
 
 #########################################
+"""
+    make_color_script()::String
+
+Prepare the FORM script including generic function for the calculation of color factors.
+"""
 function make_color_script()::String
 #########################################
 
@@ -1297,6 +1322,11 @@ end # function make_color_script
 
 
 ############################################################################################
+"""
+    make_simplify_color_factor_script( color_factor::Basic, file_name::String )::String
+
+Specifically calculate the color factor `color_factor`.
+"""
 function make_simplify_color_factor_script( color_factor::Basic, file_name::String )::String
 ############################################################################################
 
