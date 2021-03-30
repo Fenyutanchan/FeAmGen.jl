@@ -860,9 +860,9 @@ function convert_qgraf_TO_Graph( one_qgraf::Dict{Any,Any}, model::Model )::Union
     momentum = sign(field_part.kf)*Basic(one_rem["momentum"])
 
     style_str = findfirst("q",one_rem["momentum"]) == nothing ? "Internal" : "Loop"
-    if style_str == "Loop"
-      momentum = canonicalize_loop_mom(momentum)
-    end # if
+##  if style_str == "Loop"
+##    momentum = canonicalize_loop_mom(momentum)
+##  end # if
 
     id_color_dict = Dict( :triplet => [ Basic(" DeltaFun(clb$mark,cla$mark) ") ], 
                           :octet   => [ Basic(" DeltaAdj(clb$mark,cla$mark) ") ],
