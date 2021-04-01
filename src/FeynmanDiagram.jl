@@ -1603,17 +1603,23 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
 
   #------------------------------------------------  
   # Convert qgraf to GenericGraph
-  graph_set = Set{GenericGraph}()
-  for one_qgraf in qgraf_list 
+  graph_list = @pipe qgraf_list |> 
+               map( q -> convert_qgraf_TO_Graph( q, model ), _ ) |>
+               filter( !isnothing, _ ) |>
+               sort( _, by= g->vertex_from_label("graph property",g).attributes["diagram_index"] )
+  #------------------------------------------------  
+# # Convert qgraf to GenericGraph
+# graph_set = Set{GenericGraph}()
+# for one_qgraf in qgraf_list 
 
-    g = convert_qgraf_TO_Graph( one_qgraf, model )
-    if g == nothing 
-      continue
-    end # if
+#   g = convert_qgraf_TO_Graph( one_qgraf, model )
+#   if g == nothing 
+#     continue
+#   end # if
 
-    push!( graph_set, g )
-  end # for one_qgraf
-  graph_list = sort( collect( graph_set ), by= g_->vertex_from_label("graph property",g_).attributes["diagram_index"] )
+#   push!( graph_set, g )
+# end # for one_qgraf
+# graph_list = sort( collect( graph_set ), by= g_->vertex_from_label("graph property",g_).attributes["diagram_index"] )
 
 
   #------------------------------------------------  
@@ -1622,7 +1628,8 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
   # Generate kinematics relation
   kin_relation = generate_kin_relation( graph_list )
   file = open( "kin_relation.frm", "w" )
-  write( file, join( map( ele_->"id $(ele_[1]) = $(ele_[2]);", collect(kin_relation) ), "\n" ) )
+  write( file, (join∘map)( ele_->"id $(ele_[1]) = $(ele_[2]);\n", collect(kin_relation) ) )
+  #write( file, join( map( ele_->"id $(ele_[1]) = $(ele_[2]);", collect(kin_relation) ), "\n" ) )
   close(file)
 
   ext_mom_list  = generate_ext_mom_list( graph_list )
