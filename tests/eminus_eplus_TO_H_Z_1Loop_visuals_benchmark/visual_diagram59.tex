@@ -1,0 +1,230 @@
+\documentclass{revtex4}
+\usepackage{tikz-feynman}
+\usepackage{rotating}
+\usepackage{breqn}
+
+\begin{document}
+
+\begin{figure}[!htb] 
+\begin{center} 
+\feynmandiagram [large] { 
+  %vertex [0] "graph property" 
+    %sign => 1 
+    %n_out => 2 
+    %diagram_index => 59 
+    %style =>  
+    %n_inc => 2 
+    %mark => 0 
+    %symmetry_factor => 1 
+  %edge [1]: vertex [1] "v1" -- vertex [5] "v5" 
+    %birth_COLOR => cla1 
+    %particle => FeAmGen.Particle(11, "eminus", "eplus", :fermion, :singlet, -1//1, 0, 0) 
+    %death_LORENTZ => mub1 
+    %couplings_lorentz_list => Basic[SpU(1, spb1, k1, r1, 0)] 
+    %momentum => k1 
+    %mark => 1 
+    %color_list => Basic[1] 
+    %null_MOM => k1 
+    %death_COLOR => clb1 
+    %propagator_index => -1 
+    %birth_LORENTZ => mua1 
+    %ref2_MOM => r1 
+    %death_SPINOR => spb1 
+    %style => External 
+    %birth_SPINOR => spa1 
+  %edge [2]: vertex [2] "v2" -- vertex [5] "v5" 
+    %birth_COLOR => cla2 
+    %particle => FeAmGen.Particle(-11, "eplus", "eminus", :fermion, :singlet, 1//1, 0, 0) 
+    %death_LORENTZ => mub2 
+    %couplings_lorentz_list => Basic[SpVB(2, spb2, k2, r2, 0)] 
+    %momentum => k2 
+    %mark => 2 
+    %color_list => Basic[1] 
+    %null_MOM => k2 
+    %death_COLOR => clb2 
+    %propagator_index => -3 
+    %birth_LORENTZ => mua2 
+    %ref2_MOM => r2 
+    %death_SPINOR => spb2 
+    %style => External 
+    %birth_SPINOR => spa2 
+  %edge [3]: vertex [6] "v6" -- vertex [3] "v3" 
+    %birth_COLOR => cla3 
+    %particle => FeAmGen.Particle(25, "H", "H", :scalar, :singlet, 0//1, mh, wh) 
+    %death_LORENTZ => mub3 
+    %couplings_lorentz_list => Basic[1] 
+    %momentum => K3 
+    %mark => 3 
+    %color_list => Basic[1] 
+    %null_MOM => k3 
+    %death_COLOR => clb3 
+    %propagator_index => -2 
+    %birth_LORENTZ => mua3 
+    %ref2_MOM => r3 
+    %death_SPINOR => spb3 
+    %style => External 
+    %birth_SPINOR => spa3 
+  %edge [4]: vertex [6] "v6" -- vertex [4] "v4" 
+    %birth_COLOR => cla4 
+    %particle => FeAmGen.Particle(23, "Z", "Z", :vector, :singlet, 0//1, mz, wz) 
+    %death_LORENTZ => mub4 
+    %couplings_lorentz_list => Basic[VecEpsC(4, mua4, K4, r4, mz)] 
+    %momentum => K4 
+    %mark => 4 
+    %color_list => Basic[1] 
+    %null_MOM => k4 
+    %death_COLOR => clb4 
+    %propagator_index => -4 
+    %birth_LORENTZ => mua4 
+    %ref2_MOM => r4 
+    %death_SPINOR => spb4 
+    %style => External 
+    %birth_SPINOR => spa4 
+  %edge [5]: vertex [7] "v7" -- vertex [5] "v5" 
+    %birth_COLOR => cla5 
+    %particle => FeAmGen.Particle(23, "Z", "Z", :vector, :singlet, 0//1, mz, wz) 
+    %death_LORENTZ => mub5 
+    %couplings_lorentz_list => Basic[-im*LMT(mua5, mub5)*Den(-k1 - k2, mz, wz)] 
+    %momentum => -k1 - k2 
+    %mark => 5 
+    %color_list => Basic[1] 
+    %null_MOM => 0 
+    %death_COLOR => clb5 
+    %propagator_index => 1 
+    %birth_LORENTZ => mua5 
+    %ref2_MOM => 0 
+    %death_SPINOR => spb5 
+    %style => Internal 
+    %birth_SPINOR => spa5 
+  %edge [6]: vertex [8] "v8" -- vertex [6] "v6" 
+    %birth_COLOR => cla6 
+    %particle => FeAmGen.Particle(23, "Z", "Z", :vector, :singlet, 0//1, mz, wz) 
+    %death_LORENTZ => mub6 
+    %couplings_lorentz_list => Basic[-im*LMT(mua6, mub6)*Den(K3 + K4, mz, wz)] 
+    %momentum => K3 + K4 
+    %mark => 6 
+    %color_list => Basic[1] 
+    %null_MOM => 0 
+    %death_COLOR => clb6 
+    %propagator_index => 2 
+    %birth_LORENTZ => mua6 
+    %ref2_MOM => 0 
+    %death_SPINOR => spb6 
+    %style => Internal 
+    %birth_SPINOR => spa6 
+  %edge [7]: vertex [8] "v8" -- vertex [7] "v7" 
+    %birth_COLOR => cla7 
+    %particle => FeAmGen.Particle(251, "Gplus", "Gminus", :scalar, :singlet, 1//1, mw, ww) 
+    %death_LORENTZ => mub7 
+    %couplings_lorentz_list => Basic[im*Den(-k1 - k2 + q1, mw, ww)] 
+    %momentum => -k1 - k2 + q1 
+    %mark => 7 
+    %color_list => Basic[1] 
+    %null_MOM => 0 
+    %death_COLOR => clb7 
+    %propagator_index => 3 
+    %birth_LORENTZ => mua7 
+    %ref2_MOM => 0 
+    %death_SPINOR => spb7 
+    %style => Loop 
+    %birth_SPINOR => spa7 
+  %edge [8]: vertex [7] "v7" -- vertex [8] "v8" 
+    %birth_COLOR => cla8 
+    %particle => FeAmGen.Particle(251, "Gplus", "Gminus", :scalar, :singlet, 1//1, mw, ww) 
+    %death_LORENTZ => mub8 
+    %couplings_lorentz_list => Basic[im*Den(q1, mw, ww)] 
+    %momentum => q1 
+    %mark => 8 
+    %color_list => Basic[1] 
+    %null_MOM => 0 
+    %death_COLOR => clb8 
+    %propagator_index => 4 
+    %birth_LORENTZ => mua8 
+    %ref2_MOM => 0 
+    %death_SPINOR => spb8 
+    %style => Loop 
+    %birth_SPINOR => spa8 
+  %vertex [0] "graph property" 
+    %sign => 1 
+    %n_out => 2 
+    %diagram_index => 59 
+    %style =>  
+    %n_inc => 2 
+    %mark => 0 
+    %symmetry_factor => 1 
+  %vertex [1] "v1" 
+    %QCDct_order => 0 
+    %couplings_lorentz_list => [1] 
+    %style => External 
+    %interaction => nothing 
+    %mark => 1 
+    %color_list => [1] 
+  %vertex [2] "v2" 
+    %QCDct_order => 0 
+    %couplings_lorentz_list => [1] 
+    %style => External 
+    %interaction => nothing 
+    %mark => 2 
+    %color_list => [1] 
+  %vertex [3] "v3" 
+    %QCDct_order => 0 
+    %couplings_lorentz_list => [1] 
+    %style => External 
+    %interaction => nothing 
+    %mark => 3 
+    %color_list => [1] 
+  %vertex [4] "v4" 
+    %QCDct_order => 0 
+    %couplings_lorentz_list => [1] 
+    %style => External 
+    %interaction => nothing 
+    %mark => 4 
+    %color_list => [1] 
+  %vertex [5] "v5" 
+    %QCDct_order => 0 
+    %couplings_lorentz_list => Basic[(GAij(spb2, spv501, mub5)*PLij(spv501, spb1) + 2*GAij(spb2, spv501, mub5)*PRij(spv501, spb1))*gcsub59 + gcsub50*GAij(spb2, spv501, mub5)*PLij(spv501, spb1)] 
+    %style => Internal 
+    %interaction => FeAmGen.Interaction("V_107", FeAmGen.Particle[FeAmGen.Particle(11, "eminus", "eplus", :fermion, :singlet, -1//1, 0, 0), FeAmGen.Particle(-11, "eplus", "eminus", :fermion, :singlet, 1//1, 0, 0), FeAmGen.Particle(23, "Z", "Z", :vector, :singlet, 0//1, mz, wz)], Basic[1], Basic[ProjM(-1, 1)*Gamma(3, 2, -1), ProjM(-1, 1)*Gamma(3, 2, -1) + 2*ProjP(-1, 1)*Gamma(3, 2, -1)], Basic[gcsub50 gcsub59], 0, 1) 
+    %mark => 5 
+    %propagator_index_list => [-1, -3, 1] 
+    %color_list => Basic[1] 
+  %vertex [6] "v6" 
+    %QCDct_order => 0 
+    %couplings_lorentz_list => Basic[LMT(mua4, mub6)*gcsub81] 
+    %style => Internal 
+    %interaction => FeAmGen.Interaction("V_69", FeAmGen.Particle[FeAmGen.Particle(23, "Z", "Z", :vector, :singlet, 0//1, mz, wz), FeAmGen.Particle(23, "Z", "Z", :vector, :singlet, 0//1, mz, wz), FeAmGen.Particle(25, "H", "H", :scalar, :singlet, 0//1, mh, wh)], Basic[1], Basic[Metric(1, 2)], Basic[gcsub81], 0, 1) 
+    %mark => 6 
+    %propagator_index_list => [-4, 2, -2] 
+    %color_list => Basic[1] 
+  %vertex [7] "v7" 
+    %QCDct_order => 0 
+    %couplings_lorentz_list => Basic[gcsub61*(-FV(q1, mua5) + FV(-(-k1 - k2 + q1), mua5))] 
+    %style => Internal 
+    %interaction => FeAmGen.Interaction("V_58", FeAmGen.Particle[FeAmGen.Particle(23, "Z", "Z", :vector, :singlet, 0//1, mz, wz), FeAmGen.Particle(251, "Gplus", "Gminus", :scalar, :singlet, 1//1, mw, ww), FeAmGen.Particle(-251, "Gminus", "Gplus", :scalar, :singlet, -1//1, mw, ww)], Basic[1], Basic[P(1, 2) - P(1, 3)], Basic[gcsub61], 0, 1) 
+    %mark => 7 
+    %propagator_index_list => [1, 3, 4] 
+    %color_list => Basic[1] 
+  %vertex [8] "v8" 
+    %QCDct_order => 0 
+    %couplings_lorentz_list => Basic[gcsub61*(FV(-q1, mua6) - FV(-k1 - k2 + q1, mua6))] 
+    %style => Internal 
+    %interaction => FeAmGen.Interaction("V_58", FeAmGen.Particle[FeAmGen.Particle(23, "Z", "Z", :vector, :singlet, 0//1, mz, wz), FeAmGen.Particle(251, "Gplus", "Gminus", :scalar, :singlet, 1//1, mw, ww), FeAmGen.Particle(-251, "Gminus", "Gplus", :scalar, :singlet, -1//1, mw, ww)], Basic[1], Basic[P(1, 2) - P(1, 3)], Basic[gcsub61], 0, 1) 
+    %mark => 8 
+    %propagator_index_list => [2, 4, 3] 
+    %color_list => Basic[1] 
+v1 [particle = \(1\)] -- [fermion, edge label' = \(e^{-}\), momentum = \(k_{1}\) ] v5, 
+v2 [particle = \(2\)] -- [anti fermion, edge label' = \(e^{+}\), momentum = \(k_{2}\) ] v5, 
+v6 -- [scalar, edge label' = \(H\), momentum = \(K_{3}\) ] v3 [particle = \(3\)], 
+v6 -- [boson, edge label' = \(Z\), momentum = \(K_{4}\) ] v4 [particle = \(4\)], 
+v7 -- [boson, edge label' = \(Z\), momentum = \(-k_{1} - k_{2}\) ] v5, 
+v8 -- [boson, edge label' = \(Z\), momentum = \(K_{3} + K_{4}\) ] v6, 
+v8 -- [charged scalar, half right, edge label' = \(G^{+}\), momentum = \(-k_{1} - k_{2} + q_{1}\) ] v7, 
+v7 -- [charged scalar, half right, edge label' = \(G^{+}\), momentum = \(q_{1}\) ] v8, 
+};
+\end{center}
+\caption{Diagram59, Sign: 1, Symmetry factor: 1}
+\end{figure}
+\newpage
+
+\end{document} 
+
