@@ -1496,6 +1496,7 @@ function write_out_visual_graph( g::GenericGraph, model::Model,
   diagram_index = vertex_from_label("graph property",g).attributes["diagram_index"]
 
   graph_str = generate_visual_graph( g, model )
+  graph_str = replace( graph_str, "SymEngine.Basic"=>"Basic" )
 
   couplingfactor_str = convert_couplingfactor( diagram_index, couplingfactor )
   color_str_list = convert_color_list( diagram_index, color_list )
@@ -1658,7 +1659,7 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
 
     write_out_visual_graph( g, model, couplingfactor, amp_color_list, amp_lorentz_noexpand_list, ext_mom_list, scale2_list, proc_str )
 
-    check_consistency( diagram_index, amp_lorentz_list, amp_lorentz_noexpand_list, ext_mom_list, kin_relation )
+    #check_consistency( diagram_index, amp_lorentz_list, amp_lorentz_noexpand_list, ext_mom_list, kin_relation )
 
   end # for g
   now()
