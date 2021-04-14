@@ -939,8 +939,8 @@ function make_baseINC_script( graph::GenericGraph, gauge_choice::Dict{Basic,Basi
   result_str *= 
     ";\n"*
     "id FV(mom?,rho?)*VecEpsilon?{VecEps,VecEpsC}(int?,rho?,mom?,ref?,mass?) = 0;\n"*
-    "\n"*
-    "***Gauge Choice: $(gauge_choice) \n"
+    "\n"
+    #"***Gauge Choice: $(gauge_choice) \n"
 
   
   for one_edge in sorted_ext_edge_list

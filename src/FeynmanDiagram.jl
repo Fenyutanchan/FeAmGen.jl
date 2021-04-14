@@ -1339,9 +1339,9 @@ Close[stream];
     @assert length(result_str) < 4
     @assert Basic(result_str) == 0
   
-    #rm( file_name*".m" )
+    rm( file_name*".m" )
     rm( file_name*".log" )
-    #rm( file_name*".out" )
+    rm( file_name*".out" )
 
   end # for lorentz_index
 
