@@ -64,14 +64,14 @@ function digest_seed_proc( seed_file::String, model_dir::String )::Nothing
 
 
   #----------------------------------------------------------------------------------------------
-  parton_proc_str = join( [ input["incoming"]; "TO"; input["outgoing"] ], "_" )
+  parton_proc_str = join( [ input["incoming"]; "TO"; input["outgoing"]; "$(input["n_loop"])Loop" ], "_" )
   if isdir( parton_proc_str ) == true
     rm( parton_proc_str, recursive=true )
   end # if
   mkdir( parton_proc_str )
   cd( parton_proc_str ) 
 
-  printstyled( "[ Generate subprocesses cards in ", parton_proc_str, " ]\u264e\n", color=:green, bold=true )
+  printstyled( "[ Generate subprocesses cards in $(parton_proc_str) ]\u264e\n", color=:green, bold=true )
   for proc_str in proc_set 
     write_card( proc_str, n_inc, input )
   end # for proc_str

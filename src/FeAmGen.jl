@@ -39,9 +39,6 @@ include("GenAmp.jl")
 ###################
 function __init__()
 ###################
-
-  #show_welcome_message()
-
   return nothing
 end # function __init__
 

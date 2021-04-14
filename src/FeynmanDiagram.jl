@@ -607,50 +607,6 @@ end # function translate_lorentz_factor
 
 
 
-###################################################
-"""
-    canonicalize_loop_mom( mom::Basic )::Basic
-
-Canonicalize the loop momenta.
-"""
-function canonicalize_loop_mom( mom::Basic )::Basic
-###################################################
-
-  @vars q1, q2, q3
-
-  q1_coeff = coeff(mom,q1)
-  if q1_coeff == Basic(1)
-    return mom
-  end # if
-  if q1_coeff == Basic(-1)
-    return expand(-mom)
-  end # if
-
-  @assert q1_coeff == 0
-  q2_coeff = coeff(mom,q2)
-  if q2_coeff == Basic(1)
-    return mom
-  end # if
-  if q2_coeff == Basic(-1)
-    return expand(-mom)
-  end # if
-
-  @assert q2_coeff == 0
-  q3_coeff = coeff(mom,q3)
-  if q3_coeff == Basic(1)
-    return mom
-  end # if
-  if q3_coeff == Basic(-1)
-    return expand(-mom)
-  end # if
-
-  error( "This should not happen! mom is $(mom)" )
-
-  return mom
-
-end # function canonicalize_loop_mom
-
-
 
 
 
@@ -667,11 +623,15 @@ function convert_qgraf_TO_Graph( one_qgraf::Dict{Any,Any}, model::Model )::Union
 
   # Check if there is CT vertex and if the QCDct field is properly used for CT graphs.
   # QCDct1 and QCDct2 should have same end-points as designed.
-  QCDct_propagators = filter( p_ -> p_["field"] in ["QCDct1","QCDct2"], one_qgraf["remnant_propagators"] )
-  invalid_propagator_pos = findfirst( p_ -> p_["birth_index"] != p_["death_index"], QCDct_propagators )
-  if invalid_propagator_pos != nothing 
-    printstyled( "Found one invalid diagram!\n", color=:red )
-    return nothing
+  # It is possible that the diagram does not have any remnant propagator.
+  QCDct_propagators = Dict{Any,Any}[]
+  if !isnothing( one_qgraf["remnant_propagators"] )
+    QCDct_propagators::Array{Dict{Any,Any},1} = filter( p_ -> p_["field"] in ["QCDct1","QCDct2"], one_qgraf["remnant_propagators"] )
+    invalid_propagator_pos = findfirst( p_ -> p_["birth_index"] != p_["death_index"], QCDct_propagators )
+    if !isnothing( invalid_propagator_pos ) 
+      printstyled( "Found one invalid diagram!\n", color=:red )
+      return nothing
+    end # if
   end # if
 
   g = graph( ExVertex[], ExEdge[] )  
@@ -842,8 +802,12 @@ function convert_qgraf_TO_Graph( one_qgraf::Dict{Any,Any}, model::Model )::Union
 
 
   # Filter out the "QCDct1" and "QCDct2" propagators.
-  qgraf_remnant_propagators = one_qgraf["remnant_propagators"]
-  true_remnant_propagators = filter( rem_ -> (rem_["field"] in ["QCDct1","QCDct2"]) == false, qgraf_remnant_propagators )
+  # It is possible that the diagram does not have any remnant propagator.
+  true_remnant_propagators = Dict{Any,Any}[]
+  if !isnothing( one_qgraf["remnant_propagators"] )
+    qgraf_remnant_propagators = one_qgraf["remnant_propagators"]
+    true_remnant_propagators::Array{Dict{Any,Any},1} = filter( rem_ -> (rem_["field"] in ["QCDct1","QCDct2"]) == false, qgraf_remnant_propagators )
+  end # if
   # Add internal and loop propagators.
   for one_rem in true_remnant_propagators
     mark = one_rem["propagator_index"]+n_inc+n_out
@@ -860,9 +824,6 @@ function convert_qgraf_TO_Graph( one_qgraf::Dict{Any,Any}, model::Model )::Union
     momentum = sign(field_part.kf)*Basic(one_rem["momentum"])
 
     style_str = findfirst("q",one_rem["momentum"]) == nothing ? "Internal" : "Loop"
-##  if style_str == "Loop"
-##    momentum = canonicalize_loop_mom(momentum)
-##  end # if
 
     id_color_dict = Dict( :triplet => [ Basic(" DeltaFun(clb$mark,cla$mark) ") ], 
                           :octet   => [ Basic(" DeltaAdj(clb$mark,cla$mark) ") ],
@@ -1373,9 +1334,10 @@ Close[stream];
     file = open( file_name*".out", "r" )
     result_str = replace( read( file, String ), r"\s"=>"" )
     close(file)
-    printstyled( "  $(file_name).out has length $(length(result_str))\n", color=:red )
+    #printstyled( "  $(file_name).out has length $(length(result_str))\n", color=:red )
 
-    #@assert Basic(result_str) == 0
+    @assert length(result_str) < 4
+    @assert Basic(result_str) == 0
   
     #rm( file_name*".m" )
     rm( file_name*".log" )
@@ -1436,7 +1398,7 @@ end # function simplify_color_factors
 
 ###########################################################################################################
 """
-    write_out_amplitude( n_loop::Int64, diagram_index::Int64, couplingfactor::Basic, parameter_dict::Dict{Basic,Basic}, ext_mom_list::Vector{Basic}, scale2_list::Vector{Basic}, kin_relation::Dict{Basic,Basic}, baseINC_script_str::String, amp_color_list::Vector{Basic}, amp_lorentz_list::Vector{Basic}, loop_den_list::Vector{Basic}, loop_den_xpt_list::Vector{Int64}, min_eps_xpt::Int64, max_eps_xpt::Int64, the_lock::ReentrantLock )::Nothing
+    write_out_amplitude( n_loop::Int64, diagram_index::Int64, couplingfactor::Basic, parameter_dict::Dict{Basic,Basic}, ext_mom_list::Vector{Basic}, scale2_list::Vector{Basic}, kin_relation::Dict{Basic,Basic}, baseINC_script_str::String, amp_color_list::Vector{Basic}, amp_lorentz_list::Vector{Basic}, loop_den_list::Vector{Basic}, loop_den_xpt_list::Vector{Int64}, min_eps_xpt::Int64, max_eps_xpt::Int64, proc_str::String, the_lock::ReentrantLock )::Nothing
 
 Write out the amplitude information into the file that can be read easily.
 """
@@ -1444,12 +1406,12 @@ function write_out_amplitude( n_loop::Int64, diagram_index::Int64, couplingfacto
     ext_mom_list::Vector{Basic}, scale2_list::Vector{Basic}, kin_relation::Dict{Basic,Basic}, baseINC_script_str::String, 
     amp_color_list::Vector{Basic}, amp_lorentz_list::Vector{Basic}, 
     loop_den_list::Vector{Basic}, loop_den_xpt_list::Vector{Int64},
-    min_eps_xpt::Int64, max_eps_xpt::Int64, the_lock::ReentrantLock )::Nothing
+    min_eps_xpt::Int64, max_eps_xpt::Int64, proc_str::String, the_lock::ReentrantLock )::Nothing
 ###########################################################################################################
 
 
   printstyled( "[ Generate amplitude_diagram$(diagram_index).out ]\u264e\n", color=:green, bold=true )
-  amp_file = open( "amplitudes/amplitude_diagram$(diagram_index).out", "w" )
+  amp_file = open( "$(proc_str)_amplitudes/amplitude_diagram$(diagram_index).out", "w" )
   write( amp_file, 
     "n_loop: $(n_loop)\n"*
     "couplingfactor: $(couplingfactor)\n"*
@@ -1496,11 +1458,11 @@ function write_out_amplitude( n_loop::Int64, diagram_index::Int64, couplingfacto
 
   close( amp_file )
 
-  if isfile( "amplitudes/amplitude_diagram$(diagram_index).jld" )
-    rm( "amplitudes/amplitude_diagram$(diagram_index).jld" )
+  if isfile( "$(proc_str)_amplitudes/amplitude_diagram$(diagram_index).jld" )
+    rm( "$(proc_str)_amplitudes/amplitude_diagram$(diagram_index).jld" )
   end # if
 
-  jldopen( "amplitudes/amplitude_diagram$(diagram_index).jld", "w" ) do file 
+  jldopen( "$(proc_str)_amplitudes/amplitude_diagram$(diagram_index).jld", "w" ) do file 
     write( file, "n_loop", n_loop )
     write( file, "min_eps_xpt", min_eps_xpt )
     write( file, "max_eps_xpt", max_eps_xpt )
@@ -1522,13 +1484,13 @@ end # function write_out_amplitude
 
 #########################################################################
 """
-    write_out_visual_graph( g::GenericGraph, model::Model, couplingfactor::Basic, color_list::Vector{Basic}, lorentz_list::Vector{Basic}, ext_mom_list::Vector{Basic}, scale2_list::Vector{Basic} )::Nothing
+    write_out_visual_graph( g::GenericGraph, model::Model, couplingfactor::Basic, color_list::Vector{Basic}, lorentz_list::Vector{Basic}, ext_mom_list::Vector{Basic}, scale2_list::Vector{Basic}, proc_str::String )::Nothing
 
 Write out the diagrams into the file that can be complied or read easily.
 """
 function write_out_visual_graph( g::GenericGraph, model::Model, 
     couplingfactor::Basic, color_list::Vector{Basic}, lorentz_list::Vector{Basic},
-    ext_mom_list::Vector{Basic}, scale2_list::Vector{Basic} )::Nothing
+    ext_mom_list::Vector{Basic}, scale2_list::Vector{Basic}, proc_str::String )::Nothing
 #########################################################################
 
   diagram_index = vertex_from_label("graph property",g).attributes["diagram_index"]
@@ -1540,7 +1502,7 @@ function write_out_visual_graph( g::GenericGraph, model::Model,
   lorentz_str_list = convert_lorentz_list( diagram_index, lorentz_list, ext_mom_list, scale2_list )
 
   printstyled( "[ Generate visual_diagram$(diagram_index).tex ]\u264e\n", color=:green, bold=true )
-  visual_file = open( "visuals/visual_diagram$(diagram_index).tex", "w" )
+  visual_file = open( "$(proc_str)_visuals/visual_diagram$(diagram_index).tex", "w" )
   write( visual_file,
     "\\documentclass{revtex4}\n"*
     "\\usepackage{tikz-feynman}\n"*
@@ -1556,7 +1518,7 @@ function write_out_visual_graph( g::GenericGraph, model::Model,
   close( visual_file )
 
 
-  expression_file = open( "visuals/expression_diagram$(diagram_index).m", "w" ) 
+  expression_file = open( "$(proc_str)_visuals/expression_diagram$(diagram_index).m", "w" ) 
   write( expression_file, 
     "(* coupling factor: *) \n"*
     "$(couplingfactor_str)\n"*
@@ -1592,6 +1554,8 @@ Generate amplitudes after `model` has been prepared.
 function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
 ##########################################################################
 
+  proc_str = join( [ input["incoming"]; "TO"; input["outgoing"]; "$(input["n_loop"])Loop" ], "_" )
+
   n_loop = input["n_loop"]
   couplingfactor = Basic(input["couplingfactor"]) 
 
@@ -1605,6 +1569,7 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
   # Convert qgraf to GenericGraph
   graph_list = @pipe qgraf_list |> 
                map( q -> convert_qgraf_TO_Graph( q, model ), _ ) |>
+               convert( Array{GenericGraph,1}, _ ) |>
                filter( !isnothing, _ ) |>
                sort( _, by= g->vertex_from_label("graph property",g).attributes["diagram_index"] )
   #------------------------------------------------  
@@ -1655,16 +1620,16 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
   write( file, baseINC_script_str )
   close(file)
 
-  if isdir( "visuals" )
-    mv( "visuals", "visuals_$(now())" )
+  if isdir( "$(proc_str)_visuals" )
+    mv( "$(proc_str)_visuals", "$(proc_str)_visuals_$(now())" )
   end # if
-  mkdir( "visuals" )
-  cp( "../tikz-feynman.sty", "visuals/tikz-feynman.sty" )
+  mkdir( "$(proc_str)_visuals" )
+  cp( "../tikz-feynman.sty", "$(proc_str)_visuals/tikz-feynman.sty" )
 
-  if isdir( "amplitudes" )
-    mv( "amplitudes", "amplitudes_$(now())" )
+  if isdir( "$(proc_str)_amplitudes" )
+    mv( "$(proc_str)_amplitudes", "$(proc_str)_amplitudes_$(now())" )
   end # if
-  mkdir( "amplitudes" )
+  mkdir( "$(proc_str)_amplitudes" )
 
   the_lock = ReentrantLock()
 
@@ -1688,10 +1653,10 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
     amp_lorentz_list = amp_lorentz_list[perm]
 
     write_out_amplitude( n_loop, diagram_index, couplingfactor, model.parameter_dict, ext_mom_list, scale2_list, kin_relation, baseINC_script_str,
-                         amp_color_list, amp_lorentz_list, loop_den_list, loop_den_xpt_list, input["Amp_Min_Eps_Xpt"], input["Amp_Max_Eps_Xpt"], the_lock )
+                         amp_color_list, amp_lorentz_list, loop_den_list, loop_den_xpt_list, input["Amp_Min_Eps_Xpt"], input["Amp_Max_Eps_Xpt"], proc_str, the_lock )
 
 
-    write_out_visual_graph( g, model, couplingfactor, amp_color_list, amp_lorentz_noexpand_list, ext_mom_list, scale2_list )
+    write_out_visual_graph( g, model, couplingfactor, amp_color_list, amp_lorentz_noexpand_list, ext_mom_list, scale2_list, proc_str )
 
     check_consistency( diagram_index, amp_lorentz_list, amp_lorentz_noexpand_list, ext_mom_list, kin_relation )
 
@@ -1708,7 +1673,7 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
 
 
   diagram_index_list = map( g_->vertex_from_label("graph property",g_).attributes["diagram_index"], graph_list )
-  file = open( "visuals/generate_diagram_pdf.jl", "w" )
+  file = open( "$(proc_str)_visuals/generate_diagram_pdf.jl", "w" )
   write( file, "diagram_index_list = $(diagram_index_list)\n"*
                "for diagram_index in diagram_index_list\n"*
                "  run( `lualatex visual_diagram\$(diagram_index)` )\n"*
