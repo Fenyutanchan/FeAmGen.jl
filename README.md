@@ -1,6 +1,6 @@
 # FeAmGen.jl
 
-FeAmGen: Julia program for Feynman Amplitude Generation @ project MIRACLE      
+FeAmGen: Julia program for Feynman Amplitude Generation      
 
 -----------------------------------------------
 
@@ -13,7 +13,7 @@ This is used to generate process input files according to generic seed process f
 -----------------------------------------------
 
 ```julia
-generate_amp( "parton_parton_TO_parton_t/b_u_TO_d_t.yaml", "Models" )
+generate_amp( "parton_parton_TO_parton_t_0Loop/b_u_TO_d_t.yaml", "Models" )
 ```
 `generate_amp( <process file>, <model directory> )`
 This is used to generate diagrams and amplitudes by using the previously generated process input file and model directory.

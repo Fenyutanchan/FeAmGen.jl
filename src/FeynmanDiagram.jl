@@ -1625,7 +1625,13 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
     mv( "$(proc_str)_visuals", "$(proc_str)_visuals_$(now())" )
   end # if
   mkdir( "$(proc_str)_visuals" )
-  cp( "../tikz-feynman.sty", "$(proc_str)_visuals/tikz-feynman.sty" )
+  if isfile( "../tikz-feynman.sty" )
+    cp( "../tikz-feynman.sty", "$(proc_str)_visuals/tikz-feynman.sty" )
+  elseif isfile( "./tikz-feynman.sty" )
+    cp( "./tikz-feynman.sty", "$(proc_str)_visuals/tikz-feynman.sty" )
+  else
+    error( "Can not find tikz_feynman.sty in . or .." )
+  end # if
 
   if isdir( "$(proc_str)_amplitudes" )
     mv( "$(proc_str)_amplitudes", "$(proc_str)_amplitudes_$(now())" )
