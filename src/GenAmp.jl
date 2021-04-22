@@ -1,12 +1,13 @@
 
 ######################################################################
 """
-    generate_amp( proc_file::String, model_dir::String )::Nothing
+    generate_amp( proc_file::String )::Nothing
 
 Read-in the card for the specific process and produce the relevant amplitude.
 This function is one of the front-end functions in FeAmGen.jl.
+The directory of model files are supposed in `(dirname∘dirname∘pathof∘Base.moduleroot)(FeAmGen)*"/Models"`.
 """
-function generate_amp( proc_file::String, model_dir::String )::Nothing
+function generate_amp( proc_file::String )::Nothing
 ######################################################################
 
   #------------------------------------------------------------------
@@ -19,7 +20,7 @@ function generate_amp( proc_file::String, model_dir::String )::Nothing
 
   #------------------------------------------------------------------
   green_message( "Choose model: ", string(input["model_name"]) )
-  model = readin_model( input, model_dir )
+  model = readin_model( input )
   generate_QGRAF_model( model )
   logging_model( model )
   #------------------------------------------------------------------

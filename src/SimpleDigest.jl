@@ -234,16 +234,18 @@ end #function filter_charge
 
 #############################################################
 """
-    simple_readin_model( model_name::String, model_dir::String )::Dict{String,Particle}
+    simple_readin_model( model_name::String )::Dict{String,Particle}
 
 Read-in the model detail from python model file. For seed program, we only need particle list.
+The directory of model files are supposed in `(dirname∘dirname∘pathof∘Base.moduleroot)(FeAmGen)*"/Models"`.
 """
-function simple_readin_model( model_name::String, model_dir::String )::Dict{String,Particle}
+function simple_readin_model( model_name::String )::Dict{String,Particle}
 ############################################################################################
 
   # append the path that python can find the model files
   sys = pyimport( "sys" )
-  push!( sys."path", model_dir )
+  @assert isfile( (dirname∘dirname∘pathof∘Base.moduleroot)(FeAmGen)*"/Models/"*model_name*"/object_library.py" )
+  push!( sys."path", (dirname∘dirname∘pathof∘Base.moduleroot)(FeAmGen)*"/Models" )
 
   # For example sm.object_library include the basic structure of this model
   model = pyimport( model_name*".object_library" )

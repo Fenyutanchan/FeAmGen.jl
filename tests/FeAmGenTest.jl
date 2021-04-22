@@ -118,9 +118,9 @@ for nloop in [0,1]
     write( infile, generic_ggttbar_seed_proc_yaml_str(nloop=nloop) )
   end 
 
-  digest_seed_proc( "ggttbar_seed_proc_$(nloop)Loop.yaml", "../Models" )
+  digest_seed_proc( "ggttbar_seed_proc_$(nloop)Loop.yaml" )
 
-  generate_amp( "g_g_TO_t_tbar_$(nloop)Loop/g_g_TO_t_tbar.yaml", "../Models" )
+  generate_amp( "g_g_TO_t_tbar_$(nloop)Loop/g_g_TO_t_tbar.yaml" )
 
 end # for nloop
 
@@ -147,7 +147,6 @@ end # for nloop
   end # testset for diagram_index
 
 end # testset
-
 
 
 
@@ -210,9 +209,9 @@ for nloop in [0,1]
     write( infile, generic_eeHZ_seed_proc_yaml_str(nloop=nloop) )
   end 
 
-  digest_seed_proc( "eeHZ_seed_proc_$(nloop)Loop.yaml", "../Models" )
+  digest_seed_proc( "eeHZ_seed_proc_$(nloop)Loop.yaml" )
 
-  generate_amp( "eplus_eminus_TO_H_Z_$(nloop)Loop/eminus_eplus_TO_H_Z.yaml", "../Models" )
+  generate_amp( "eplus_eminus_TO_H_Z_$(nloop)Loop/eminus_eplus_TO_H_Z.yaml" )
 
 end # for nloop
 
@@ -303,9 +302,9 @@ for nloop in [0,1,2]
     write( infile, generic_dy_seed_proc_yaml_str(nloop=nloop) )
   end 
 
-  digest_seed_proc( "dy_seed_proc_$(nloop)Loop.yaml", "../Models" )
+  digest_seed_proc( "dy_seed_proc_$(nloop)Loop.yaml" )
 
-  generate_amp( "dbar_u_TO_Wplus_$(nloop)Loop/dbar_u_TO_Wplus.yaml", "../Models" )
+  generate_amp( "dbar_u_TO_Wplus_$(nloop)Loop/dbar_u_TO_Wplus.yaml" )
 
 end # for nloop
 
@@ -394,9 +393,9 @@ for nloop in [0,1,2]
     write( infile, generic_gbtw_seed_proc_yaml_str(nloop=nloop) )
   end 
 
-  digest_seed_proc( "gbtw_seed_proc_$(nloop)Loop.yaml", "../Models" )
+  digest_seed_proc( "gbtw_seed_proc_$(nloop)Loop.yaml" )
 
-  generate_amp( "g_b_TO_t_Wminus_$(nloop)Loop/b_g_TO_Wminus_t.yaml", "../Models" )
+  generate_amp( "g_b_TO_t_Wminus_$(nloop)Loop/b_g_TO_Wminus_t.yaml" )
 
 end # for nloop
 

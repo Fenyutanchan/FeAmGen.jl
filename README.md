@@ -20,9 +20,11 @@ This is used to generate diagrams and amplitudes by using the previously generat
 
 -----------------------------------------------
 
-Here we use directly the UFO model files stored in `<model directory>`.
+Here we use directly the UFO model files stored in the `<model directory>`.
 
-***NOTE: Since we are using UFO format, PyCall.jl needs to be compiled with Python2 instead of Python3.***
+***NOTE:***
+***If the UFO model files are based on Python2, one can convert them into Python3 scripts by using the script `2to3`, which may be found in for example `Python-3.8.1/Tools/scripts`***
+***And PyCall can be build with relevant version of Python. The method can be found in PyCall.jl homepage.***
 
 And we need `QGRAF` and `FORM` packages installed.
 

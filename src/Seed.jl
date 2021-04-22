@@ -5,8 +5,9 @@
 
 Read-in the card for seed process, and write-out the cards for the relevant specific processes.
 This function is one of the front-end functions in FeAmGen.jl.
+The directory of model files are supposed in `(dirname∘dirname∘pathof∘Base.moduleroot)(FeAmGen)*"/Models"`.
 """
-function digest_seed_proc( seed_file::String, model_dir::String )::Nothing
+function digest_seed_proc( seed_file::String )::Nothing
 ##########################################################################
 
 
@@ -20,7 +21,7 @@ function digest_seed_proc( seed_file::String, model_dir::String )::Nothing
 
   #-------------------------------------------------------
   green_message( "Choose model: ", string(input["model_name"]) )
-  particle_dict = simple_readin_model( input["model_name"], model_dir )
+  particle_dict = simple_readin_model( input["model_name"] )
 
   printstyled( "All the particles: \n", color=:green )
   for name_part in particle_dict
