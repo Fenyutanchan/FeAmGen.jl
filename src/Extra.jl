@@ -193,7 +193,7 @@ function make_SP( mom1::Basic, mom2::Basic )::Basic
 
   result_SP = zero(Basic)
   for pair1 in mom1_array, pair2 in mom2_array
-    result_SP += pair1[:num] * pair2[:num] * SP( pair1[:ki], pair2[:ki] )
+    result_SP += pair1[:num] * pair2[:num] * SP( sort( Basic[pair1[:ki],pair2[:ki]], by=string )... )
   end # for pair1, pair2
 
   return result_SP

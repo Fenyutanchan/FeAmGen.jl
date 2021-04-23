@@ -1,7 +1,7 @@
 n_loop: 2
 couplingfactor: 1
-ext_mom_list: SymEngine.Basic[k1, k2, K3]
-scale2_list: SymEngine.Basic[mw^2, mt^2]
+ext_mom_list: Basic[k1, k2, K3]
+scale2_list: Basic[mw^2, mt^2]
 Diagram #14: 
   Denominators: 
     Den(-k1 - q1, 0, 0)
@@ -11,12 +11,12 @@ Diagram #14:
     Den(-k1 - q1 + q2, mt, 0)
     Den(q2, mt, 0)
 Kinematics Relations: 
+  SP(K3, k2) => (1/2)*mw^2
   SP(k2, k2) => 0
   SP(k1, k2) => (1/2)*mw^2
-  SP(k2, K3) => (1/2)*mw^2
+  SP(K3, k1) => (1/2)*mw^2
   SP(K3, K3) => mw^2
   SP(k1, k1) => 0
-  SP(k1, K3) => (1/2)*mw^2
 Color Factors: 
   amp_color #1: 
     (-1/4)*DeltaFun(clb1, clb2)/ca + (1/4)*ca*DeltaFun(clb1, clb2); 

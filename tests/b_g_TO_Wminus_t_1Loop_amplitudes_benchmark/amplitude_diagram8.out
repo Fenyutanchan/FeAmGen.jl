@@ -1,7 +1,7 @@
 n_loop: 1
 couplingfactor: 1
-ext_mom_list: SymEngine.Basic[k1, k2, K3, K4]
-scale2_list: SymEngine.Basic[shat, mw^2, ver1, mt^2]
+ext_mom_list: Basic[k1, k2, K3, K4]
+scale2_list: Basic[shat, mw^2, ver1, mt^2]
 Diagram #8: 
   Denominators: 
     Den(-k1 + q1, 0, 0)
@@ -11,18 +11,18 @@ Kinematics Relations:
   SP(k1, k2) => (1/2)*shat
   Den(K3 - k1, mt, 0) => ver6
   Den(-K4 + k2, mt, 0) => ver6
-  SP(k1, K4) => (1/2)*(shat + ver1 - mw^2)
   Den(K3 + K4, 0, 0) => ver7
   Den(-K3 - K4, 0, 0) => ver7
-  SP(k2, K3) => (1/2)*(shat + ver1 - mt^2)
   SP(K3, K3) => mw^2
+  SP(K4, k1) => (1/2)*(shat + ver1 - mw^2)
   SP(k2, k2) => 0
-  SP(k2, K4) => (1/2)*(-ver1 + mt^2)
-  SP(k1, K3) => (1/2)*(-ver1 + mw^2)
+  SP(K3, k2) => (1/2)*(shat + ver1 - mt^2)
   SP(K4, K4) => mt^2
+  SP(K3, k1) => (1/2)*(-ver1 + mw^2)
   Den(-K3 + k1, mt, 0) => ver6
-  Den(K4 - k2, mt, 0) => ver6
   SP(K3, K4) => (1/2)*(shat - mt^2 - mw^2)
+  Den(K4 - k2, mt, 0) => ver6
+  SP(K4, k2) => (1/2)*(-ver1 + mt^2)
   SP(k1, k1) => 0
   Den(k1 + k2, 0, 0) => ver7
   Den(-k1 - k2, 0, 0) => ver7

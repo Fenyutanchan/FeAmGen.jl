@@ -8,14 +8,14 @@ Kinematics Relations:
   Den(-k1 - k2, mz, wz) => ver6
   SP(k1, k2) => (1/2)*shat
   Den(k1 + k2, mz, wz) => ver6
-  SP(k1, K4) => (1/2)*(shat + ver1 - mh^2)
-  SP(k2, K3) => (1/2)*(shat + ver1 - mz^2)
   SP(K3, K3) => mh^2
+  SP(K4, k1) => (1/2)*(shat + ver1 - mh^2)
   SP(k2, k2) => 0
-  SP(k2, K4) => (1/2)*(-ver1 + mz^2)
-  SP(k1, K3) => (1/2)*(-ver1 + mh^2)
+  SP(K3, k2) => (1/2)*(shat + ver1 - mz^2)
   SP(K4, K4) => mz^2
+  SP(K3, k1) => (1/2)*(-ver1 + mh^2)
   SP(K3, K4) => (1/2)*(shat - mh^2 - mz^2)
+  SP(K4, k2) => (1/2)*(-ver1 + mz^2)
   SP(k1, k1) => 0
 Color Factors: 
   amp_color #1: 
