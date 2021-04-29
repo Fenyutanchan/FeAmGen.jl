@@ -133,7 +133,7 @@ end # for nloop
     content_dict = load( "g_g_TO_t_tbar_$(nloop)Loop_amplitudes/amplitude_diagram$(diagram_index).jld" )
     content_dict_bench = load( "g_g_TO_t_tbar_$(nloop)Loop_amplitudes_benchmark/amplitude_diagram$(diagram_index).jld" )
 
-    @test  content_dict == content_dict_bench 
+    @test content_dict == content_dict_bench 
 
     visual_bench_file = open( "g_g_TO_t_tbar_$(nloop)Loop_visuals_benchmark/visual_diagram$(diagram_index).tex" ) 
     visual_list_bench = readlines( visual_bench_file )
@@ -223,7 +223,7 @@ end # for nloop
     content_dict = load( "eminus_eplus_TO_H_Z_$(nloop)Loop_amplitudes/amplitude_diagram$(diagram_index).jld" )
     content_dict_bench = load( "eminus_eplus_TO_H_Z_$(nloop)Loop_amplitudes_benchmark/amplitude_diagram$(diagram_index).jld" )
 
-    @test  content_dict == content_dict_bench 
+    @test content_dict == content_dict_bench 
 
     visual_bench_file = open( "eminus_eplus_TO_H_Z_$(nloop)Loop_visuals_benchmark/visual_diagram$(diagram_index).tex" ) 
     visual_list_bench = readlines( visual_bench_file )
@@ -316,7 +316,7 @@ end # for nloop
     content_dict = load( "dbar_u_TO_Wplus_$(nloop)Loop_amplitudes/amplitude_diagram$(diagram_index).jld" )
     content_dict_bench = load( "dbar_u_TO_Wplus_$(nloop)Loop_amplitudes_benchmark/amplitude_diagram$(diagram_index).jld" )
 
-    @test  content_dict == content_dict_bench 
+    @test content_dict == content_dict_bench 
 
     visual_bench_file = open( "dbar_u_TO_Wplus_$(nloop)Loop_visuals_benchmark/visual_diagram$(diagram_index).tex" ) 
     visual_list_bench = readlines( visual_bench_file )
@@ -405,7 +405,7 @@ end # for nloop
     content_dict = load( "b_g_TO_Wminus_t_$(nloop)Loop_amplitudes/amplitude_diagram$(diagram_index).jld" )
     content_dict_bench = load( "b_g_TO_Wminus_t_$(nloop)Loop_amplitudes_benchmark/amplitude_diagram$(diagram_index).jld" )
 
-    @test  content_dict == content_dict_bench 
+    @test content_dict == content_dict_bench 
 
     visual_bench_file = open( "b_g_TO_Wminus_t_$(nloop)Loop_visuals_benchmark/visual_diagram$(diagram_index).tex" ) 
     visual_list_bench = readlines( visual_bench_file )
@@ -419,16 +419,6 @@ end # for nloop
   end # testset for diagram_index
 
 end # testset
-
-
-
-
-
-
-
-
-
-
 
 
 

@@ -1463,6 +1463,7 @@ function write_out_amplitude( n_loop::Int64, diagram_index::Int64, couplingfacto
   end # if
 
   jldopen( "$(proc_str)_amplitudes/amplitude_diagram$(diagram_index).jld", "w" ) do file 
+    write( file, "Generator", "FeAmGen.jl" )
     write( file, "n_loop", n_loop )
     write( file, "min_eps_xpt", min_eps_xpt )
     write( file, "max_eps_xpt", max_eps_xpt )
