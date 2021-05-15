@@ -21,7 +21,7 @@ using Dates
 using JLD
 using Pipe
 
-export digest_seed_proc, generate_amp
+export digest_seed_proc, generate_amp, generate_integral
 
 include("Message.jl")
 include("Extra.jl")
@@ -35,6 +35,7 @@ include("Converter.jl")
 include("FeynmanDiagram.jl")
 include("Seed.jl")
 include("GenAmp.jl")
+include("Integral.jl")
 
 ###################
 function __init__()
