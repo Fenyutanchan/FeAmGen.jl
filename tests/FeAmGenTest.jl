@@ -105,6 +105,7 @@ numerator: "SP(q1,q2)"
 
   generate_integral( "scalar_integral.yaml" )
 
+  rm( "scalar_integral.yaml" )
 
 @testset "scalar_integral" begin
 
@@ -115,7 +116,6 @@ numerator: "SP(q1,q2)"
 
 end # @testset
 
-exit()
 
 
 
