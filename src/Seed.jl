@@ -13,9 +13,7 @@ function digest_seed_proc( seed_file::String )::Nothing
 
 
   #----------------------------------------------------------------------------------------------
-  file_stream = open(seed_file)
-  input = YAML.load( file_stream )
-  close( file_stream )
+  input = YAML.load_file( seed_file )
   #----------------------------------------------------------------------------------------------
 
 

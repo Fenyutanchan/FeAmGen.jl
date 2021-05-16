@@ -5,9 +5,7 @@
 function generate_integral( yaml_file::String )::Nothing
 #---------------------------------------------------
 
-  file_stream = open( yaml_file )
-  file_dict = YAML.load( file_stream ) 
-  close( file_stream )
+  file_dict = YAML.load_file( yaml_file ) 
 
   name_str = file_dict["name"]
   n_loop = file_dict["n_loop"]::Int64

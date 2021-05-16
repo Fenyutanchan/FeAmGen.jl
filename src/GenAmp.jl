@@ -12,9 +12,7 @@ function generate_amp( proc_file::String )::Nothing
 
   #------------------------------------------------------------------
   @assert isfile(proc_file) "The first argument is not a file!"
-  file_stream = open(proc_file)
-  input = YAML.load( file_stream )
-  close( file_stream )
+  input = YAML.load_file( proc_file )
   #------------------------------------------------------------------
 
 

@@ -1561,9 +1561,7 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
   n_loop = input["n_loop"]
   couplingfactor = Basic(input["couplingfactor"]) 
 
-  file_stream = open("qgraf_out.dat")
-  qgraf_out = YAML.load( file_stream )
-  close( file_stream )
+  qgraf_out = YAML.load_file( "qgraf_out.dat" )
 
   qgraf_list = qgraf_out["FeynmanDiagrams"]
 
