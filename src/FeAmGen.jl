@@ -9,6 +9,7 @@ module FeAmGen
 
 # for reading input YAML file "SeedProcess.yaml"
 using YAML
+using OrderedCollections
 # for read model python file
 using PyCall
 # for using @test and @testset
@@ -21,7 +22,7 @@ using Dates
 using JLD
 using Pipe
 
-export digest_seed_proc, generate_amp, generate_integral
+export digest_seed_proc, generate_amp, generate_integral, generate_multi_yaml
 
 include("Message.jl")
 include("Extra.jl")

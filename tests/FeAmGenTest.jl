@@ -1,4 +1,4 @@
-using SymEngine, FeAmGen, Test, BenchmarkTools, JLD, Pipe
+using SymEngine, FeAmGen, Test, BenchmarkTools, YAML, JLD, Pipe
 
 @testset "degree" begin
   @vars x, y
@@ -59,6 +59,77 @@ end # @testset
 
 
 
+#--------------------------------------------------------------------
+# MA
+#--------------------------------------------------------------------
+
+  TSI_origin_str = """
+name: "TSI"
+
+n_loop: 2
+
+min_eps_xpt: -4
+max_eps_xpt: 0
+
+external_momenta: [ K1 ]
+
+kin_relation:
+  - [ "SP(K1,K1)", "mm^2" ]
+
+den_list: [
+"Den(q1,0,0)",
+"Den(q1+K1,m0,0)",
+"Den(q2,0,0)",
+"Den(q2+K1,0,0)",
+"Den(q1+q2,0,0)"
+]
+
+den_xpt_list: [ 0, 0, 0, 0, 0 ]
+
+numerator: "1"
+
+comment: "Seed yaml file for TSI"
+"""
+
+  open( "TSI_original.yaml", "w" ) do infile
+    write( infile, TSI_origin_str )
+  end 
+
+  # The last five (except the first one) integrals are master integarls.
+  indices_list = [ [0,3,3,0,3], [0,1,2,0,1], [0,2,1,0,1], [0,1,1,0,1], [0,0,0,1,1], [0,1,0,0,1] ]
+  generate_multi_yaml( "TSI_original.yaml", indices_list, "TSI_integrals" )
+
+  rm( "TSI_original.yaml" )
+
+
+  cd( "TSI_integrals" )
+  for one_indices in indices_list
+    generate_integral( "TSI_$( join( map( string, one_indices ), "," ) ).yaml" ) 
+  end # for one_indices
+  cd( ".." )
+
+
+  @testset "" for one_indices in indices_list
+    indices_str = join( map( string, one_indices ), "," )
+    yaml_file0_dict = YAML.load_file( joinpath( "TSI_integrals_benchmark", "TSI_$(indices_str).yaml" ) )
+    yaml_file1_dict = YAML.load_file( joinpath( "TSI_integrals", "TSI_$(indices_str).yaml" ) )
+    delete!( yaml_file0_dict, "comment" )
+    delete!( yaml_file1_dict, "comment" )
+    @test yaml_file0_dict == yaml_file1_dict
+
+    jld_file0_dict = load( joinpath( "TSI_integrals_benchmark", "integral_TSI_$(indices_str).jld" ) )
+    jld_file1_dict = load( joinpath( "TSI_integrals", "integral_TSI_$(indices_str).jld" ) )
+    @test jld_file0_dict == jld_file1_dict
+  end # testset
+
+exit()
+
+
+
+#--------------------------------------------------------------------
+# JLD file generation for single-top amplitude reduction.
+#--------------------------------------------------------------------
+
   yaml_str = """
 name: Dia199SI1
 
@@ -97,6 +168,8 @@ den_list: [
 den_xpt_list: [ 0, 0, 1, 0, 1, 0, 1, -2, 2 ]
 
 numerator: "SP(q1,q2)"
+
+comment: "For the tensor reduction of single-top amplitude."
 """
 
   open( "scalar_integral.yaml", "w" ) do infile
