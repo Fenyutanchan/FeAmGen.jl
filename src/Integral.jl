@@ -5,7 +5,8 @@
 function generate_integral( yaml_file::String )::Nothing
 #---------------------------------------------------
 
-  dir_path = joinpath( splitpath( yaml_file )[1:end-1]... ) 
+  dir_path_list = splitpath( yaml_file )[1:end-1]
+  dir_path = isempty( dir_path_list ) ? string() : joinpath( dir_path_list... ) 
 
   file_dict = YAML.load_file( yaml_file; dicttype=OrderedDict{String,Any} ) 
   @assert collect(keys(file_dict)) == ["name", "n_loop", "min_eps_xpt", "max_eps_xpt", "external_momenta", "kin_relation", "den_list", "den_xpt_list", "numerator", "comment"]
