@@ -60,10 +60,10 @@ end # @testset
 
 
 #--------------------------------------------------------------------
-# MA
+# Two-loop Self-energy Integral (TSI)
 #--------------------------------------------------------------------
 
-  TSI_origin_str = """
+TSI_origin_str = """
 name: "TSI"
 
 n_loop: 2
@@ -91,38 +91,62 @@ numerator: "1"
 comment: "Seed yaml file for TSI"
 """
 
-  open( "TSI_original.yaml", "w" ) do infile
-    write( infile, TSI_origin_str )
-  end 
+open( "TSI_original.yaml", "w" ) do infile
+  write( infile, TSI_origin_str )
+end 
 
-  # The last five (except the first one) integrals are master integarls.
-  indices_list = [ [0,3,3,0,3], [0,1,2,0,1], [0,2,1,0,1], [0,1,1,0,1], [0,0,0,1,1], [0,1,0,0,1] ]
-  generate_multi_yaml( "TSI_original.yaml", indices_list, "TSI_integrals" )
+# The last five (except the first one) integrals are master integarls.
+indices_list = [ [0,3,3,0,3], [0,1,2,0,1], [0,2,1,0,1], [0,1,1,0,1], [0,0,0,1,1], [0,1,0,0,1] ]
+multi_yaml_list = generate_multi_yaml( "TSI_original.yaml", indices_list, "TSI_integrals" )
 
-  rm( "TSI_original.yaml" )
-
-
-  cd( "TSI_integrals" )
-  for one_indices in indices_list
-    generate_integral( "TSI_$( join( map( string, one_indices ), "," ) ).yaml" ) 
-  end # for one_indices
-  cd( ".." )
+rm( "TSI_original.yaml" )
 
 
-  @testset "" for one_indices in indices_list
-    indices_str = join( map( string, one_indices ), "," )
-    yaml_file0_dict = YAML.load_file( joinpath( "TSI_integrals_benchmark", "TSI_$(indices_str).yaml" ) )
-    yaml_file1_dict = YAML.load_file( joinpath( "TSI_integrals", "TSI_$(indices_str).yaml" ) )
-    delete!( yaml_file0_dict, "comment" )
-    delete!( yaml_file1_dict, "comment" )
-    @test yaml_file0_dict == yaml_file1_dict
+for one_yaml in multi_yaml_list
+  generate_integral( one_yaml ) 
+end # for one_yaml
 
-    jld_file0_dict = load( joinpath( "TSI_integrals_benchmark", "integral_TSI_$(indices_str).jld" ) )
-    jld_file1_dict = load( joinpath( "TSI_integrals", "integral_TSI_$(indices_str).jld" ) )
-    @test jld_file0_dict == jld_file1_dict
-  end # testset
 
-exit()
+@testset "TSI" for one_yaml in multi_yaml_list
+  file_name = last( splitpath( one_yaml )  )
+  yaml_file0_dict = YAML.load_file( joinpath( "TSI_integrals_benchmark", file_name ) )
+  yaml_file1_dict = YAML.load_file( joinpath( "TSI_integrals", file_name ) )
+  delete!( yaml_file0_dict, "comment" )
+  delete!( yaml_file1_dict, "comment" )
+  @test yaml_file0_dict == yaml_file1_dict
+
+  jld_name = "integral_$(file_name[1:end-5]).jld"
+  jld_file0_dict = load( joinpath( "TSI_integrals_benchmark", jld_name ) )
+  jld_file1_dict = load( joinpath( "TSI_integrals", jld_name ) )
+  @test jld_file0_dict == jld_file1_dict
+end # testset
+
+
+scalar_yaml_list = Vector{String}()
+for one_indices in indices_list
+  indices_str = join( map( string, one_indices ), "," )
+  push!( scalar_yaml_list, "TSI_integrals/TSI_$(indices_str).yaml" )
+end # for one_indices
+new_yaml_list = generate_shiftUP_yaml( scalar_yaml_list, "shiftUP_TSI_integrals" )
+
+for one_yaml in new_yaml_list
+  generate_integral( one_yaml ) 
+end # for one_yaml
+
+@testset "shfitUP_TSI" for one_yaml in new_yaml_list
+  file_name = last( splitpath( one_yaml )  )
+  yaml_file0_dict = YAML.load_file( joinpath( "shiftUP_TSI_integrals_benchmark", file_name ) )
+  yaml_file1_dict = YAML.load_file( joinpath( "shiftUP_TSI_integrals", file_name ) )
+  delete!( yaml_file0_dict, "comment" )
+  delete!( yaml_file1_dict, "comment" )
+  @test yaml_file0_dict == yaml_file1_dict
+
+  jld_name = "integral_$(file_name[1:end-5]).jld"
+  jld_file0_dict = load( joinpath( "shiftUP_TSI_integrals_benchmark", jld_name ) )
+  jld_file1_dict = load( joinpath( "shiftUP_TSI_integrals", jld_name ) )
+  @test jld_file0_dict == jld_file1_dict
+end # testset
+
 
 
 
@@ -130,7 +154,7 @@ exit()
 # JLD file generation for single-top amplitude reduction.
 #--------------------------------------------------------------------
 
-  yaml_str = """
+yaml_str = """
 name: Dia199SI1
 
 n_loop: 2
@@ -172,20 +196,20 @@ numerator: "SP(q1,q2)"
 comment: "For the tensor reduction of single-top amplitude."
 """
 
-  open( "scalar_integral.yaml", "w" ) do infile
-    write( infile, yaml_str )
-  end 
+open( "scalar_integral.yaml", "w" ) do infile
+  write( infile, yaml_str )
+end 
 
-  generate_integral( "scalar_integral.yaml" )
+generate_integral( "scalar_integral.yaml" )
 
-  rm( "scalar_integral.yaml" )
+rm( "scalar_integral.yaml" )
 
 @testset "scalar_integral" begin
 
-    content_dict = load( "integral_Dia199SI1.jld" )
-    content_dict_bench = load( "integral_Dia199SI1_benchmark.jld" )
+  content_dict = load( "integral_Dia199SI1.jld" )
+  content_dict_bench = load( "integral_Dia199SI1_benchmark.jld" )
 
-    @test content_dict == content_dict_bench 
+  @test content_dict == content_dict_bench 
 
 end # @testset
 

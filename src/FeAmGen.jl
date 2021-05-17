@@ -22,7 +22,7 @@ using Dates
 using JLD
 using Pipe
 
-export digest_seed_proc, generate_amp, generate_integral, generate_multi_yaml
+export digest_seed_proc, generate_amp, generate_integral, generate_multi_yaml, generate_shiftUP_yaml
 
 include("Message.jl")
 include("Extra.jl")
