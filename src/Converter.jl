@@ -38,11 +38,8 @@ Close[stream];
 """ )
   close(file)
 
-  #printstyled( "  run MathKernel -script $(file_name).m ... \n", color=:green )
-  #println( "  Start @", Dates.now() )
   run( pipeline( `MathKernel -script $(file_name).m`, file_name*".log" ) )
-  #println( "  Done @", Dates.now() )
-  printstyled( "  Done MathKernel -script $(file_name).m in thread #$(Threads.threadid()) \n", color=:green )
+  @info "  Done MathKernel -script $(file_name).m in thread #$(Threads.threadid()) "
 
   file = open( file_name*".out", "r" )
   result_str = replace( read( file, String ), r"\s"=>"" )
@@ -99,11 +96,8 @@ Close[stream];
 """ )
     close(file)
 
-    #printstyled( "  run MathKernel -script $(file_name).m ... \n", color=:green )
-    #println( "  Start @", Dates.now() )
     run( pipeline( `MathKernel -script $(file_name).m`, file_name*".log" ) )
-    #println( "  Done @", Dates.now() )
-    printstyled( "  Done MathKernel -script $(file_name).m in thread #$(Threads.threadid()) \n", color=:green )
+    @info "  Done MathKernel -script $(file_name).m in thread #$(Threads.threadid())"
   
     file = open( file_name*".out", "r" )
     result_str = replace( read( file, String ), r"\s"=>"" )
@@ -228,11 +222,8 @@ Close[stream];
 """ )
     close(file)
 
-    #printstyled( "  run MathKernel -script $(file_name).m ... \n", color=:green )
-    #println( "  Start @", Dates.now() )
     run( pipeline( `MathKernel -script $(file_name).m`, file_name*".log" ) )
-    #println( "  Done @", Dates.now() )
-    printstyled( "  Done MathKernel -script $(file_name).m in thread #$(Threads.threadid()) \n", color=:green )
+    @info "  Done MathKernel -script $(file_name).m in thread #$(Threads.threadid())"
   
     file = open( file_name*".out", "r" )
     result_str = replace( read( file, String ), r"\s"=>"" )

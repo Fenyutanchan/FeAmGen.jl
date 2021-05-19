@@ -17,33 +17,33 @@ function generate_amp( proc_file::String )::Nothing
 
 
   #------------------------------------------------------------------
-  green_message( "Choose model: ", string(input["model_name"]) )
+  @info "Choose model: $(input["model_name"])"
   model = readin_model( input )
   generate_QGRAF_model( model )
   logging_model( model )
   #------------------------------------------------------------------
 
-  green_message( "Usage of unitary gauge: ", string(input["unitary_gauge"]) )
+  @info "Usage of unitary gauge: $(input["unitary_gauge"])"
 
-  green_message( "drop Tadpole: ", string(input["DropTadpole"]) )
+  @info "drop Tadpole: $(input["DropTadpole"])"
 
-  green_message( "drop WFcorrection: ", string(input["DropWFcorrection"]) )
+  @info "drop WFcorrection: $(input["DropWFcorrection"])"
 
-  green_message( "# of loops: ", string(input["n_loop"]) )
+  @info "# of loops: $(input["n_loop"])"
 
-  green_message( "QCD CT-order: ", string(input["QCDCT_order"]) )
+  @info "QCD CT-order: $(input["QCDCT_order"])"
 
-  green_message( "order of QCD coupling gs in the amplitude: ", string(input["Amp_QCD_order"]) )
+  @info "order of QCD coupling gs in the amplitude: $(input["Amp_QCD_order"])"
 
-  green_message( "order of QED coupling gs in the amplitude: ", string(input["Amp_QED_order"]) )
+  @info "order of QED coupling gs in the amplitude: $(input["Amp_QED_order"])"
 
-  green_message( "min eps power in the amplitude: ", string(input["Amp_Min_Eps_Xpt"]) )
-  green_message( "max eps power in the amplitude: ", string(input["Amp_Max_Eps_Xpt"]) )
+  @info "min eps power in the amplitude: $(input["Amp_Min_Eps_Xpt"])"
+  @info "max eps power in the amplitude: $(input["Amp_Max_Eps_Xpt"])"
 
-  green_message( "incoming: ", string(input["incoming"]) )
-  green_message( "outgoing: ", string(input["outgoing"]) )
+  @info "incoming: $(input["incoming"])"
+  @info "outgoing: $(input["outgoing"])"
 
-  green_message( "coupling factor: ", string(input["couplingfactor"]) )
+  @info "coupling factor: $(input["couplingfactor"])"
 
   #----------------------------------------------------------------------
   # Run the QGRAF

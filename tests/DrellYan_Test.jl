@@ -1,5 +1,10 @@
-using SymEngine, FeAmGen, Test, BenchmarkTools, YAML, JLD, Pipe
+using SymEngine, FeAmGen, Test, BenchmarkTools, YAML, JLD, Pipe, Dates, Logging
 
+io = open("DrellYan_Test.log", "w+")
+logger = SimpleLogger(io)
+global_logger(logger)
+
+@info "DrellYan_Test starts @ $(now())"
 
 
 
@@ -90,4 +95,7 @@ end # for nloop
 end # testset
 
 
+@info "DrellYan_Test ends @ $(now())"
+
+close(io)
 

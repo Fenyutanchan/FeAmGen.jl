@@ -338,7 +338,7 @@ function generate_kin_relation( graph_list::Vector{GenericGraph} )::Dict{Basic,B
   mass2 = map( e_->e_.attributes["particle"].mass^2, sorted_ext_edge_list )
   # here mom and mass2 in fact are Vector{Basic}, but for later convenience we do not explicitly show it.
 
-  println( "external momenta: ", mom )
+  @info "external momenta: $mom"
 
   kin_relation = generate_kin_relation( n_inc, n_out, mom, mass2 )
 
@@ -351,7 +351,7 @@ function generate_kin_relation( graph_list::Vector{GenericGraph} )::Dict{Basic,B
     mom_n += (-1)*mom[ii]
   end # for ii
 
-  println( "momentum conservation: ", mom[nn], " = ", mom_n )
+  @info "momentum conservation: $(mom[nn]) = $(mom_n)"
 
 
   @funs Den

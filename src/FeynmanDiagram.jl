@@ -109,15 +109,14 @@ Interface to generating Feynman diagrams by using `QGRAF`.
 function generate_Feynman_diagram( model::Model, input::Dict{Any,Any} )
 #######################################################################
 
-  println()
-  printstyled( "[Generate Feynman diagrams]\n", color=:green )
+  printstyled( "[ Generate Feynman diagrams using QGRAF ]\n", color=:green )
 
   prepare_qgraf_dat( model, input )
 
   if isfile( "qgraf_out.dat" ) == true
     rm( "qgraf_out.dat" )
   end # if
-  run(`qgraf`)
+  run( pipeline( `qgraf`, "qgraf.log" ) )
   @assert isfile( "qgraf_out.dat" )
 
   rm( "qgraf.dat" )
@@ -629,7 +628,7 @@ function convert_qgraf_TO_Graph( one_qgraf::Dict{Any,Any}, model::Model )::Union
     QCDct_propagators::Array{Dict{Any,Any},1} = filter( p_ -> p_["field"] in ["QCDct1","QCDct2"], one_qgraf["remnant_propagators"] )
     invalid_propagator_pos = findfirst( p_ -> p_["birth_index"] != p_["death_index"], QCDct_propagators )
     if !isnothing( invalid_propagator_pos ) 
-      printstyled( "Found one invalid diagram!\n", color=:red )
+      @info "Found one invalid diagram!"
       return nothing
     end # if
   end # if
@@ -1080,8 +1079,7 @@ function contract_Dirac_indices( g::GenericGraph, lorentz_expr_list::Vector{Basi
     write( file, form_script_str )
     close(file)
 
-    #printstyled( "[ form $(file_name).frm in thread #$(Threads.threadid()) ]\n", color=:yellow )
-    printstyled( "[ form $(file_name).frm ]\n", color=:yellow )
+    println( "[ form $(file_name).frm ]" )
     run( pipeline( `form $(file_name).frm`, file_name*".log" ) )
 
     file = open( file_name*".out", "r" )
@@ -1127,7 +1125,7 @@ function contract_Dirac_indices_noexpand( g::GenericGraph, lorentz_expr_list::Ve
     write( file, form_script_str )
     close(file)
 
-    printstyled( "[ form $(file_name).frm ]\n", color=:yellow )
+    println( "[ form $(file_name).frm ]" )
     run( pipeline( `form $(file_name).frm`, file_name*".log" ) )
 
     file = open( file_name*".out", "r" )
@@ -1325,16 +1323,12 @@ Close[stream];
     close(file)
 
 
-    #printstyled( "  run MathKernel -script $(file_name).m ... \n", color=:green )
-    #println( "  Start @", Dates.now() )
     run( pipeline( `MathKernel -script $(file_name).m`, file_name*".log" ) )
-    #println( "  Done @", Dates.now() )
-    printstyled( "  Done MathKernel -script $(file_name).m in thread #$(Threads.threadid()) \n", color=:green )
+    @info "  Done MathKernel -script $(file_name).m in thread #$(Threads.threadid())."
   
     file = open( file_name*".out", "r" )
     result_str = replace( read( file, String ), r"\s"=>"" )
     close(file)
-    #printstyled( "  $(file_name).out has length $(length(result_str))\n", color=:red )
 
     @assert length(result_str) < 4
     @assert Basic(result_str) == 0
@@ -1377,8 +1371,7 @@ function simplify_color_factors( g::GenericGraph, color_factor_list::Vector{Basi
     write( file, form_script_str )
     close(file)
 
-    #printstyled( "[ form $(file_name).frm in thread #$(Threads.threadid()) ]\n", color=:yellow )
-    printstyled( "[ form $(file_name).frm ]\n", color=:yellow )
+    println( "[ form $(file_name).frm ]" )
     run( pipeline( `form $(file_name).frm`, file_name*".log" ) )
 
     file = open( file_name*".out", "r" )
@@ -1410,7 +1403,7 @@ function write_out_amplitude( n_loop::Int64, diagram_index::Int64, couplingfacto
 ###########################################################################################################
 
 
-  printstyled( "[ Generate amplitude_diagram$(diagram_index).out ]\u264e\n", color=:green, bold=true )
+  printstyled( "[ Generate amplitude_diagram$(diagram_index).out ]\n", color=:green )
   amp_file = open( "$(proc_str)_amplitudes/amplitude_diagram$(diagram_index).out", "w" )
   write( amp_file, 
     "n_loop: $(n_loop)\n"*
@@ -1503,7 +1496,7 @@ function write_out_visual_graph( g::GenericGraph, model::Model,
   color_str_list = convert_color_list( diagram_index, color_list )
   lorentz_str_list = convert_lorentz_list( diagram_index, lorentz_list, ext_mom_list, scale2_list )
 
-  printstyled( "[ Generate visual_diagram$(diagram_index).tex ]\u264e\n", color=:green, bold=true )
+  printstyled( "[ Generate visual_diagram$(diagram_index).tex ]\n", color=:green )
   visual_file = open( "$(proc_str)_visuals/visual_diagram$(diagram_index).tex", "w" )
   write( visual_file,
     "\\documentclass{revtex4}\n"*
@@ -1573,18 +1566,6 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
                filter( !isnothing, _ ) |>
                sort( _, by= g->vertex_from_label("graph property",g).attributes["diagram_index"] )
   #------------------------------------------------  
-# # Convert qgraf to GenericGraph
-# graph_set = Set{GenericGraph}()
-# for one_qgraf in qgraf_list 
-
-#   g = convert_qgraf_TO_Graph( one_qgraf, model )
-#   if g == nothing 
-#     continue
-#   end # if
-
-#   push!( graph_set, g )
-# end # for one_qgraf
-# graph_list = sort( collect( graph_set ), by= g_->vertex_from_label("graph property",g_).attributes["diagram_index"] )
 
 
   #------------------------------------------------  
@@ -1594,7 +1575,6 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
   kin_relation = generate_kin_relation( graph_list )
   file = open( "kin_relation.frm", "w" )
   write( file, (join∘map)( ele_->"id $(ele_[1]) = $(ele_[2]);\n", collect(kin_relation) ) )
-  #write( file, join( map( ele_->"id $(ele_[1]) = $(ele_[2]);", collect(kin_relation) ), "\n" ) )
   close(file)
 
   ext_mom_list  = generate_ext_mom_list( graph_list )
@@ -1683,7 +1663,7 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
                "  run( `lualatex visual_diagram\$(diagram_index)` )\n"*
                "end\n" )
   close(file)
-  printstyled( "\nUse script \"generate_diagram_pdf.jl\" to generate PDF files for all diagrams.\n\n", color=:green, bold=true )
+  @info "Use script \"generate_diagram_pdf.jl\" to generate PDF files for all diagrams."
 
   return nothing
 

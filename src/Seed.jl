@@ -15,24 +15,23 @@ function digest_seed_proc( seed_file::String )::Nothing
   #----------------------------------------------------------------------------------------------
   input = YAML.load_file( seed_file )
   #----------------------------------------------------------------------------------------------
+  parton_proc_str = join( [ input["incoming"]; "TO"; input["outgoing"]; "$(input["n_loop"])Loop" ], "_" )
 
+  printstyled( "Read in model [$(input["model_name"])] for $(parton_proc_str)\n", color=:light_cyan )
 
   #-------------------------------------------------------
-  green_message( "Choose model: ", string(input["model_name"]) )
+  @info "Choose model: $(input["model_name"])"
   particle_dict = simple_readin_model( input["model_name"] )
 
-  printstyled( "All the particles: \n", color=:green )
-  for name_part in particle_dict
-    println( "  ", name_part )
-  end # for part
+  @info "All the particles: $( join( particle_dict, " " ) )"
   #-------------------------------------------------------
 
 
   #----------------------------------------------------------------------------------------------
-  green_message( "unitary gauge: ", string(input["unitary_gauge"]) )
-  green_message( "parton content: ", string(input["partons"]) )
-  green_message( "Incoming: ", string(input["incoming"]) )
-  green_message( "Outgoing: ", string(input["outgoing"]) )
+  @info "unitary gauge: $(input["unitary_gauge"])"
+  @info "parton content: $(input["partons"])"
+  @info "Incoming: $(input["incoming"])"
+  @info "Outgoing: $(input["outgoing"])"
   proc_list = expand_parton( input["incoming"], input["outgoing"], input["partons"] )
   #----------------------------------------------------------------------------------------------
 
@@ -52,29 +51,27 @@ function digest_seed_proc( seed_file::String )::Nothing
   proc_list = map( s_ -> sort_proc_str( s_, n_inc ), proc_list )
 
   proc_set = delete!( Set(proc_list), nothing )
-  println()
-  println( "Filtered subprocesses: " )
+  @info "Filtered subprocesses: " 
   for proc_str in proc_set 
     part_str_list = split( proc_str, "," )
     pretty_str = join( part_str_list[1:n_inc], "," )*" => "*join( part_str_list[n_inc+1:end], "," )
-    printstyled( "  ", pretty_str, "\n", color=:green )
+    @info "  "*pretty_str
   end # for proc_str
   #----------------------------------------------------------------------------------------------
 
 
   #----------------------------------------------------------------------------------------------
-  parton_proc_str = join( [ input["incoming"]; "TO"; input["outgoing"]; "$(input["n_loop"])Loop" ], "_" )
   if isdir( parton_proc_str ) == true
     rm( parton_proc_str, recursive=true )
   end # if
   mkdir( parton_proc_str )
   cd( parton_proc_str ) 
 
-  printstyled( "[ Generate subprocesses cards in $(parton_proc_str) ]\u264e\n", color=:green, bold=true )
+  @info "[ Generate subprocesses cards in $(parton_proc_str) ]"
   for proc_str in proc_set 
     write_card( proc_str, n_inc, input )
   end # for proc_str
-  println( "Done" )
+  @info "Done" 
 
   cd( ".." )
   #----------------------------------------------------------------------------------------------

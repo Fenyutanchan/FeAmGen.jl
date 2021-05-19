@@ -1,4 +1,10 @@
-using SymEngine, FeAmGen, Test, BenchmarkTools, YAML, JLD, Pipe
+using SymEngine, FeAmGen, Test, BenchmarkTools, YAML, JLD, Pipe, Logging, Dates
+
+io = open("basicTest.log", "w+")
+logger = SimpleLogger(io)
+global_logger(logger)
+
+@info "basicTest starts @ $(now())"
 
 @testset "degree" begin
   @vars x, y
@@ -57,5 +63,7 @@ end # @testset
   @test FeAmGen.get_list_quoted_str( String["a","b","c"] ) == "[ \"a\",\"b\",\"c\" ]"
 end # @testset
 
+@info "basicTest ends @ $(now())"
 
+close(io)
 

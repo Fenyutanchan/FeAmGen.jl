@@ -1,5 +1,10 @@
-using SymEngine, FeAmGen, Test, BenchmarkTools, YAML, JLD, Pipe
+using SymEngine, FeAmGen, Test, BenchmarkTools, YAML, JLD, Pipe, Dates, Logging
 
+io = open("AmpRed_Test.log", "w+")
+logger = SimpleLogger(io)
+global_logger(logger)
+
+@info "AmpRed_Test starts @ $(now())"
 
 
 #--------------------------------------------------------------------
@@ -65,4 +70,8 @@ rm( "scalar_integral.yaml" )
 
 end # @testset
 
+
+@info "AmpRed_Test ends @ $(now())"
+
+close(io)
 

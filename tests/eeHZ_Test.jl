@@ -1,5 +1,10 @@
-using SymEngine, FeAmGen, Test, BenchmarkTools, YAML, JLD, Pipe
+using SymEngine, FeAmGen, Test, BenchmarkTools, YAML, JLD, Pipe, Dates, Logging
 
+io = open("eeHZ_Test.log", "w+")
+logger = SimpleLogger(io)
+global_logger(logger)
+
+@info "eeHZ_Test starts @ $(now())"
 
 
 
@@ -90,5 +95,7 @@ end # testset
 
 
 
+@info "eeHZ_Test ends @ $(now())"
 
+close(io)
 

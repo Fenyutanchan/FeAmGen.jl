@@ -1,5 +1,10 @@
-using SymEngine, FeAmGen, Test, BenchmarkTools, YAML, JLD, Pipe
+using SymEngine, FeAmGen, Test, BenchmarkTools, YAML, JLD, Pipe, Dates, Logging
 
+io = open("TSI_Test.log", "w+")
+logger = SimpleLogger(io)
+global_logger(logger)
+
+@info "TSI_Test starts @ $(now())"
 
 #--------------------------------------------------------------------
 # Two-loop Self-energy Integral (TSI)
@@ -90,4 +95,8 @@ end # for one_yaml
 end # testset
 
 
+
+@info "TSI_Test ends @ $(now())"
+
+close(io)
 

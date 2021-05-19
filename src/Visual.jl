@@ -33,8 +33,7 @@ function get_line_style_str( part::Particle )::String
   elseif part.spin == :ghost 
     return "ghost"
   else
-    printstyled( "Spin exception!\n" )
-    exit()
+    error( "Spin exception!" )
   end # if
 
 end # function get_line_style_str

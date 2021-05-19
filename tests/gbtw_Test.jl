@@ -1,5 +1,10 @@
-using SymEngine, FeAmGen, Test, BenchmarkTools, YAML, JLD, Pipe
+using SymEngine, FeAmGen, Test, BenchmarkTools, YAML, JLD, Pipe, Dates, Logging
 
+io = open("gbtw_Test.log", "w+")
+logger = SimpleLogger(io)
+global_logger(logger)
+
+@info "gbtw_Test starts @ $(now())"
 
 
 
@@ -87,4 +92,7 @@ end # for nloop
 
 end # testset
 
+@info "gbtw_Test ends @ $(now())"
+
+close(io)
 

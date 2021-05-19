@@ -75,7 +75,7 @@ function generate_integral( yaml_file::String )::Nothing
   # baseINC only needs information from the external fields.
   touch( "baseINC.frm" )
 
-  printstyled( "[ form $(file_name).frm ]\n", color=:yellow )
+  @info "[ form $(file_name).frm ]"
   run( pipeline( `form $(file_name).frm`, file_name*".log" ) )
 
   file = open( file_name*".out", "r" )
