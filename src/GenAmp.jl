@@ -17,33 +17,33 @@ function generate_amp( proc_file::String )::Nothing
 
 
   #------------------------------------------------------------------
-  @info "Choose model: $(input["model_name"])"
+  @info "Choose model" model=input["model_name"]
   model = readin_model( input )
   generate_QGRAF_model( model )
   logging_model( model )
   #------------------------------------------------------------------
 
-  @info "Usage of unitary gauge: $(input["unitary_gauge"])"
+  @info "Usage of unitary gauge" unitary_gauge=input["unitary_gauge"]
 
-  @info "drop Tadpole: $(input["DropTadpole"])"
+  @info "Drop Tadpole" DropTadpole=input["DropTadpole"]
 
-  @info "drop WFcorrection: $(input["DropWFcorrection"])"
+  @info "Drop WFcorrection" DropWFcorrection=input["DropWFcorrection"]
 
-  @info "# of loops: $(input["n_loop"])"
+  @info "Number of loops" n_loop=input["n_loop"]
 
-  @info "QCD CT-order: $(input["QCDCT_order"])"
+  @info "QCD CT-order" QCDCT_order=input["QCDCT_order"]
 
-  @info "order of QCD coupling gs in the amplitude: $(input["Amp_QCD_order"])"
+  @info "Order of QCD coupling gs in the amplitude" Amp_QCD_order=input["Amp_QCD_order"]
 
-  @info "order of QED coupling gs in the amplitude: $(input["Amp_QED_order"])"
+  @info "Order of QED coupling gs in the amplitude" Amp_QED_order=input["Amp_QED_order"]
 
-  @info "min eps power in the amplitude: $(input["Amp_Min_Eps_Xpt"])"
-  @info "max eps power in the amplitude: $(input["Amp_Max_Eps_Xpt"])"
+  @info "Min eps power in the amplitude" Amp_Min_Eps_Xpt=input["Amp_Min_Eps_Xpt"]
+  @info "Max eps power in the amplitude" Amp_Max_Eps_Xpt=input["Amp_Max_Eps_Xpt"]
 
-  @info "incoming: $(input["incoming"])"
-  @info "outgoing: $(input["outgoing"])"
+  @info "Incoming" input["incoming"]
+  @info "Outgoing" input["outgoing"]
 
-  @info "coupling factor: $(input["couplingfactor"])"
+  @info "Coupling factor" couplingfactor=input["couplingfactor"]
 
   #----------------------------------------------------------------------
   # Run the QGRAF

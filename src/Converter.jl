@@ -39,7 +39,7 @@ Close[stream];
   close(file)
 
   run( pipeline( `MathKernel -script $(file_name).m`, file_name*".log" ) )
-  @info "  Done MathKernel -script $(file_name).m in thread #$(Threads.threadid()) "
+  @info "Done Mathematica script execution." script="$(file_name).m" thread="#$(Threads.threadid())"
 
   file = open( file_name*".out", "r" )
   result_str = replace( read( file, String ), r"\s"=>"" )
@@ -97,7 +97,7 @@ Close[stream];
     close(file)
 
     run( pipeline( `MathKernel -script $(file_name).m`, file_name*".log" ) )
-    @info "  Done MathKernel -script $(file_name).m in thread #$(Threads.threadid())"
+    @info "Done Mathematica script execution." script="$(file_name).m" thread="#$(Threads.threadid())"
   
     file = open( file_name*".out", "r" )
     result_str = replace( read( file, String ), r"\s"=>"" )
@@ -223,7 +223,7 @@ Close[stream];
     close(file)
 
     run( pipeline( `MathKernel -script $(file_name).m`, file_name*".log" ) )
-    @info "  Done MathKernel -script $(file_name).m in thread #$(Threads.threadid())"
+    @info "Done Mathematica script execution." script="$(file_name).m" thread="#$(Threads.threadid())"
   
     file = open( file_name*".out", "r" )
     result_str = replace( read( file, String ), r"\s"=>"" )

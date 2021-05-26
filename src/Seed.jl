@@ -17,21 +17,21 @@ function digest_seed_proc( seed_file::String )::Nothing
   #----------------------------------------------------------------------------------------------
   parton_proc_str = join( [ input["incoming"]; "TO"; input["outgoing"]; "$(input["n_loop"])Loop" ], "_" )
 
-  printstyled( "Read in model [$(input["model_name"])] for $(parton_proc_str)\n", color=:light_cyan )
+  box_message( "[ Read in model \"$(input["model_name"])\" for $(parton_proc_str) ]" )
 
   #-------------------------------------------------------
-  @info "Choose model: $(input["model_name"])"
+  @info "Choose model" model=input["model_name"]
   particle_dict = simple_readin_model( input["model_name"] )
 
-  @info "All the particles: $( join( particle_dict, " " ) )"
+  @info "All the particles" join( particle_dict, " " ) 
   #-------------------------------------------------------
 
 
   #----------------------------------------------------------------------------------------------
-  @info "unitary gauge: $(input["unitary_gauge"])"
-  @info "parton content: $(input["partons"])"
-  @info "Incoming: $(input["incoming"])"
-  @info "Outgoing: $(input["outgoing"])"
+  @info "Unitary gauge" input["unitary_gauge"]
+  @info "Parton content" input["partons"]
+  @info "Incoming" input["incoming"]
+  @info "Outgoing" input["outgoing"]
   proc_list = expand_parton( input["incoming"], input["outgoing"], input["partons"] )
   #----------------------------------------------------------------------------------------------
 
@@ -51,7 +51,7 @@ function digest_seed_proc( seed_file::String )::Nothing
   proc_list = map( s_ -> sort_proc_str( s_, n_inc ), proc_list )
 
   proc_set = delete!( Set(proc_list), nothing )
-  @info "Filtered subprocesses: " 
+  @info "Filtered subprocesses" 
   for proc_str in proc_set 
     part_str_list = split( proc_str, "," )
     pretty_str = join( part_str_list[1:n_inc], "," )*" => "*join( part_str_list[n_inc+1:end], "," )

@@ -1068,6 +1068,7 @@ function contract_Dirac_indices( g::GenericGraph, lorentz_expr_list::Vector{Basi
 ##################################################################################
 
   diagram_index = vertex_from_label("graph property",g).attributes["diagram_index"]
+  printstyled( "[ Contract the Dirac indices for diagram #$(diagram_index) ]\n", color=:green )
 
   new_lorentz_expr_list = Vector{Basic}( undef, length(lorentz_expr_list) )
   for index in 1:length(lorentz_expr_list)
@@ -1079,7 +1080,7 @@ function contract_Dirac_indices( g::GenericGraph, lorentz_expr_list::Vector{Basi
     write( file, form_script_str )
     close(file)
 
-    println( "[ form $(file_name).frm ]" )
+    println( "  [ form $(file_name).frm ]" )
     run( pipeline( `form $(file_name).frm`, file_name*".log" ) )
 
     file = open( file_name*".out", "r" )
@@ -1114,6 +1115,7 @@ function contract_Dirac_indices_noexpand( g::GenericGraph, lorentz_expr_list::Ve
 ##################################################################################
 
   diagram_index = vertex_from_label("graph property",g).attributes["diagram_index"]
+  printstyled( "\n[ Contract the Dirac indices (no expansion) for diagram #$(diagram_index) ]\n", color=:green )
 
   new_lorentz_expr_list = Vector{Basic}( undef, length(lorentz_expr_list) )
   for index in 1:length(lorentz_expr_list)
@@ -1125,7 +1127,7 @@ function contract_Dirac_indices_noexpand( g::GenericGraph, lorentz_expr_list::Ve
     write( file, form_script_str )
     close(file)
 
-    println( "[ form $(file_name).frm ]" )
+    println( "  [ form $(file_name).frm ]" )
     run( pipeline( `form $(file_name).frm`, file_name*".log" ) )
 
     file = open( file_name*".out", "r" )
@@ -1324,7 +1326,7 @@ Close[stream];
 
 
     run( pipeline( `MathKernel -script $(file_name).m`, file_name*".log" ) )
-    @info "  Done MathKernel -script $(file_name).m in thread #$(Threads.threadid())."
+    @info "Done Mathematica script execution." script="$(file_name).m" thread="#$(Threads.threadid())"
   
     file = open( file_name*".out", "r" )
     result_str = replace( read( file, String ), r"\s"=>"" )
@@ -1360,6 +1362,7 @@ function simplify_color_factors( g::GenericGraph, color_factor_list::Vector{Basi
 ###################################################################################################
 
   diagram_index = vertex_from_label("graph property",g).attributes["diagram_index"]
+  printstyled( "\n[ Simplify the color factor for diagram #$(diagram_index) ]\n", color=:green )
 
   new_color_factor_list = Vector{Basic}( undef, length(color_factor_list) )
   for index in 1:length(color_factor_list)
@@ -1371,7 +1374,7 @@ function simplify_color_factors( g::GenericGraph, color_factor_list::Vector{Basi
     write( file, form_script_str )
     close(file)
 
-    println( "[ form $(file_name).frm ]" )
+    println( "  [ form $(file_name).frm ]" )
     run( pipeline( `form $(file_name).frm`, file_name*".log" ) )
 
     file = open( file_name*".out", "r" )
@@ -1403,7 +1406,7 @@ function write_out_amplitude( n_loop::Int64, diagram_index::Int64, couplingfacto
 ###########################################################################################################
 
 
-  printstyled( "[ Generate amplitude_diagram$(diagram_index).out ]\n", color=:green )
+  printstyled( "\n[ Generate amplitude_diagram$(diagram_index).out ]\n", color=:green )
   amp_file = open( "$(proc_str)_amplitudes/amplitude_diagram$(diagram_index).out", "w" )
   write( amp_file, 
     "n_loop: $(n_loop)\n"*
@@ -1496,7 +1499,7 @@ function write_out_visual_graph( g::GenericGraph, model::Model,
   color_str_list = convert_color_list( diagram_index, color_list )
   lorentz_str_list = convert_lorentz_list( diagram_index, lorentz_list, ext_mom_list, scale2_list )
 
-  printstyled( "[ Generate visual_diagram$(diagram_index).tex ]\n", color=:green )
+  printstyled( "\n[ Generate visual_diagram$(diagram_index).tex ]\n", color=:green )
   visual_file = open( "$(proc_str)_visuals/visual_diagram$(diagram_index).tex", "w" )
   write( visual_file,
     "\\documentclass{revtex4}\n"*
@@ -1621,6 +1624,7 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
   #Threads.@threads for g in graph_list
   for g in graph_list
     diagram_index = vertex_from_label("graph property",g).attributes["diagram_index"]
+    box_message( "[ Working on diagram #$(diagram_index) ($(length(graph_list))) ]", color=:light_green )
 
     scale2_list = generate_scale2_list( g, kin_relation )
 
@@ -1663,7 +1667,7 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
                "  run( `lualatex visual_diagram\$(diagram_index)` )\n"*
                "end\n" )
   close(file)
-  @info "Use script \"generate_diagram_pdf.jl\" to generate PDF files for all diagrams."
+  @info "Users can generate PDF files for all diagrams." script="generate_diagram_pdf.jl"
 
   return nothing
 
