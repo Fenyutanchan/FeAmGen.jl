@@ -57,6 +57,7 @@ run( `rm -r g_g_TO_t_tbar_1Loop_visuals`, wait=false )
 rm( "integral_Dia199SI1.jld" )
 rm( "TSI_integrals", recursive=true )
 rm( "shiftUP_TSI_integrals", recursive=true )
+rm( "IRD_integrals", recursive=true )
 
 
 

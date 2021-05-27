@@ -3,6 +3,8 @@ include("basicTest.jl")
 
 include("TSI_Test.jl")
 
+include("IRD_Test.jl")
+
 include("AmpRed_Test.jl")
 
 include("ggttbar_Test.jl")
