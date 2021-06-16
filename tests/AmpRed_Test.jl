@@ -11,8 +11,8 @@ global_logger(logger)
 # JLD file generation for single-top amplitude reduction.
 #--------------------------------------------------------------------
 
-yaml_str = """
-name: Dia199SI1
+yaml_str( rank_str::String, index::Int64, num_str::String ) = """
+name: Dia199_$(rank_str)_SI$(index)
 
 n_loop: 2
 
@@ -48,28 +48,39 @@ den_list: [
 
 den_xpt_list: [ 0, 0, 1, 0, 1, 0, 1, -2, 2 ]
 
-numerator: "SP(q1,q2)"
+numerator: "$(num_str)"
 
 comment: "For the tensor reduction of single-top amplitude."
 """
 
-open( "scalar_integral.yaml", "w" ) do infile
-  write( infile, yaml_str )
-end 
+@vars k1, k2, K3
+rank_str = "q1q1q1"
+num_list = generate_SP_combo( rank_str, [k1,k2,K3] )
+num_list = sort( num_list, by=gen_mma_str )
+n_num = length( num_list )
 
-generate_integral( "scalar_integral.yaml" )
+for index in 1:n_num
+  one_num_str = string( num_list[index] )
+  file_name = "scalar_integral_$(rank_str)_SI$(index).yaml"
 
-rm( "scalar_integral.yaml" )
+  open( file_name, "w" ) do infile
+    write( infile, yaml_str(rank_str,index,one_num_str) )
+  end 
 
-@testset "scalar_integral" begin
+  generate_integral( file_name )
 
-  content_dict = load( "integral_Dia199SI1.jld" )
-  content_dict_bench = load( "integral_Dia199SI1_benchmark.jld" )
+  rm( file_name )
 
-  @test content_dict == content_dict_bench 
+  @testset "scalar_integral" begin
 
-end # @testset
+    content_dict = load( "integral_Dia199_$(rank_str)_SI$(index).jld" )
+    content_dict_bench = load( "integral_Dia199_$(rank_str)_SI$(index)_benchmark.jld" )
 
+    @test content_dict == content_dict_bench 
+
+  end # @testset
+
+end # for index
 
 @info "AmpRed_Test ends @ $(now())"
 
