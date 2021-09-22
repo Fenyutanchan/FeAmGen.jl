@@ -1639,6 +1639,7 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
     perm = sortperm( amp_color_list, by=gen_mma_str )
     amp_color_list = amp_color_list[perm]
     amp_lorentz_list = amp_lorentz_list[perm]
+    amp_lorentz_noexpand_list = amp_lorentz_noexpand_list[perm]
 
     write_out_amplitude( n_loop, diagram_index, couplingfactor, model.parameter_dict, ext_mom_list, scale2_list, kin_relation, baseINC_script_str,
                          amp_color_list, amp_lorentz_list, loop_den_list, loop_den_xpt_list, input["Amp_Min_Eps_Xpt"], input["Amp_Max_Eps_Xpt"], proc_str, the_lock )

@@ -123,7 +123,11 @@ end # function generate_integral
 
 
 #-------------------------------------------------------------
-function generate_multi_yaml( original_yaml::String, indices_list::Vector{Vector{Int64}}, target_dir::String )::Vector{String}
+function generate_multi_yaml( 
+    original_yaml::String, 
+    indices_list::Vector{Vector{Int64}}, 
+    target_dir::String 
+)::Vector{String}
 #-------------------------------------------------------------
 
   if isdir( target_dir ) || isfile( target_dir )

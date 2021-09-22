@@ -42,9 +42,11 @@ open( "TSI_original.yaml", "w" ) do infile
   write( infile, TSI_origin_str )
 end 
 
+#--------------------------------------------------------------------------
 # The last five (except the first one) integrals are master integarls.
 indices_list = [ [0,3,3,0,3], [0,1,2,0,1], [0,2,1,0,1], [0,1,1,0,1], [0,0,0,1,1], [0,1,0,0,1] ]
 multi_yaml_list = generate_multi_yaml( "TSI_original.yaml", indices_list, "TSI_integrals" )
+#--------------------------------------------------------------------------
 
 rm( "TSI_original.yaml" )
 
@@ -80,7 +82,7 @@ for one_yaml in new_yaml_list
   generate_integral( one_yaml ) 
 end # for one_yaml
 
-@testset "shfitUP_TSI" for one_yaml in new_yaml_list
+@testset "shiftUP_TSI" for one_yaml in new_yaml_list
   file_name = last( splitpath( one_yaml )  )
   yaml_file0_dict = YAML.load_file( joinpath( "shiftUP_TSI_integrals_benchmark", file_name ) )
   yaml_file1_dict = YAML.load_file( joinpath( "shiftUP_TSI_integrals", file_name ) )
