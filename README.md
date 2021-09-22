@@ -20,6 +20,12 @@ This is used to generate diagrams and amplitudes by using the previously generat
 
 -----------------------------------------------
 
+`generate_integral( <YAML file> )`
+This is used to generate expression for given YAML file, which has specific format shown in the test examples.
+
+-----------------------------------------------
+
+
 Here we use directly the UFO model files stored in the `<model directory>`.
 
 ***NOTE:***
