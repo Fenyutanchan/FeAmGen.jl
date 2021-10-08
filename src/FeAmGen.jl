@@ -23,7 +23,7 @@ using JLD
 using Pipe
 
 export digest_seed_proc, generate_amp, generate_integral, generate_multi_yaml, generate_shiftUP_yaml
-export generate_SP_combo, gen_mma_str
+export generate_SP_combo, gen_mma_str, box_message
 
 include("Message.jl")
 include("Extra.jl")

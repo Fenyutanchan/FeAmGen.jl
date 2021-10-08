@@ -57,7 +57,7 @@ incoming: [ "eplus", "eminus" ]          # incoming particles
 outgoing: [ "H", "Z" ]               # outgoing particles 
 """
 
-for nloop in [0,1]
+for nloop in [0,1,2]
 
   open( "eeHZ_seed_proc_$(nloop)Loop.yaml", "w" ) do infile
     write( infile, generic_eeHZ_seed_proc_yaml_str(nloop=nloop) )

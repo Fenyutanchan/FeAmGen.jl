@@ -55,7 +55,7 @@ comment: "For the tensor reduction of single-top amplitude."
 
 @vars k1, k2, K3
 rank_str = "q1q1q1"
-num_list = generate_SP_combo( rank_str, [k1,k2,K3] )
+num_list = generate_SPcombo( rank_str, [k1,k2,K3] )
 num_list = sort( num_list, by=gen_mma_str )
 n_num = length( num_list )
 
