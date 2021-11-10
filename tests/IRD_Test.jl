@@ -35,6 +35,10 @@ den_xpt_list: [ 0, 0, 0, 0, 0 ]
 
 numerator: "1"
 
+# 1: i*eta for all 
+# 2: i*eta for only massive
+ieta_scheme: 1
+
 comment: "Seed yaml file for IRD"
 """
 
@@ -60,6 +64,7 @@ end # for one_yaml
   yaml_file1_dict = YAML.load_file( joinpath( "IRD_integrals", file_name ) )
   delete!( yaml_file0_dict, "comment" )
   delete!( yaml_file1_dict, "comment" )
+  delete!( yaml_file1_dict, "ieta_scheme" )
   @test yaml_file0_dict == yaml_file1_dict
 
   jld_name = "integral_$(file_name[1:end-5]).jld"

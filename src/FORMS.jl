@@ -981,6 +981,8 @@ Off FinalStats;
 #include model_parameters.frm
 #include contractor.frm
 
+symbol sqrteta;
+
 format nospaces;
 format maple;
 
@@ -1075,6 +1077,8 @@ Off FinalStats;
 
 #include model_parameters.frm
 #include contractor.frm
+
+symbol sqrteta;
 
 format nospaces;
 format maple;

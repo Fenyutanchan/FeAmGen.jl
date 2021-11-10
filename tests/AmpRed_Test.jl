@@ -50,6 +50,10 @@ den_xpt_list: [ 0, 0, 1, 0, 1, 0, 1, -2, 2 ]
 
 numerator: "$(num_str)"
 
+# 1: i*eta for all 
+# 2: i*eta for only massive
+ieta_scheme: 1
+
 comment: "For the tensor reduction of single-top amplitude."
 """
 
