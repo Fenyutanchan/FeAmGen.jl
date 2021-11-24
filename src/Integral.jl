@@ -108,7 +108,7 @@ function generate_integral(
   rm( file_name*".log" )
 
   # write out
-  jldopen( joinpath( dir_path, "integral_$(name_str).jld" ), "w" ) do file 
+  jldopen( joinpath( dir_path, "integral$(name_str).jld" ), "w" ) do file 
     write( file, "Generator", "FeAmGen.jl" )
     write( file, "ieta_scheme", ieta_scheme )
     write( file, "n_loop", n_loop )
