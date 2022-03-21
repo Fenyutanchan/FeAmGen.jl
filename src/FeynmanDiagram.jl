@@ -168,7 +168,7 @@ function get_incoming_couplings_lorentz_list( part::Particle, mark::Int64, momen
   elseif part.spin == :fermion && part.kf < 0
     return [ Basic(" SpVB( $mark, spb$mark, $momentum, r$mark, $(part.mass) ) ") ]
   elseif part.spin == :vector
-    return [ Basic(" VecEps( $mark, mub$mark, $momentum, r$mark, $(part.mass) ) ") ]
+    return [ Basic(" VecEp( $mark, mub$mark, $momentum, r$mark, $(part.mass) ) ") ]
   elseif part.spin == :scalar
     return [ Basic("1") ]
   else
@@ -192,7 +192,7 @@ function get_outgoing_couplings_lorentz_list( part::Particle, mark::Int64, momen
   elseif part.spin == :fermion && part.kf < 0
     return [ Basic(" SpV( $mark, spa$mark, $momentum, r$mark, $(part.mass) ) ") ]
   elseif part.spin == :vector
-    return [ Basic(" VecEpsC( $mark, mua$mark, $momentum, r$mark, $(part.mass) ) ") ]
+    return [ Basic(" VecEpC( $mark, mua$mark, $momentum, r$mark, $(part.mass) ) ") ]
   elseif part.spin == :scalar
     return [ Basic("1") ]
   else
@@ -1194,7 +1194,7 @@ expr2 = $( gen_mma_str(one_lorentz_noexpand) );
 MomList = {q1,q2,q3,$(join(map(string,ext_mom_list),","))};
 vanishing = Map[# :> 0 &, MomList];
 
-dummyList = {epsMU1,epsMU2,epsMU3,epsMU4,epsMU5,dummyMU1,dummyMU2,dummyMU3,dummyMU4,dummyMU5,dummyMU6,dummyMU7,dummyMU8,dummyMU9,dummyMU10};
+dummyList = {epMU1,epMU2,epMU3,epMU4,epMU5,dummyMU1,dummyMU2,dummyMU3,dummyMU4,dummyMU5,dummyMU6,dummyMU7,dummyMU8,dummyMU9,dummyMU10};
 nuList = {NU1,NU2,NU3,NU4,NU5,NU6,NU7,NU8,NU10,NU12,NU13,NU14,NU15,NU16,NU17,NU18,NU19,NU20};
 muList = {MU1,MU2,MU3,MU4,MU5,MU6,MU7,MU8,MU10,MU12,MU13,MU14,MU15,MU16,MU17,MU18,MU19,MU20};
 
@@ -1268,7 +1268,7 @@ expr2 = expr2 //. {$( join(collect(kin_relation_str_set),",") )};
 
 expr2 = expr2 //. FermionChain[ x1__, GA[mu_/; MemberQ[dummyList, mu]], x__, GA[mu_/; MemberQ[dummyList, mu]], x2__ ] :> FermionChain[ x1, GA[muList[[Length[{x1}]]]], x, GA[muList[[Length[{x1}]]]], x2 ];
 
-expr2 = expr2 //. { FV[mom_,mu_]*VecEps[int_, mu_, mom_, ref_, mass_] :> 0, FV[mom_,mu_]*VecEpsC[int_, mu_, mom_, ref_, mass_] :> 0,
+expr2 = expr2 //. { FV[mom_,mu_]*VecEp[int_, mu_, mom_, ref_, mass_] :> 0, FV[mom_,mu_]*VecEpC[int_, mu_, mom_, ref_, mass_] :> 0,
                     FermionChain[ x__, GA[mom_], U[int_,mom_,ref_,0] ] :> 0, FermionChain[ x__, GA[mom_], V[int_,mom_,ref_,0] ] :> 0,
                     FermionChain[ UB[int_,mom_,ref_,0], PL, GA[mom_], x__ ] :> 0, FermionChain[ VB[int_,mom_,ref_,0], PL, GA[mom_], x__ ] :> 0, 
                     FermionChain[ UB[int_,mom_,ref_,0], PR, GA[mom_], x__ ] :> 0, FermionChain[ VB[int_,mom_,ref_,0], PR, GA[mom_], x__ ] :> 0,
@@ -1296,7 +1296,7 @@ expr1 = expr1 //. {$( join(collect(kin_relation_str_set),",") )};
 
 expr1 = expr1 //. FermionChain[ x1__, GA[mu_/; MemberQ[dummyList, mu]], x__, GA[mu_/; MemberQ[dummyList, mu]], x2__ ] :> FermionChain[ x1, GA[muList[[Length[{x1}]]]], x, GA[muList[[Length[{x1}]]]], x2 ];
 
-expr1 = expr1 //. { FV[mom_,mu_]*VecEps[int_, mu_, mom_, ref_, mass_] :> 0, FV[mom_,mu_]*VecEpsC[int_, mu_, mom_, ref_, mass_] :> 0,
+expr1 = expr1 //. { FV[mom_,mu_]*VecEp[int_, mu_, mom_, ref_, mass_] :> 0, FV[mom_,mu_]*VecEpC[int_, mu_, mom_, ref_, mass_] :> 0,
                     FermionChain[ x__, GA[mom_], U[int_,mom_,ref_,0] ] :> 0, FermionChain[ x__, GA[mom_], V[int_,mom_,ref_,0] ] :> 0,
                     FermionChain[ UB[int_,mom_,ref_,0], PL, GA[mom_], x__ ] :> 0, FermionChain[ VB[int_,mom_,ref_,0], PL, GA[mom_], x__ ] :> 0, 
                     FermionChain[ UB[int_,mom_,ref_,0], PR, GA[mom_], x__ ] :> 0, FermionChain[ VB[int_,mom_,ref_,0], PR, GA[mom_], x__ ] :> 0,
@@ -1394,7 +1394,7 @@ end # function simplify_color_factors
 
 ###########################################################################################################
 """
-    write_out_amplitude( n_loop::Int64, diagram_index::Int64, couplingfactor::Basic, parameter_dict::Dict{Basic,Basic}, ext_mom_list::Vector{Basic}, scale2_list::Vector{Basic}, kin_relation::Dict{Basic,Basic}, baseINC_script_str::String, amp_color_list::Vector{Basic}, amp_lorentz_list::Vector{Basic}, loop_den_list::Vector{Basic}, loop_den_xpt_list::Vector{Int64}, min_eps_xpt::Int64, max_eps_xpt::Int64, proc_str::String, the_lock::ReentrantLock )::Nothing
+    write_out_amplitude( n_loop::Int64, diagram_index::Int64, couplingfactor::Basic, parameter_dict::Dict{Basic,Basic}, ext_mom_list::Vector{Basic}, scale2_list::Vector{Basic}, kin_relation::Dict{Basic,Basic}, baseINC_script_str::String, amp_color_list::Vector{Basic}, amp_lorentz_list::Vector{Basic}, loop_den_list::Vector{Basic}, loop_den_xpt_list::Vector{Int64}, min_ep_xpt::Int64, max_ep_xpt::Int64, proc_str::String, the_lock::ReentrantLock )::Nothing
 
 Write out the amplitude information into the file that can be read easily.
 """
@@ -1402,7 +1402,7 @@ function write_out_amplitude( n_loop::Int64, diagram_index::Int64, couplingfacto
     ext_mom_list::Vector{Basic}, scale2_list::Vector{Basic}, kin_relation::Dict{Basic,Basic}, baseINC_script_str::String, 
     amp_color_list::Vector{Basic}, amp_lorentz_list::Vector{Basic}, 
     loop_den_list::Vector{Basic}, loop_den_xpt_list::Vector{Int64},
-    min_eps_xpt::Int64, max_eps_xpt::Int64, proc_str::String, the_lock::ReentrantLock )::Nothing
+    min_ep_xpt::Int64, max_ep_xpt::Int64, proc_str::String, the_lock::ReentrantLock )::Nothing
 ###########################################################################################################
 
 
@@ -1461,8 +1461,8 @@ function write_out_amplitude( n_loop::Int64, diagram_index::Int64, couplingfacto
   jldopen( "$(proc_str)_amplitudes/amplitude_diagram$(diagram_index).jld", "w" ) do file 
     write( file, "Generator", "FeAmGen.jl" )
     write( file, "n_loop", n_loop )
-    write( file, "min_eps_xpt", min_eps_xpt )
-    write( file, "max_eps_xpt", max_eps_xpt )
+    write( file, "min_ep_xpt", min_ep_xpt )
+    write( file, "max_ep_xpt", max_ep_xpt )
     write( file, "couplingfactor", string(couplingfactor) )
     write( file, "ext_mom_list", map( string, ext_mom_list ) )
     write( file, "scale2_list", map( string, scale2_list ) )
@@ -1642,7 +1642,7 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
     amp_lorentz_noexpand_list = amp_lorentz_noexpand_list[perm]
 
     write_out_amplitude( n_loop, diagram_index, couplingfactor, model.parameter_dict, ext_mom_list, scale2_list, kin_relation, baseINC_script_str,
-                         amp_color_list, amp_lorentz_list, loop_den_list, loop_den_xpt_list, input["Amp_Min_Eps_Xpt"], input["Amp_Max_Eps_Xpt"], proc_str, the_lock )
+                         amp_color_list, amp_lorentz_list, loop_den_list, loop_den_xpt_list, input["Amp_Min_Ep_Xpt"], input["Amp_Max_Ep_Xpt"], proc_str, the_lock )
 
 
     write_out_visual_graph( g, model, couplingfactor, amp_color_list, amp_lorentz_noexpand_list, ext_mom_list, scale2_list, proc_str )

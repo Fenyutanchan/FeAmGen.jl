@@ -39,24 +39,24 @@ auto symbol ver, gc;
 auto symbol spa, spb, spv spw;
 
 ***Lorentz indices
-auto index mua, mub, muv, muw, rho, dummyMU, epsMU;
+auto index mua, mub, muv, muw, rho, dummyMU, epMU;
 
 Set RHO: rho,rho0,...,rho200;
-Set EPSMU: epsMU1,...,epsMU100;
-Set EPSMUC: epsMUC1,...,epsMUC100;
+Set EPMU: epMU1,...,epMU100;
+Set EPMUC: epMUC1,...,epMUC100;
 Set DUMMYMU: dummyMU1,...,dummyMU100;
-Set NonEPSMU: mua,mua0,...,mua100,mub,mub0,...,mub100,muv, muv0,...,muv10000,muw, muw0,...,muw10000,dummyMU1,...,dummyMU100;
+Set NonEPMU: mua,mua0,...,mua100,mub,mub0,...,mub100,muv, muv0,...,muv10000,muw, muw0,...,muw10000,dummyMU1,...,dummyMU100;
 
 Set LOR: mua,mua0,...,mua100,mub,mub0,...,mub100,muv,muv0,...,muv10000,muw,muw0,...,muw10000,
-         rho,rho0,...,rho100,dummyMU,dummyMU0,...,dummyMU100,epsMU1,...,epsMU100;
+         rho,rho0,...,rho100,dummyMU,dummyMU0,...,dummyMU100,epMU1,...,epMU100;
 
 Set LORC: muaC,muaC0,...,muaC100,mubC,mubC0,...,mubC100,muvC,muvC0,...,muvC10000,muwC,muwC0,...,muwC10000,
-          rhoC,rhoC0,...,rhoC100,dummyMUC,dummyMUC0,...,dummyMUC100,epsMUC1,...,epsMUC100;
+          rhoC,rhoC0,...,rhoC100,dummyMUC,dummyMUC0,...,dummyMUC100,epMUC1,...,epMUC100;
 
 Set ALLLOR: mua,mua0,...,mua100,mub,mub0,...,mub100,muv,muv0,...,muv10000,muw,muw0,...,muw10000,
-            rho,rho0,...,rho100,dummyMU,dummyMU0,...,dummyMU100,epsMU1,...,epsMU100,
+            rho,rho0,...,rho100,dummyMU,dummyMU0,...,dummyMU100,epMU1,...,epMU100,
             muaC,muaC0,...,muaC100,mubC,mubC0,...,mubC100,muvC,muvC0,...,muvC10000,muwC,muwC0,...,muwC10000,
-            rhoC,rhoC0,...,rhoC100,dummyMUC,dummyMUC0,...,dummyMUC100,epsMUC1,...,epsMUC100;
+            rhoC,rhoC0,...,rhoC100,dummyMUC,dummyMUC0,...,dummyMUC100,epMUC1,...,epMUC100;
 
 
 ***For matching both indices and momenta
@@ -68,7 +68,7 @@ vector ref, ref0, ref1,...,ref4;
 symbol mass, mass1,...,mass4, width;
 
 CFunction Den, PowDen, FV, FermionLoopPow, GhostLoopPow;
-CFunction VecEpsilon, VecEpsilon1,...,VecEpsilon4, VecEps, VecEpsC;
+CFunction VecEpsilon, VecEpsilon1,...,VecEpsilon4, VecEp, VecEpC;
 CFunction Spinor, Spinor1,...,Spinor4, FermionChain;
 
 CFunction SpUB, SpVB, SpU, SpV;
@@ -147,7 +147,7 @@ repeat;
   id LMT(rho1?,rho2?)*FV(mom1?,rho1?) = FV(mom1,rho2);
   id LMT(rho1?,rho2?)*GAij(spa1?,spa2?,rho1?) = GAij(spa1,spa2,rho2);
   id LMT(rho1?,rho2?)*Levi(rho1?,rho3?,rho4?,rho5?) = Levi(rho2,rho3,rho4,rho5);
-  id LMT(rho1?,rho2?)*VecEpsilon?{VecEps,VecEpsC}(int1?,rho2?,mom1?,ref1?,mass1?) = VecEpsilon(int1,rho1,mom1,ref1,mass1);
+  id LMT(rho1?,rho2?)*VecEpsilon?{VecEp,VecEpC}(int1?,rho2?,mom1?,ref1?,mass1?) = VecEpsilon(int1,rho1,mom1,ref1,mass1);
 endrepeat;
 
 id GAij(spa1?,spa2?,rho?)*FV(mom?,rho?) = GAij(spa1,spa2,mom);
@@ -158,27 +158,27 @@ repeat;
   id LMT(rho1?,rho2?)*FermionChain(?vars1,GA(rho2?),?vars2) = FermionChain(?vars1,GA(rho1),?vars2);
 endrepeat;
 
-repeat id LMT(rho?NonEPSMU,rho0?)*VecEpsilon?{VecEps,VecEpsC}(int?,rho?NonEPSMU,?vars)
-  = LMT(EPSMU[int],rho0)*VecEpsilon(int,EPSMU[int],?vars);
-id GAij(spa1?,spa2?,rho?NonEPSMU)*VecEpsilon?{VecEps,VecEpsC}(int?,rho?NonEPSMU,?vars)
-  = GAij(spa1,spa2,EPSMU[int])*VecEpsilon(int,EPSMU[int],?vars);
+repeat id LMT(rho?NonEPMU,rho0?)*VecEpsilon?{VecEp,VecEpC}(int?,rho?NonEPMU,?vars)
+  = LMT(EPMU[int],rho0)*VecEpsilon(int,EPMU[int],?vars);
+id GAij(spa1?,spa2?,rho?NonEPMU)*VecEpsilon?{VecEp,VecEpC}(int?,rho?NonEPMU,?vars)
+  = GAij(spa1,spa2,EPMU[int])*VecEpsilon(int,EPMU[int],?vars);
 .sort
 
 *
 * vanishing 
 *
-id FV(mom?,rho?) * VecEpsilon?{VecEps,VecEpsC}(int?,rho?,mom?,ref?,mass?) = 0;
-id FV(ref?,rho?) * VecEpsilon?{VecEps,VecEpsC}(int?,rho?,mom?,ref?,mass?) = 0;
+id FV(mom?,rho?) * VecEpsilon?{VecEp,VecEpC}(int?,rho?,mom?,ref?,mass?) = 0;
+id FV(ref?,rho?) * VecEpsilon?{VecEp,VecEpC}(int?,rho?,mom?,ref?,mass?) = 0;
 .sort
 
 *
-* use EPSMU indices
+* use EPMU indices
 *
-id SP( FV(mom1?,0), VecEpsilon?{VecEps,VecEpsC}(int?,0,mom2?,ref?,mass?) )
-  = FV(mom1,EPSMU[int]) * VecEpsilon(int,EPSMU[int],mom2,ref,mass);
-id FV(mom1?,rho?) * VecEpsilon?{VecEps,VecEpsC}(int?,rho?,mom2?,ref?,mass?)
-  = FV(mom1,EPSMU[int]) * VecEpsilon(int,EPSMU[int],mom2,ref,mass);
-id VecEpsilon1?{VecEps,VecEpsC}(int1?, rho?, ?vars1) * VecEpsilon2?{VecEps,VecEpsC}(int2?, rho?, ?vars2)
+id SP( FV(mom1?,0), VecEpsilon?{VecEp,VecEpC}(int?,0,mom2?,ref?,mass?) )
+  = FV(mom1,EPMU[int]) * VecEpsilon(int,EPMU[int],mom2,ref,mass);
+id FV(mom1?,rho?) * VecEpsilon?{VecEp,VecEpC}(int?,rho?,mom2?,ref?,mass?)
+  = FV(mom1,EPMU[int]) * VecEpsilon(int,EPMU[int],mom2,ref,mass);
+id VecEpsilon1?{VecEp,VecEpC}(int1?, rho?, ?vars1) * VecEpsilon2?{VecEp,VecEpC}(int2?, rho?, ?vars2)
   = SP( VecEpsilon1(int1, 0, ?vars1), VecEpsilon2(int2, 0, ?vars2) );
 .sort
 
@@ -257,7 +257,7 @@ repeat;
   id LMT(rho1?,rho2?)*FV(mom1?,rho1?) = FV(mom1,rho2);
   id LMT(rho1?,rho2?)*GAij(spa1?,spa2?,rho1?) = GAij(spa1,spa2,rho2);
   id LMT(rho1?,rho2?)*Levi(rho1?,rho3?,rho4?,rho5?) = Levi(rho2,rho3,rho4,rho5);
-  id LMT(rho1?,rho2?)*VecEpsilon?{VecEps,VecEpsC}(int1?,rho2?,mom1?,ref1?,mass1?) = VecEpsilon(int1,rho1,mom1,ref1,mass1);
+  id LMT(rho1?,rho2?)*VecEpsilon?{VecEp,VecEpC}(int1?,rho2?,mom1?,ref1?,mass1?) = VecEpsilon(int1,rho1,mom1,ref1,mass1);
 endrepeat;
 
 id GAij(spa1?,spa2?,rho?)*FV(mom?,rho?) = GAij(spa1,spa2,mom);
@@ -268,27 +268,27 @@ repeat;
   id LMT(rho1?,rho2?)*FermionChain(?vars1,GA(rho2?),?vars2) = FermionChain(?vars1,GA(rho1),?vars2);
 endrepeat;
 
-repeat id LMT(rho?NonEPSMU,rho0?)*VecEpsilon?{VecEps,VecEpsC}(int?,rho?NonEPSMU,?vars)
-  = LMT(EPSMU[int],rho0)*VecEpsilon(int,EPSMU[int],?vars);
-id GAij(spa1?,spa2?,rho?NonEPSMU)*VecEpsilon?{VecEps,VecEpsC}(int?,rho?NonEPSMU,?vars)
-  = GAij(spa1,spa2,EPSMU[int])*VecEpsilon(int,EPSMU[int],?vars);
+repeat id LMT(rho?NonEPMU,rho0?)*VecEpsilon?{VecEp,VecEpC}(int?,rho?NonEPMU,?vars)
+  = LMT(EPMU[int],rho0)*VecEpsilon(int,EPMU[int],?vars);
+id GAij(spa1?,spa2?,rho?NonEPMU)*VecEpsilon?{VecEp,VecEpC}(int?,rho?NonEPMU,?vars)
+  = GAij(spa1,spa2,EPMU[int])*VecEpsilon(int,EPMU[int],?vars);
 .sort
 
 *
 * vanishing 
 *
-id FV(mom?,rho?) * VecEpsilon?{VecEps,VecEpsC}(int?,rho?,mom?,ref?,mass?) = 0;
-id FV(ref?,rho?) * VecEpsilon?{VecEps,VecEpsC}(int?,rho?,mom?,ref?,mass?) = 0;
+id FV(mom?,rho?) * VecEpsilon?{VecEp,VecEpC}(int?,rho?,mom?,ref?,mass?) = 0;
+id FV(ref?,rho?) * VecEpsilon?{VecEp,VecEpC}(int?,rho?,mom?,ref?,mass?) = 0;
 .sort
 
 *
-* use EPSMU indices
+* use EPMU indices
 *
-id SP( FV(mom1?,0), VecEpsilon?{VecEps,VecEpsC}(int?,0,mom2?,ref?,mass?) )
-  = FV(mom1,EPSMU[int]) * VecEpsilon(int,EPSMU[int],mom2,ref,mass);
-id FV(mom1?,rho?) * VecEpsilon?{VecEps,VecEpsC}(int?,rho?,mom2?,ref?,mass?)
-  = FV(mom1,EPSMU[int]) * VecEpsilon(int,EPSMU[int],mom2,ref,mass);
-id VecEpsilon1?{VecEps,VecEpsC}(int1?, rho?, ?vars1) * VecEpsilon2?{VecEps,VecEpsC}(int2?, rho?, ?vars2)
+id SP( FV(mom1?,0), VecEpsilon?{VecEp,VecEpC}(int?,0,mom2?,ref?,mass?) )
+  = FV(mom1,EPMU[int]) * VecEpsilon(int,EPMU[int],mom2,ref,mass);
+id FV(mom1?,rho?) * VecEpsilon?{VecEp,VecEpC}(int?,rho?,mom2?,ref?,mass?)
+  = FV(mom1,EPMU[int]) * VecEpsilon(int,EPMU[int],mom2,ref,mass);
+id VecEpsilon1?{VecEp,VecEpC}(int1?, rho?, ?vars1) * VecEpsilon2?{VecEp,VecEpC}(int2?, rho?, ?vars2)
   = SP( VecEpsilon1(int1, 0, ?vars1), VecEpsilon2(int2, 0, ?vars2) );
 .sort
 
@@ -406,7 +406,7 @@ endrepeat;
 contract;
 .sort
 
-id VecEpsilon?{VecEps,VecEpsC}(int?,mom0?,mom?,ref?,mass?) = FV(mom0,EPSMU[int])*VecEpsilon(int,EPSMU[int],mom,ref,mass);
+id VecEpsilon?{VecEp,VecEpC}(int?,mom0?,mom?,ref?,mass?) = FV(mom0,EPMU[int])*VecEpsilon(int,EPMU[int],mom,ref,mass);
 id mom?NULL.mom?NULL = 0;
 id mom1?.mom2? = SP(mom1,mom2);
 id mom?(rho?ALLLOR) = FV(mom,rho);
@@ -417,8 +417,8 @@ id d_(rho1?,rho2?) = LMT(rho1,rho2);
 repeat id LMT(rho1?ALLLOR,rho2?ALLLOR)*FermionChain(?vars1,GA(rho2?ALLLOR),?vars2) = FermionChain(?vars1,GA(rho1),?vars2);
 .sort
 
-id VecEpsilon?{VecEps,VecEpsC}(int?,rho?NonEPSMU,mom?,ref?,mass?)*FermionChain(?vars1,GA(rho?NonEPSMU),?vars2) 
-  = VecEpsilon(int,EPSMU[int],mom,ref,mass)*FermionChain(?vars1,GA(EPSMU[int]),?vars2);
+id VecEpsilon?{VecEp,VecEpC}(int?,rho?NonEPMU,mom?,ref?,mass?)*FermionChain(?vars1,GA(rho?NonEPMU),?vars2) 
+  = VecEpsilon(int,EPMU[int],mom,ref,mass)*FermionChain(?vars1,GA(EPMU[int]),?vars2);
 .sort
 
 #endprocedure
@@ -926,7 +926,7 @@ function make_baseINC_script( graph::GenericGraph, gauge_choice::Dict{Basic,Basi
   #-----------------------------------------------------------------------------------
   if sorted_ext_edge_list[n_leg].attributes["particle"].spin == :vector
     result_str *=
-      "id FV($(momNm1),rho?)*VecEpsilon?{VecEps,VecEpsC}($(n_leg),rho?,$(momN),r$(n_leg)?,mass?) = \n"
+      "id FV($(momNm1),rho?)*VecEpsilon?{VecEp,VecEpC}($(n_leg),rho?,$(momN),r$(n_leg)?,mass?) = \n"
     for index in 1:(n_leg-2)
       edge = sorted_ext_edge_list[index]
       mom = edge.attributes["momentum"]
@@ -938,7 +938,7 @@ function make_baseINC_script( graph::GenericGraph, gauge_choice::Dict{Basic,Basi
 
   result_str *= 
     ";\n"*
-    "id FV(mom?,rho?)*VecEpsilon?{VecEps,VecEpsC}(int?,rho?,mom?,ref?,mass?) = 0;\n"*
+    "id FV(mom?,rho?)*VecEpsilon?{VecEp,VecEpC}(int?,rho?,mom?,ref?,mass?) = 0;\n"*
     "\n"
     #"***Gauge Choice: $(gauge_choice) \n"
 
@@ -951,7 +951,7 @@ function make_baseINC_script( graph::GenericGraph, gauge_choice::Dict{Basic,Basi
     mom = one_edge.attributes["momentum"]
     ref_mom = one_edge.attributes["ref2_MOM"]
     gauge_ref = subs( ref_mom, gauge_choice... )
-    result_str *= "id FV($(gauge_ref),rho?)*VecEpsilon?{VecEps,VecEpsC}($(mark),rho?,$(mom),ref?,mass?) = 0;\n"
+    result_str *= "id FV($(gauge_ref),rho?)*VecEpsilon?{VecEp,VecEpC}($(mark),rho?,$(mom),ref?,mass?) = 0;\n"
   end # for one_edge
 
   return result_str
@@ -1006,10 +1006,10 @@ repeat;
 endrepeat;
 
 
-id FV(mom?,rho?)*VecEpsilon?{VecEps,VecEpsC}(int?,rho?,mom?,ref?,mass?) = 0;
+id FV(mom?,rho?)*VecEpsilon?{VecEp,VecEpC}(int?,rho?,mom?,ref?,mass?) = 0;
 .sort
 
-while( match(FermionChain(?vars1,GA(rho?NonEPSMU\$LORENTZ),?vars2)) );
+while( match(FermionChain(?vars1,GA(rho?NonEPMU\$LORENTZ),?vars2)) );
   sum \$LORENTZ;
 endwhile;
 .sort
@@ -1105,10 +1105,10 @@ repeat;
 endrepeat;
 
 
-id FV(mom?,rho?)*VecEpsilon?{VecEps,VecEpsC}(int?,rho?,mom?,ref?,mass?) = 0;
+id FV(mom?,rho?)*VecEpsilon?{VecEp,VecEpC}(int?,rho?,mom?,ref?,mass?) = 0;
 .sort
 
-while( match(FermionChain(?vars1,GA(rho?NonEPSMU\$LORENTZ),?vars2)) );
+while( match(FermionChain(?vars1,GA(rho?NonEPMU\$LORENTZ),?vars2)) );
   sum \$LORENTZ;
 endwhile;
 .sort

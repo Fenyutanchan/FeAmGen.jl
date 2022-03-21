@@ -447,10 +447,10 @@ Amp_QCD_order: $(input["Amp_QCD_order"])
 # order of QED coupling ee in the amplitude
 Amp_QED_order: $(input["Amp_QED_order"])
 
-# min eps power in the amplitude
-Amp_Min_Eps_Xpt: $(input["Amp_Min_Eps_Xpt"])
-# max eps power in the amplitude
-Amp_Max_Eps_Xpt: $(input["Amp_Max_Eps_Xpt"])
+# min ep power in the amplitude
+Amp_Min_Ep_Xpt: $(input["Amp_Min_Ep_Xpt"])
+# max ep power in the amplitude
+Amp_Max_Ep_Xpt: $(input["Amp_Max_Ep_Xpt"])
 
 # incoming and outgoing information
 incoming: $inc_part_list_str           # incoming particles

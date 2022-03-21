@@ -142,9 +142,9 @@ function convert_lorentz_list( diagram_index::Int64, lorentz_list::Vector{Basic}
     dummy_symbol_str_list = map( string, dummy_symbol_list )
     dummy_symbol_replace_str_list = map( s_ -> "$(s_) -> Subscript[ \\[Mu], $(s_[8:length(s_)]) ]", dummy_symbol_str_list )
 
-    epsMu_symbol_list = filter( s_ -> length(string(s_)) > 5 && string(s_)[1:5] == "epsMU", free_symbols(one_lorentz) )
-    epsMu_symbol_str_list = map( string, epsMu_symbol_list )
-    epsMu_symbol_replace_str_list = map( s_ -> "$(s_) -> Subscript[ \\[Nu], $(s_[6:length(s_)]) ]", epsMu_symbol_str_list )
+    epMu_symbol_list = filter( s_ -> length(string(s_)) > 5 && string(s_)[1:5] == "epMU", free_symbols(one_lorentz) )
+    epMu_symbol_str_list = map( string, epMu_symbol_list )
+    epMu_symbol_replace_str_list = map( s_ -> "$(s_) -> Subscript[ \\[Nu], $(s_[6:length(s_)]) ]", epMu_symbol_str_list )
 
     gcsub_list = filter( s_ -> length(string(s_)) > 5 && string(s_)[1:5] == "gcsub", free_symbols(one_lorentz) )
     gcsub_str_list = map( string, gcsub_list )
@@ -201,13 +201,13 @@ expr = expr //. FermionChain[ x1__, GA[mom_/; (mom /. vanishing) == 0], x2__ ] :
 expr = expr //. FermionChain[x__] :> Dot[x] //. { PR -> Subscript[P, R], PL -> Subscript[P, L], im -> I, 
                   UB[idx_, x__] -> Subscript[U, idx], U[idx_, x__] -> Subscript[u, idx], 
                   VB[idx_, x__] -> Subscript[V, idx], V[idx_, x__] -> Subscript[v, idx],
-                  VecEps[idx_,mu_,x__] -> Superscript[Subscript[\\[Epsilon],idx],mu], VecEpsC[idx_,mu_,x__] -> Superscript[Subscript[\\[Epsilon],idx,c],mu],
+                  VecEp[idx_,mu_,x__] -> Superscript[Subscript[\\[Epsilon],idx],mu], VecEpC[idx_,mu_,x__] -> Superscript[Subscript[\\[Epsilon],idx,c],mu],
                   FV[k1_,mu1_]*FV[k2_,mu2_]*LMT[mu1_,mu2_] -> SP[k1,k2] };
 
 expr = expr //.{$(join(loop_mom_replace_str_list,","))} //.{$(join(ext_mom_replace_str_list,","))};
 
 expr = expr //. {$(join(dummy_symbol_replace_str_list,","))};
-expr = expr //. {$(join(epsMu_symbol_replace_str_list,","))};
+expr = expr //. {$(join(epMu_symbol_replace_str_list,","))};
 expr = expr //. {$(join(gcsub_replace_str_list,","))};
 expr = expr //. {$(join(scale_replace_str_list,","))};
 expr = expr //. {$(join(ver_replace_str_list,","))};

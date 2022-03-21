@@ -15,8 +15,8 @@ name: "IRD"
 
 n_loop: 2
 
-min_eps_xpt: -4
-max_eps_xpt: 0
+min_ep_xpt: -4
+max_ep_xpt: 0
 
 external_momenta: [ K1 ]
 

@@ -46,10 +46,10 @@ Amp_QCD_order: $(1+2*nloop)
 # order of QED coupling ee in the amplitude
 Amp_QED_order: 1 
 
-# min eps power in the amplitude
-Amp_Min_Eps_Xpt: $(-2*nloop)
-# max eps power in the amplitude
-Amp_Max_Eps_Xpt: 0
+# min ep power in the amplitude
+Amp_Min_Ep_Xpt: $(-2*nloop)
+# max ep power in the amplitude
+Amp_Max_Ep_Xpt: 0
 
 # incoming and outgoing information
 incoming: [ "g", "b" ]          # incoming particles

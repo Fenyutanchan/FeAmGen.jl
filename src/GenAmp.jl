@@ -37,8 +37,8 @@ function generate_amp( proc_file::String )::Nothing
 
   @info "Order of QED coupling gs in the amplitude" Amp_QED_order=input["Amp_QED_order"]
 
-  @info "Min eps power in the amplitude" Amp_Min_Eps_Xpt=input["Amp_Min_Eps_Xpt"]
-  @info "Max eps power in the amplitude" Amp_Max_Eps_Xpt=input["Amp_Max_Eps_Xpt"]
+  @info "Min ep power in the amplitude" Amp_Min_Ep_Xpt=input["Amp_Min_Ep_Xpt"]
+  @info "Max ep power in the amplitude" Amp_Max_Ep_Xpt=input["Amp_Max_Ep_Xpt"]
 
   @info "Incoming" input["incoming"]
   @info "Outgoing" input["outgoing"]

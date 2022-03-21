@@ -16,8 +16,8 @@ name: Dia199_$(rank_str)_SI$(index)
 
 n_loop: 2
 
-min_eps_xpt: -4
-max_eps_xpt: 0
+min_ep_xpt: -4
+max_ep_xpt: 0
 
 external_momenta: [ k1, k2, K3, K4 ]
 

@@ -24,7 +24,7 @@ Color Factors:
     SUNT(clb2, cla4, clb1); 
 Lorentz Factors: 
   amp_lorentz #1: 
-    -im*ver6*VecEps(2, epsMU2, k2, r2, 0)*gcsub49*gcsub11*VecEpsC(3, epsMU3, K3, r3, mw)*FV(K3, dummyMU1)*FermionChain(UB(4, K4, r4, mt), PR, GA(epsMU2), GA(dummyMU1), GA(epsMU3), U(1, k1, r1, 0)) + im*ver6*VecEps(2, epsMU2, k2, r2, 0)*gcsub49*gcsub11*VecEpsC(3, epsMU3, K3, r3, mw)*FV(k1, dummyMU1)*FermionChain(UB(4, K4, r4, mt), PR, GA(epsMU2), GA(dummyMU1), GA(epsMU3), U(1, k1, r1, 0)) + mt*im*ver6*VecEps(2, epsMU2, k2, r2, 0)*gcsub49*gcsub11*FermionChain(UB(4, K4, r4, mt), PL, GA(epsMU2), GA(epsMU3), U(1, k1, r1, 0))*VecEpsC(3, epsMU3, K3, r3, mw); 
+    -im*ver6*VecEpC(3, epMU3, K3, r3, mw)*gcsub49*gcsub11*FermionChain(UB(4, K4, r4, mt), PR, GA(epMU2), GA(dummyMU1), GA(epMU3), U(1, k1, r1, 0))*FV(K3, dummyMU1)*VecEp(2, epMU2, k2, r2, 0) + im*ver6*VecEpC(3, epMU3, K3, r3, mw)*gcsub49*gcsub11*FermionChain(UB(4, K4, r4, mt), PR, GA(epMU2), GA(dummyMU1), GA(epMU3), U(1, k1, r1, 0))*FV(k1, dummyMU1)*VecEp(2, epMU2, k2, r2, 0) + mt*im*ver6*VecEpC(3, epMU3, K3, r3, mw)*gcsub49*gcsub11*FermionChain(UB(4, K4, r4, mt), PL, GA(epMU2), GA(epMU3), U(1, k1, r1, 0))*VecEp(2, epMU2, k2, r2, 0); 
 Model Parameters: 
   as => 0.118
   aws => 0.808

@@ -1,3 +1,54 @@
+####################################
+function has_ieta(
+    den_index::Int64,
+    den_list::Vector{Basic},
+    ext_mom_list::Vector{Basic},
+    kin_relation::Dict{Basic,Basic},
+    ieta_scheme::Int64
+)::Bool
+####################################
+
+  vanish_ext_mom_map = Dict{Basic,Basic}( map( m_ -> m_ => zero(Basic), ext_mom_list ) )
+  den_ex = den_list[den_index]
+  mom = get_args(den_ex)[1]
+  loop_mom = subs( mom, vanish_ext_mom_map... )
+  ext_mom = expand( mom - loop_mom )
+  mass = get_args(den_ex)[2]
+
+  if ieta_scheme == 0
+    return false 
+  elseif ieta_scheme == 1
+    return true
+  elseif ieta_scheme == 2
+    if iszero(mass)  
+      return false
+    else
+      return true
+    end # if 
+  elseif ieta_scheme == 3
+    mass_list = map( den -> get_args(den)[2], den_list )
+    kin_SP = subs( make_SP(ext_mom,ext_mom), kin_relation... )
+    has_mass = !isempty( free_symbols( kin_SP) ∩ mass_list )
+    if !has_mass && iszero(mass)
+      return false
+    else
+      return true
+    end # if
+  elseif ieta_scheme > 10
+    ieta_scheme_corr = ieta_scheme - 10
+    bin_str = Base.bin( Unsigned(ieta_scheme_corr), 2, false )
+    bin_str = "0"^(length(den_list)-length(bin_str)) * bin_str
+    if bin_str[den_index] == '0'
+      return false
+    else
+      return true
+    end # if
+  else
+    error("Exception on ieta_scheme")
+  end # if
+
+end # function has_ieta
+
 
 
 
@@ -11,15 +62,15 @@ function generate_integral(
 
   file_dict = YAML.load_file( yaml_file; dicttype=OrderedDict{String,Any} ) 
   @assert collect(keys(file_dict)) == [
-      "name", "n_loop", "min_eps_xpt", "max_eps_xpt", 
+      "name", "n_loop", "min_ep_xpt", "max_ep_xpt", 
       "external_momenta", "kin_relation", "den_list", 
       "den_xpt_list", "numerator", "ieta_scheme", "comment"]
 
   name_str = file_dict["name"]
   n_loop = file_dict["n_loop"]::Int64
-  min_eps_xpt = file_dict["min_eps_xpt"]::Int64
-  max_eps_xpt = file_dict["max_eps_xpt"]::Int64
-  ext_mom_list = file_dict["external_momenta"]::Vector{String}
+  min_ep_xpt = file_dict["min_ep_xpt"]::Int64
+  max_ep_xpt = file_dict["max_ep_xpt"]::Int64
+  ext_mom_list = map( Basic, file_dict["external_momenta"] )
   kin_relation = Dict{Basic,Basic}( map( p_->(Basic(p_[1]),Basic(p_[2])), file_dict["kin_relation"] ) )
   loop_den_list = map( Basic, file_dict["den_list"] )
   loop_den_xpt_list = file_dict["den_xpt_list"]
@@ -39,28 +90,59 @@ function generate_integral(
   end # for index
 
 
-  positive_pos_list = findall( x_ -> x_ > 0, loop_den_xpt_list )
-  positive_loop_den_list = loop_den_list[positive_pos_list]
-  positive_loop_den_xpt_list = loop_den_xpt_list[positive_pos_list]
-
-  negative_pos_list = findall( x_ -> x_ < 0, loop_den_xpt_list )
+  @vars ieta, sqrteta
+  @funs Den
+  n_den = length(loop_den_list)
+  positive_loop_den_list = Vector{Basic}()
+  positive_loop_den_xpt_list = Vector{Int64}()
   irreducible_numerator = one(Basic)
-  for negative_pos in negative_pos_list
-    negative_loop_den = loop_den_list[negative_pos]
-    negative_xpt = loop_den_xpt_list[negative_pos]
+  for den_index in 1:n_den
+    one_den = loop_den_list[den_index]
+    den_xpt = loop_den_xpt_list[den_index]
 
-    den_arg_list = get_args(negative_loop_den)
+    den_arg_list = get_args(one_den)
     neg_mass2 = -den_arg_list[2]^2
-    # Now we still keep the i*eta in the irreducible numerator to be consistent with IBP reduction.
-    if ieta_scheme == 1 ||
-       ( ieta_scheme == 2 && !iszero(neg_mass2) )
-      @vars sqrteta
+    if has_ieta( den_index, loop_den_list, ext_mom_list, kin_relation, ieta_scheme )
+      den_arg_list[3] = ieta
       neg_mass2 += im*sqrteta^2
     end # if
+    new_den = Den( den_arg_list... )
+  
+    if den_xpt > 0 
+      push!( positive_loop_den_list, new_den )
+      push!( positive_loop_den_xpt_list, den_xpt )
+    end # if  
 
-    mom2 = make_SP(den_arg_list[1],den_arg_list[1])
-    irreducible_numerator *= ( mom2 + neg_mass2 )^(-negative_xpt) 
-  end # for negative_pos
+    if den_xpt < 0
+      mom2 = make_SP(den_arg_list[1],den_arg_list[1])
+      irreducible_numerator *= ( mom2 + neg_mass2 )^(-den_xpt) 
+    end # if
+  end # for den_index
+
+
+
+##positive_pos_list = findall( x_ -> x_ > 0, loop_den_xpt_list )
+##positive_loop_den_list = loop_den_list[positive_pos_list]
+##positive_loop_den_xpt_list = loop_den_xpt_list[positive_pos_list]
+
+##negative_pos_list = findall( x_ -> x_ < 0, loop_den_xpt_list )
+##irreducible_numerator = one(Basic)
+##for negative_pos in negative_pos_list
+##  negative_loop_den = loop_den_list[negative_pos]
+##  negative_xpt = loop_den_xpt_list[negative_pos]
+
+##  den_arg_list = get_args(negative_loop_den)
+##  neg_mass2 = -den_arg_list[2]^2
+##  # Now we still keep the i*eta in the irreducible numerator to be consistent with IBP reduction.
+##  if ieta_scheme == 1 ||
+##     ( ieta_scheme == 2 && !iszero(neg_mass2) )
+##    @vars sqrteta
+##    neg_mass2 += im*sqrteta^2
+##  end # if
+
+##  mom2 = make_SP(den_arg_list[1],den_arg_list[1])
+##  irreducible_numerator *= ( mom2 + neg_mass2 )^(-negative_xpt) 
+##end # for negative_pos
   # need to further expand SP^n into (FV*FV)^n with different dummy indices, maybe use FORM script.
 
   numerator_expr = irreducible_numerator * Basic( file_dict["numerator"] )
@@ -112,10 +194,10 @@ function generate_integral(
     write( file, "Generator", "FeAmGen.jl" )
     write( file, "ieta_scheme", ieta_scheme )
     write( file, "n_loop", n_loop )
-    write( file, "min_eps_xpt", min_eps_xpt )
-    write( file, "max_eps_xpt", max_eps_xpt )
+    write( file, "min_ep_xpt", min_ep_xpt )
+    write( file, "max_ep_xpt", max_ep_xpt )
     write( file, "couplingfactor", "1" )
-    write( file, "ext_mom_list", ext_mom_list )
+    write( file, "ext_mom_list", map( string, ext_mom_list ) )
     write( file, "scale2_list", map( string, scale2_list ) )
     write( file, "loop_den_list",  map( string, positive_loop_den_list ) )
     write( file, "loop_den_xpt_list", positive_loop_den_xpt_list )
@@ -152,7 +234,7 @@ function generate_multi_yaml(
 
   file_dict = YAML.load_file( original_yaml; dicttype=OrderedDict{String,Any} )
   @assert collect(keys(file_dict)) == [
-      "name", "n_loop", "min_eps_xpt", "max_eps_xpt", 
+      "name", "n_loop", "min_ep_xpt", "max_ep_xpt", 
       "external_momenta", "kin_relation", "den_list", 
       "den_xpt_list", "numerator", "ieta_scheme", "comment"]
 
