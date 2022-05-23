@@ -17,14 +17,14 @@ using Test
 # for symbolic calculation
 using SymEngine
 # for Feynman diagram
-using Graphs
 using Dates
-using JLD
+using JLD2
 using Pipe
 
 export digest_seed_proc, generate_amp, generate_integral, generate_multi_yaml, generate_shiftUP_yaml
 export generate_SP_combo, gen_mma_str, box_message
 
+include("Graph.jl")
 include("Message.jl")
 include("Extra.jl")
 include("Universe.jl")
@@ -33,7 +33,6 @@ include("Digest.jl")
 include("Kin.jl")
 include("FORMS.jl")
 include("Visual.jl")
-include("Converter.jl")
 include("FeynmanDiagram.jl")
 include("Seed.jl")
 include("GenAmp.jl")

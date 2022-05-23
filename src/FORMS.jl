@@ -823,42 +823,41 @@ end # function make_contractor_script
 
 ############################################################################################
 """
-    make_baseINC_script( graph::GenericGraph, gauge_choice::Dict{Basic,Basic} )::String
+    make_baseINC_script( graph::Graph, gauge_choice::Dict{Basic,Basic} )::String
 
 Prepare the baseINC script for containing kinematic relations.
 """
-function make_baseINC_script( graph::GenericGraph, gauge_choice::Dict{Basic,Basic} )::String
+function make_baseINC_script( graph::Graph, gauge_choice::Dict{Basic,Basic} )::String
 ############################################################################################
 
   result_str = string()
 
-  v0 = vertex_from_label( "graph property", graph )
-  n_inc = v0.attributes["n_inc"]
-  n_out = v0.attributes["n_out"]
+  n_inc = graph.property[:n_inc]
+  n_out = graph.property[:n_out]
   n_leg = n_inc+n_out
 
-  ext_edge_list = filter( e_ -> ( e_.attributes["style"]=="External" ), edges(graph) )
-  sorted_ext_edge_list = sort( ext_edge_list, by=edge_index )
+  ext_edge_list = filter( e_ -> e_.property[:style]=="External", graph.edge_list )
+  sorted_ext_edge_list = sort( ext_edge_list, by=x->x.property[:mark] ) 
 
-  momN = sorted_ext_edge_list[n_leg].attributes["momentum"]
-  momNm1 = sorted_ext_edge_list[n_leg-1].attributes["momentum"]
-  momNm2 = sorted_ext_edge_list[n_leg-2].attributes["momentum"]
+  momN = sorted_ext_edge_list[n_leg].property[:momentum]
+  momNm1 = sorted_ext_edge_list[n_leg-1].property[:momentum]
+  momNm2 = sorted_ext_edge_list[n_leg-2].property[:momentum]
 
   #-------------------------------------------------------------
-  sorted_notN_ext_edge_list = filter( e_ -> ( edge_index(e_) != n_leg ), sorted_ext_edge_list )
+  sorted_notN_ext_edge_list = filter( e_ -> ( e_.property[:mark] != n_leg ), sorted_ext_edge_list )
 
   result_str *= "id FV($(momN),rho?) = ";
   for edge in sorted_notN_ext_edge_list
-    mom = edge.attributes["momentum"]
-    inc_sign = edge_index(edge) <= n_inc ? 1 : (-1)
+    mom = edge.property[:momentum]
+    inc_sign = edge.property[:mark] <= n_inc ? 1 : (-1)
     result_str *= "+($(inc_sign))*FV($(mom),rho)"
   end # for edge
   result_str *= ";\n"
  
   result_str *= "id SP($(momN),rho?) = ";
   for edge in sorted_notN_ext_edge_list
-    mom = edge.attributes["momentum"]
-    inc_sign = edge_index(edge) <= n_inc ? 1 : (-1)
+    mom = edge.property[:momentum]
+    inc_sign = edge.property[:mark] <= n_inc ? 1 : (-1)
     result_str *= "+($(inc_sign))*SP($(mom),rho)"
   end # for edge
   result_str *= ";\n"
@@ -868,22 +867,22 @@ function make_baseINC_script( graph::GenericGraph, gauge_choice::Dict{Basic,Basi
     " ?vars1, GA($(momN)), ?vars2,"*
     " Spinor2?IRSPSET(int2?!{,$(n_leg)},mom2?,ref2?,mass2?) ) = \n"
   for edge in sorted_notN_ext_edge_list
-    mom = edge.attributes["momentum"]
-    inc_sign = edge_index(edge) <= n_inc ? 1 : (-1)
+    mom = edge.property[:momentum]
+    inc_sign = edge.property[:mark] <= n_inc ? 1 : (-1)
     result_str *= 
     "  +($(inc_sign))*FermionChain( Spinor1(int1,mom1,ref1,mass1), ?vars1, GA($(mom)), ?vars2, Spinor2(int2,mom2,ref2,mass2) )\n"
   end # for edge
   result_str *= ";\n"
 
   #-------------------------------------------------------------
-  sorted_notNm1_ext_edge_list = filter( e_ -> ( edge_index(e_) != n_leg-1 ), sorted_ext_edge_list )
+  sorted_notNm1_ext_edge_list = filter( e_ -> e_.property[:mark] != n_leg-1, sorted_ext_edge_list )
   Nm1_sign = n_leg-1 <= n_inc ? (-1) : (+1)
 
   result_str *=
     "id FermionChain( Spinor?ILSPSET($(n_leg),mom?,ref?,mass?), ?vars1, GA($(momNm1)), ?vars2 ) = \n"
   for edge in sorted_notNm1_ext_edge_list
-    mom = edge.attributes["momentum"]
-    inc_sign = edge_index(edge) <= n_inc ? 1*Nm1_sign : (-1)*Nm1_sign
+    mom = edge.property[:momentum]
+    inc_sign = edge.property[:mark] <= n_inc ? 1*Nm1_sign : (-1)*Nm1_sign
     result_str *=
     "  +($(inc_sign))*FermionChain( Spinor($(n_leg),mom,ref,mass), ?vars1, GA($(mom)), ?vars2 )\n"
   end # for edge
@@ -892,22 +891,22 @@ function make_baseINC_script( graph::GenericGraph, gauge_choice::Dict{Basic,Basi
   result_str *=
     "id FermionChain( ?vars1, GA($(momNm1)), ?vars2, Spinor?IRSPSET($(n_leg),mom?,ref?,mass?) ) = \n"
   for edge in sorted_notNm1_ext_edge_list
-    mom = edge.attributes["momentum"]
-    inc_sign = edge_index(edge) <= n_inc ? 1*Nm1_sign : (-1)*Nm1_sign
+    mom = edge.property[:momentum]
+    inc_sign = edge.property[:mark] <= n_inc ? 1*Nm1_sign : (-1)*Nm1_sign
     result_str *=
     "  +($(inc_sign))*FermionChain( ?vars1, GA($(mom)), ?vars2, Spinor($(n_leg),mom,ref,mass) )\n"
   end # for edge
   result_str *= ";\n"
 
   #-------------------------------------------------------------
-  sorted_notNm2_ext_edge_list = filter( e_ -> ( edge_index(e_) != n_leg-2 ), sorted_ext_edge_list )
+  sorted_notNm2_ext_edge_list = filter( e_ -> e_.property[:mark] != n_leg-2, sorted_ext_edge_list )
   Nm2_sign = n_leg-2 <= n_inc ? (-1) : (+1)
   
   result_str *=
     "id FermionChain( Spinor1?ILSPSET($(n_leg-1),mom1?,ref1?,mass1?), ?vars1, GA($(momNm2)), ?vars2, Spinor2?IRSPSET($(n_leg),mom2?,ref2?,mass2?) ) = \n"
   for edge in sorted_notNm2_ext_edge_list
-    mom = edge.attributes["momentum"]
-    inc_sign = edge_index(edge) <= n_inc ? 1*Nm2_sign : (-1)*Nm2_sign
+    mom = edge.property[:momentum]
+    inc_sign = edge.property[:mark] <= n_inc ? 1*Nm2_sign : (-1)*Nm2_sign
     result_str *=
     "  +($(inc_sign))*FermionChain( Spinor1($(n_leg-1),mom1,ref1,mass1), ?vars1, GA($(mom)), ?vars2, Spinor2($(n_leg),mom2,ref2,mass2) )\n"
   end # for edge
@@ -916,20 +915,20 @@ function make_baseINC_script( graph::GenericGraph, gauge_choice::Dict{Basic,Basi
   result_str *=
     "id FermionChain( Spinor1?ILSPSET($(n_leg),mom1?,ref1?,mass1?), ?vars1, GA($(momNm2)), ?vars2, Spinor2?IRSPSET($(n_leg-1),mom2?,ref2?,mass2?) ) = \n"
   for edge in sorted_notNm2_ext_edge_list
-    mom = edge.attributes["momentum"]
-    inc_sign = edge_index(edge) <= n_inc ? 1*Nm2_sign : (-1)*Nm2_sign
+    mom = edge.property[:momentum]
+    inc_sign = edge.property[:mark] <= n_inc ? 1*Nm2_sign : (-1)*Nm2_sign
     result_str *=
     "  +($(inc_sign))*FermionChain( Spinor1($(n_leg),mom1,ref1,mass1), ?vars1, GA($(mom)), ?vars2, Spinor2($(n_leg-1),mom2,ref2,mass2) )\n"
   end # for edge
   result_str *= ";\n"
 
   #-----------------------------------------------------------------------------------
-  if sorted_ext_edge_list[n_leg].attributes["particle"].spin == :vector
+  if sorted_ext_edge_list[n_leg].property[:particle].spin == :vector
     result_str *=
       "id FV($(momNm1),rho?)*VecEpsilon?{VecEp,VecEpC}($(n_leg),rho?,$(momN),r$(n_leg)?,mass?) = \n"
     for index in 1:(n_leg-2)
       edge = sorted_ext_edge_list[index]
-      mom = edge.attributes["momentum"]
+      mom = edge.property[:momentum]
       inc_sign = index <= n_inc ? (+1) : (-1)
       result_str *=
       "  +($(inc_sign))*FV($(mom),rho)*VecEpsilon($(n_leg),rho,$(momN),r$(n_leg),mass)\n"
@@ -944,12 +943,12 @@ function make_baseINC_script( graph::GenericGraph, gauge_choice::Dict{Basic,Basi
 
   
   for one_edge in sorted_ext_edge_list
-    if one_edge.attributes["particle"].spin != :vector
+    if one_edge.property[:particle].spin != :vector
       continue
     end # if
-    mark = one_edge.attributes["mark"]
-    mom = one_edge.attributes["momentum"]
-    ref_mom = one_edge.attributes["ref2_MOM"]
+    mark = one_edge.property[:mark]
+    mom = one_edge.property[:momentum]
+    ref_mom = one_edge.property[:ref2_MOM]
     gauge_ref = subs( ref_mom, gauge_choice... )
     result_str *= "id FV($(gauge_ref),rho?)*VecEpsilon?{VecEp,VecEpC}($(mark),rho?,$(mom),ref?,mass?) = 0;\n"
   end # for one_edge
@@ -973,82 +972,82 @@ function make_amp_contraction_script( expr::Basic, file_name::String )::String
 ##############################################################################
 
   result_str = """
-#-
-
-Off Statistics;
-Off FinalStats;
-
-#include model_parameters.frm
-#include contractor.frm
-
-symbol sqrteta;
-
-format nospaces;
-format maple;
-
-Local expression = $(expr);
-.sort
-id GAij(spa1?,spa2?,mom?,mass?) = GAij(spa1,spa2,mom) + ONEij(spa1,spa2)*mass;
-.sort
-
-#call Simplification();
-
-#call contractDiracIndices();
-
-#call Simplification();
-
-#include kin_relation.frm
-.sort
-
-repeat;
-  id once FermionChain(?vars1, GA(mom?), ?vars2 ) = FV(mom,rho100)*FermionChain(?vars1, GA(rho100), ?vars2 );
-  sum rho100;
-endrepeat;
-
-
-id FV(mom?,rho?)*VecEpsilon?{VecEp,VecEpC}(int?,rho?,mom?,ref?,mass?) = 0;
-.sort
-
-while( match(FermionChain(?vars1,GA(rho?NonEPMU\$LORENTZ),?vars2)) );
-  sum \$LORENTZ;
-endwhile;
-.sort
-*
-* Replace system dummy indices Nm_? by our dummy indices dummyMU in case to read back to GiNaC.
-* We assume this should give the canonical form of FermionChain, 
-*   since it seems dummy indices Nm_? can make canonical form of an expression automatically.
-*
-
-repeat;
-if( match( SP(mom1?{q1,q2,q3}\$MOM1,mom2?\$MOM2) ) );
-  id once SP(\$MOM1,\$MOM2) = FV(\$MOM1,rho1)*FV(\$MOM2,rho2)*LMT(rho1,rho2);
-  sum rho1;
-  sum rho2;
-endif;
-endrepeat; 
-.sort
-
-
-#do MUIDX = 1, 20, 1
-  Multiply replace_(N`MUIDX'_?,dummyMU`MUIDX');
-#enddo
-.sort
-
-id FV(rho1?,rho2?) = FV(rho1,rho2);
-id SP(rho1?,rho2?) = SP(rho1,rho2);
-.sort
-
-#write <$(file_name).out> "%E", expression
-#close <$(file_name).out>
-.sort
-
-#system tr -d "[:space:]" < $(file_name).out > $(file_name).out.trim
-#system mv $(file_name).out.trim $(file_name).out
-.sort
-
-.end
-
-"""
+  #-
+  
+  Off Statistics;
+  Off FinalStats;
+  
+  #include model_parameters.frm
+  #include contractor.frm
+  
+  symbol sqrteta;
+  
+  format nospaces;
+  format maple;
+  
+  Local expression = $(expr);
+  .sort
+  id GAij(spa1?,spa2?,mom?,mass?) = GAij(spa1,spa2,mom) + ONEij(spa1,spa2)*mass;
+  .sort
+  
+  #call Simplification();
+  
+  #call contractDiracIndices();
+  
+  #call Simplification();
+  
+  #include kin_relation.frm
+  .sort
+  
+  repeat;
+    id once FermionChain(?vars1, GA(mom?), ?vars2 ) = FV(mom,rho100)*FermionChain(?vars1, GA(rho100), ?vars2 );
+    sum rho100;
+  endrepeat;
+  
+  
+  id FV(mom?,rho?)*VecEpsilon?{VecEp,VecEpC}(int?,rho?,mom?,ref?,mass?) = 0;
+  .sort
+  
+  while( match(FermionChain(?vars1,GA(rho?NonEPMU\$LORENTZ),?vars2)) );
+    sum \$LORENTZ;
+  endwhile;
+  .sort
+  *
+  * Replace system dummy indices Nm_? by our dummy indices dummyMU in case to read back to GiNaC.
+  * We assume this should give the canonical form of FermionChain, 
+  *   since it seems dummy indices Nm_? can make canonical form of an expression automatically.
+  *
+  
+  repeat;
+  if( match( SP(mom1?{q1,q2,q3}\$MOM1,mom2?\$MOM2) ) );
+    id once SP(\$MOM1,\$MOM2) = FV(\$MOM1,rho1)*FV(\$MOM2,rho2)*LMT(rho1,rho2);
+    sum rho1;
+    sum rho2;
+  endif;
+  endrepeat; 
+  .sort
+  
+  
+  #do MUIDX = 1, 20, 1
+    Multiply replace_(N`MUIDX'_?,dummyMU`MUIDX');
+  #enddo
+  .sort
+  
+  id FV(rho1?,rho2?) = FV(rho1,rho2);
+  id SP(rho1?,rho2?) = SP(rho1,rho2);
+  .sort
+  
+  #write <$(file_name).out> "%E", expression
+  #close <$(file_name).out>
+  .sort
+  
+  #system tr -d "[:space:]" < $(file_name).out > $(file_name).out.trim
+  #system mv $(file_name).out.trim $(file_name).out
+  .sort
+  
+  .end
+  
+  """
 
   return result_str
 
@@ -1070,84 +1069,84 @@ function make_amp_contraction_noexpand_script( expr::Basic, file_name::String ):
 ##############################################################################
 
   result_str = """
-#-
-
-Off Statistics;
-Off FinalStats;
-
-#include model_parameters.frm
-#include contractor.frm
-
-symbol sqrteta;
-
-format nospaces;
-format maple;
-
-symbol unity;
-
-Local expression = $(expr);
-.sort
-id GAij(spa1?,spa2?,mom?,mass?) = GAij(spa1,spa2,mom+mass*unity);
-.sort
-
-#call SimplificationNoExpand();
-
-#call contractDiracIndicesNoExpand();
-
-#call SimplificationNoExpand();
-
-#include kin_relation.frm
-.sort
-
-repeat;
-  id once FermionChain(?vars1, GA(mom?), ?vars2 ) = FV(mom,rho100)*FermionChain(?vars1, GA(rho100), ?vars2 );
-  sum rho100;
-endrepeat;
-
-
-id FV(mom?,rho?)*VecEpsilon?{VecEp,VecEpC}(int?,rho?,mom?,ref?,mass?) = 0;
-.sort
-
-while( match(FermionChain(?vars1,GA(rho?NonEPMU\$LORENTZ),?vars2)) );
-  sum \$LORENTZ;
-endwhile;
-.sort
-*
-* Replace system dummy indices Nm_? by our dummy indices dummyMU in case to read back to GiNaC.
-* We assume this should give the canonical form of FermionChain, 
-*   since it seems dummy indices Nm_? can make canonical form of an expression automatically.
-*
-
-repeat;
-if( match( SP(mom1?{q1,q2,q3}\$MOM1,mom2?\$MOM2) ) );
-  id once SP(\$MOM1,\$MOM2) = FV(\$MOM1,rho1)*FV(\$MOM2,rho2)*LMT(rho1,rho2);
-  sum rho1;
-  sum rho2;
-endif;
-endrepeat; 
-.sort
-
-
-#do MUIDX = 1, 20, 1
-  Multiply replace_(N`MUIDX'_?,dummyMU`MUIDX');
-#enddo
-.sort
-
-***id FV(rho1?,rho2?) = FV(rho1,rho2);
-***id SP(rho1?,rho2?) = SP(rho1,rho2);
-***.sort
-
-#write <$(file_name).out> "%E", expression
-#close <$(file_name).out>
-.sort
-
-#system tr -d "[:space:]" < $(file_name).out > $(file_name).out.trim
-#system mv $(file_name).out.trim $(file_name).out
-.sort
-
-.end
-
-"""
+  #-
+  
+  Off Statistics;
+  Off FinalStats;
+  
+  #include model_parameters.frm
+  #include contractor.frm
+  
+  symbol sqrteta;
+  
+  format nospaces;
+  format maple;
+  
+  symbol unity;
+  
+  Local expression = $(expr);
+  .sort
+  id GAij(spa1?,spa2?,mom?,mass?) = GAij(spa1,spa2,mom+mass*unity);
+  .sort
+  
+  #call SimplificationNoExpand();
+  
+  #call contractDiracIndicesNoExpand();
+  
+  #call SimplificationNoExpand();
+  
+  #include kin_relation.frm
+  .sort
+  
+  repeat;
+    id once FermionChain(?vars1, GA(mom?), ?vars2 ) = FV(mom,rho100)*FermionChain(?vars1, GA(rho100), ?vars2 );
+    sum rho100;
+  endrepeat;
+  
+  
+  id FV(mom?,rho?)*VecEpsilon?{VecEp,VecEpC}(int?,rho?,mom?,ref?,mass?) = 0;
+  .sort
+  
+  while( match(FermionChain(?vars1,GA(rho?NonEPMU\$LORENTZ),?vars2)) );
+    sum \$LORENTZ;
+  endwhile;
+  .sort
+  *
+  * Replace system dummy indices Nm_? by our dummy indices dummyMU in case to read back to GiNaC.
+  * We assume this should give the canonical form of FermionChain, 
+  *   since it seems dummy indices Nm_? can make canonical form of an expression automatically.
+  *
+  
+  repeat;
+  if( match( SP(mom1?{q1,q2,q3}\$MOM1,mom2?\$MOM2) ) );
+    id once SP(\$MOM1,\$MOM2) = FV(\$MOM1,rho1)*FV(\$MOM2,rho2)*LMT(rho1,rho2);
+    sum rho1;
+    sum rho2;
+  endif;
+  endrepeat; 
+  .sort
+  
+  
+  #do MUIDX = 1, 20, 1
+    Multiply replace_(N`MUIDX'_?,dummyMU`MUIDX');
+  #enddo
+  .sort
+  
+  ***id FV(rho1?,rho2?) = FV(rho1,rho2);
+  ***id SP(rho1?,rho2?) = SP(rho1,rho2);
+  ***.sort
+  
+  #write <$(file_name).out> "%E", expression
+  #close <$(file_name).out>
+  .sort
+  
+  #system tr -d "[:space:]" < $(file_name).out > $(file_name).out.trim
+  #system mv $(file_name).out.trim $(file_name).out
+  .sort
+  
+  .end
+  
+  """
 
   return result_str
 
@@ -1181,144 +1180,144 @@ function make_color_script()::String
 #########################################
 
   result_str = """
-CFunctions DeltaFun(symmetric), DeltaAdj(symmetric), SUNTrace(cyclesymmetric);
-CFunctions SUNT, SUNF, SUNTConj, sunTraceConj, sunTrace;
-CFunctions SUNTChain, SUNTraceChain;
-
-symbols cla0,...,cla100;
-symbols claC0,...,claC100;
-symbols claM0,...,claM100;
-symbols clb0,...,clb100;
-symbols clbC0,...,clbC100;
-symbols clbM0,...,clbM100;
-symbols clv0,...,clv10000;
-symbols clw0,...,clw10000;
-
-Symbols colorX, colorY;
-
-Symbols n0,...,n100;
-Symbols m0,...,m100;
-Symbols I, im, ca, cf;
-
-*----------------------------------------
-#procedure calc1_CF()
-**** we use the definition f(a,b,c) = -2*i*Tr(a,b,c)+2*i*Tr(c,b,a) as same as defined in MadGraph etc.
-
-repeat id SUNTConj(?n1,n2?,n3?) = SUNT(reverse_(?n1),n3,n2);
-repeat id sunTraceConj(?n0) = sunTrace(reverse_(?n0));
-.sort
-
-*
-* Trim the cyclesymmetric of SUNTrace
-* NB: But we should have replaced SUNTrace by sunTrace in MIRACLE master code.
-*multiply replace_(SUNTrace,sunTrace);
-*.sort
-
-repeat;
-  id SUNF(m1?,m2?,m3?) = -2*I*sunTrace(m1,m2,m3)+2*I*sunTrace(m3,m2,m1);
-  id SUNT(m0?,n1?,n2?)*SUNT(m0?,n3?,n4?) = 1/2*( DeltaFun(n1,n4)*DeltaFun(n2,n3)-1/ca*DeltaFun(n1,n2)*DeltaFun(n3,n4) );
-endrepeat;
-.sort
-
-repeat;
-  id DeltaFun(n1?,n0?)*SUNT(m0?,n0?,n2?) = SUNT(m0,n1,n2);
-
-  id DeltaFun(n1?,n0?)*DeltaFun(n0?,n2?) = DeltaFun(n1,n2);
-  id DeltaFun(n0?,n0?) = ca;
-  id DeltaAdj(n1?,n0?)*DeltaAdj(n0?,n2?) = DeltaAdj(n1,n2);
-  id DeltaAdj(n0?,n0?) = 2*ca*cf;
-
-  id DeltaAdj(m0?,m3?)*sunTrace(?m1,m0?,?m2) = sunTrace(?m1,m3,?m2);
-  id DeltaAdj(m0?,m3?)*SUNT(?m1,m0?,?m2,n1?,n2?) = SUNT(?m1,m3,?m2,n1,n2);
-
-  id SUNT(?m3,m0?,?m4,n1?,n2?)*sunTrace(?m1,m0?,?m2) = 1/2*( SUNT(?m3,?m2,?m1,?m4,n1,n2)-1/ca*SUNT(?m3,?m4,n1,n2)*sunTrace(?m2,?m1) );
-
-  id SUNT(?m1,m0?,?m2,n1?,n2?)*SUNT(?m3,m0?,?m4,n3?,n4?) 
-    = 1/2*( SUNT(?m1,?m4,n1,n4)*SUNT(?m3,?m2,n3,n2) -1/ca*SUNT(?m1,?m2,n1,n2)*SUNT(?m3,?m4,n3,n4) );
-  id SUNT(n1?,n2?) = DeltaFun(n1,n2);
-
-  id SUNT(?m1,n1?,n2?)*SUNT(?m2,n2?,n3?) = SUNT(?m1,?m2,n1,n3);
-  id SUNT(?m1,n1?,n1?) = sunTrace(?m1);
-  id SUNT(m0?,m0?,n1?,n2?) = cf*DeltaFun(n1,n2);
-  id SUNT(?m1,m0?,m0?,?m2,n1?,n2?) = cf*SUNT(?m1,?m2,n1,n2);
-
-  id SUNT(m0?,?m2,m0?,n1?,n2?) = 1/2*( DeltaFun(n1,n2)*sunTrace(?m2) - 1/ca*SUNT(?m2,n1,n2) );
-
-  id SUNT(?m1,m0?,?m2,m0?,?m3,n1?,n2?) = 1/2*( SUNT(?m1,?m3,n1,n2)*sunTrace(?m2) - 1/ca*SUNT(?m1,?m2,?m3,n1,n2) );
-  id sunTrace(m0?) = 0;
-
-  id sunTrace(m1?,m1?) = ca*cf;
-  id sunTrace(m1?,m2?) = 1/2*DeltaAdj(m1,m2);
-  id sunTrace(?m1,m0?,?m2)*sunTrace(?m3,m0?,?m4) = 1/2*( sunTrace(?m1,?m4,?m3,?m2)-1/ca*sunTrace(?m2,?m1)*sunTrace(?m4,?m3) );
-endrepeat;
-.sort
-
-*
-* Recover the cyclesymmetric of SUNTrace
-*
-multiply replace_(sunTrace,SUNTrace);
-.sort
-
-
-#endprocedure
-
-
-
-
-*----------------------------------------
-#procedure calc2_CF()
-
-*
-* Trim the cyclesymmetric of SUNTrace
-*
-multiply replace_(SUNTrace,sunTrace);
-.sort
-
-repeat id SUNF(m1?,m2?,m3?) = -2*I*sunTrace(m1,m2,m3)+2*I*sunTrace(m3,m2,m1);
-.sort
-
-repeat;
-  id DeltaAdj(m0?,m3?)*sunTrace(?m1,m0?) = sunTrace(?m1,m3);
-  id DeltaAdj(m0?,m3?)*sunTrace(?m1,m0?,?m2) = sunTrace(?m1,m3,?m2);
-  id DeltaAdj(m0?,m3?)*SUNT(?m1,m0?,?m2) = SUNT(?m1,m3,?m2);
-  id DeltaAdj(m3?,m0?)*SUNT(?m1,m0?,?m2) = SUNT(?m1,m3,?m2);
-
-  id SUNT(?m1,n1?,n2?)*DeltaFun(n2?,n3?) = SUNT(?m1,n1,n3);
-  id SUNT(?m1,n1?,n2?)*DeltaFun(n3?,n2?) = SUNT(?m1,n1,n3);
-
-  id DeltaFun(n1?,n2?)*DeltaFun(n2?,n3?) = DeltaFun(n1,n3);
-  id DeltaFun(n1?,n1?) = ca;
-  id DeltaAdj(n0?,n0?) = 2*ca*cf;
-
-  id SUNT(?m1,n1?,n2?)*SUNT(?m2,n2?,n3?) = SUNT(?m1,?m2,n1,n3);
-  id SUNT(?m0,m1?,n1?,n1?) = sunTrace(?m0,m1);
-
-  id sunTrace(m1?,m1?) = ca*cf;
-  id sunTrace(m1?,m2?) = 1/2*DeltaAdj(m1,m2);
-
-  id sunTrace(?m1,m0?,m0?,?m2) = cf*sunTrace(?m1,?m2);
-
-  id sunTrace(?m1,m0?,?m2,m0?,?m3) = 1/2*( sunTrace(?m1,?m3)*sunTrace(?m2) - 1/ca*sunTrace(?m1,?m2,?m3) );
-
-  id sunTrace(m0?) = 0;
-
-  id DeltaAdj(n1?,n0?)*DeltaAdj(n0?,n2?) = DeltaAdj(n1,n2);
-  id sunTrace(?m1,m0?,?m2)*sunTrace(?m3,m0?,?m4) = 1/2*( sunTrace(?m1,?m4,?m3,?m2)-1/ca*sunTrace(?m2,?m1)*sunTrace(?m4,?m3) );
-endrepeat;
-.sort
-
-id sunTrace() = ca;
-.sort
-
-*
-* Recover the cyclesymmetric of SUNTrace
-*
-multiply replace_(sunTrace,SUNTrace);
-.sort
-
-#endprocedure
-
-"""
+  CFunctions DeltaFun(symmetric), DeltaAdj(symmetric), SUNTrace(cyclesymmetric);
+  CFunctions SUNT, SUNF, SUNTConj, sunTraceConj, sunTrace;
+  CFunctions SUNTChain, SUNTraceChain;
+  
+  symbols cla0,...,cla100;
+  symbols claC0,...,claC100;
+  symbols claM0,...,claM100;
+  symbols clb0,...,clb100;
+  symbols clbC0,...,clbC100;
+  symbols clbM0,...,clbM100;
+  symbols clv0,...,clv10000;
+  symbols clw0,...,clw10000;
+  
+  Symbols colorX, colorY;
+  
+  Symbols n0,...,n100;
+  Symbols m0,...,m100;
+  Symbols I, im, ca, cf;
+  
+  *----------------------------------------
+  #procedure calc1_CF()
+  **** we use the definition f(a,b,c) = -2*i*Tr(a,b,c)+2*i*Tr(c,b,a) as same as defined in MadGraph etc.
+  
+  repeat id SUNTConj(?n1,n2?,n3?) = SUNT(reverse_(?n1),n3,n2);
+  repeat id sunTraceConj(?n0) = sunTrace(reverse_(?n0));
+  .sort
+  
+  *
+  * Trim the cyclesymmetric of SUNTrace
+  * NB: But we should have replaced SUNTrace by sunTrace in MIRACLE master code.
+  *multiply replace_(SUNTrace,sunTrace);
+  *.sort
+  
+  repeat;
+    id SUNF(m1?,m2?,m3?) = -2*I*sunTrace(m1,m2,m3)+2*I*sunTrace(m3,m2,m1);
+    id SUNT(m0?,n1?,n2?)*SUNT(m0?,n3?,n4?) = 1/2*( DeltaFun(n1,n4)*DeltaFun(n2,n3)-1/ca*DeltaFun(n1,n2)*DeltaFun(n3,n4) );
+  endrepeat;
+  .sort
+  
+  repeat;
+    id DeltaFun(n1?,n0?)*SUNT(m0?,n0?,n2?) = SUNT(m0,n1,n2);
+  
+    id DeltaFun(n1?,n0?)*DeltaFun(n0?,n2?) = DeltaFun(n1,n2);
+    id DeltaFun(n0?,n0?) = ca;
+    id DeltaAdj(n1?,n0?)*DeltaAdj(n0?,n2?) = DeltaAdj(n1,n2);
+    id DeltaAdj(n0?,n0?) = 2*ca*cf;
+  
+    id DeltaAdj(m0?,m3?)*sunTrace(?m1,m0?,?m2) = sunTrace(?m1,m3,?m2);
+    id DeltaAdj(m0?,m3?)*SUNT(?m1,m0?,?m2,n1?,n2?) = SUNT(?m1,m3,?m2,n1,n2);
+  
+    id SUNT(?m3,m0?,?m4,n1?,n2?)*sunTrace(?m1,m0?,?m2) = 1/2*( SUNT(?m3,?m2,?m1,?m4,n1,n2)-1/ca*SUNT(?m3,?m4,n1,n2)*sunTrace(?m2,?m1) );
+  
+    id SUNT(?m1,m0?,?m2,n1?,n2?)*SUNT(?m3,m0?,?m4,n3?,n4?) 
+      = 1/2*( SUNT(?m1,?m4,n1,n4)*SUNT(?m3,?m2,n3,n2) -1/ca*SUNT(?m1,?m2,n1,n2)*SUNT(?m3,?m4,n3,n4) );
+    id SUNT(n1?,n2?) = DeltaFun(n1,n2);
+  
+    id SUNT(?m1,n1?,n2?)*SUNT(?m2,n2?,n3?) = SUNT(?m1,?m2,n1,n3);
+    id SUNT(?m1,n1?,n1?) = sunTrace(?m1);
+    id SUNT(m0?,m0?,n1?,n2?) = cf*DeltaFun(n1,n2);
+    id SUNT(?m1,m0?,m0?,?m2,n1?,n2?) = cf*SUNT(?m1,?m2,n1,n2);
+  
+    id SUNT(m0?,?m2,m0?,n1?,n2?) = 1/2*( DeltaFun(n1,n2)*sunTrace(?m2) - 1/ca*SUNT(?m2,n1,n2) );
+  
+    id SUNT(?m1,m0?,?m2,m0?,?m3,n1?,n2?) = 1/2*( SUNT(?m1,?m3,n1,n2)*sunTrace(?m2) - 1/ca*SUNT(?m1,?m2,?m3,n1,n2) );
+    id sunTrace(m0?) = 0;
+  
+    id sunTrace(m1?,m1?) = ca*cf;
+    id sunTrace(m1?,m2?) = 1/2*DeltaAdj(m1,m2);
+    id sunTrace(?m1,m0?,?m2)*sunTrace(?m3,m0?,?m4) = 1/2*( sunTrace(?m1,?m4,?m3,?m2)-1/ca*sunTrace(?m2,?m1)*sunTrace(?m4,?m3) );
+  endrepeat;
+  .sort
+  
+  *
+  * Recover the cyclesymmetric of SUNTrace
+  *
+  multiply replace_(sunTrace,SUNTrace);
+  .sort
+  
+  
+  #endprocedure
+  
+  
+  
+  
+  *----------------------------------------
+  #procedure calc2_CF()
+  
+  *
+  * Trim the cyclesymmetric of SUNTrace
+  *
+  multiply replace_(SUNTrace,sunTrace);
+  .sort
+  
+  repeat id SUNF(m1?,m2?,m3?) = -2*I*sunTrace(m1,m2,m3)+2*I*sunTrace(m3,m2,m1);
+  .sort
+  
+  repeat;
+    id DeltaAdj(m0?,m3?)*sunTrace(?m1,m0?) = sunTrace(?m1,m3);
+    id DeltaAdj(m0?,m3?)*sunTrace(?m1,m0?,?m2) = sunTrace(?m1,m3,?m2);
+    id DeltaAdj(m0?,m3?)*SUNT(?m1,m0?,?m2) = SUNT(?m1,m3,?m2);
+    id DeltaAdj(m3?,m0?)*SUNT(?m1,m0?,?m2) = SUNT(?m1,m3,?m2);
+  
+    id SUNT(?m1,n1?,n2?)*DeltaFun(n2?,n3?) = SUNT(?m1,n1,n3);
+    id SUNT(?m1,n1?,n2?)*DeltaFun(n3?,n2?) = SUNT(?m1,n1,n3);
+  
+    id DeltaFun(n1?,n2?)*DeltaFun(n2?,n3?) = DeltaFun(n1,n3);
+    id DeltaFun(n1?,n1?) = ca;
+    id DeltaAdj(n0?,n0?) = 2*ca*cf;
+  
+    id SUNT(?m1,n1?,n2?)*SUNT(?m2,n2?,n3?) = SUNT(?m1,?m2,n1,n3);
+    id SUNT(?m0,m1?,n1?,n1?) = sunTrace(?m0,m1);
+  
+    id sunTrace(m1?,m1?) = ca*cf;
+    id sunTrace(m1?,m2?) = 1/2*DeltaAdj(m1,m2);
+  
+    id sunTrace(?m1,m0?,m0?,?m2) = cf*sunTrace(?m1,?m2);
+  
+    id sunTrace(?m1,m0?,?m2,m0?,?m3) = 1/2*( sunTrace(?m1,?m3)*sunTrace(?m2) - 1/ca*sunTrace(?m1,?m2,?m3) );
+  
+    id sunTrace(m0?) = 0;
+  
+    id DeltaAdj(n1?,n0?)*DeltaAdj(n0?,n2?) = DeltaAdj(n1,n2);
+    id sunTrace(?m1,m0?,?m2)*sunTrace(?m3,m0?,?m4) = 1/2*( sunTrace(?m1,?m4,?m3,?m2)-1/ca*sunTrace(?m2,?m1)*sunTrace(?m4,?m3) );
+  endrepeat;
+  .sort
+  
+  id sunTrace() = ca;
+  .sort
+  
+  *
+  * Recover the cyclesymmetric of SUNTrace
+  *
+  multiply replace_(sunTrace,SUNTrace);
+  .sort
+  
+  #endprocedure
+  
+  """
 
   return result_str
 
@@ -1335,32 +1334,32 @@ function make_simplify_color_factor_script( color_factor::Basic, file_name::Stri
 ############################################################################################
 
   result_str = """
-#-
-Off Statistics;
-
-format nospaces;
-format maple;
-
-#include color.frm
-
-Local colorFactor = $(color_factor);
-
-#call calc1_CF();
-.sort 
-
-#call calc2_CF();
-.sort 
-
-#write <$(file_name).out> "%E", colorFactor
-#close <$(file_name).out>
-.sort
-
-#system tr -d "[:space:]" < $(file_name).out > $(file_name).out.trim
-#system mv $(file_name).out.trim $(file_name).out
-.sort
-
-.end
-"""
+  #-
+  Off Statistics;
+  
+  format nospaces;
+  format maple;
+  
+  #include color.frm
+  
+  Local colorFactor = $(color_factor);
+  
+  #call calc1_CF();
+  .sort 
+  
+  #call calc2_CF();
+  .sort 
+  
+  #write <$(file_name).out> "%E", colorFactor
+  #close <$(file_name).out>
+  .sort
+  
+  #system tr -d "[:space:]" < $(file_name).out > $(file_name).out.trim
+  #system mv $(file_name).out.trim $(file_name).out
+  .sort
+  
+  .end
+  """
 
   return result_str
 

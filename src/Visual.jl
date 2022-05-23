@@ -42,39 +42,37 @@ end # function get_line_style_str
 
 #######################################################################
 """
-    generate_visual_graph( g::GenericGraph, model::Model )::String
+    generate_visual_graph( g::Graph, model::Model )::String
 
 Generate the string representing the relevant graph `g` in the tizk-feynamn syntax.
 """
-function generate_visual_graph( g::GenericGraph, model::Model )::String
+function generate_visual_graph( g::Graph, model::Model )::String
 #######################################################################
-
-  v0 = vertex_from_label( "graph property", g )
 
   result_str = 
     "\\begin{figure}[!htb] \n"*
     "\\begin{center} \n"*
     "\\feynmandiagram [large] { \n"*
-    "  %$(string(v0)) \n"
+    "  %$(g) \n"
 
-  for att in v0.attributes
+  for att in g.property
     result_str *= 
     "    %$(att[1]) => $(att[2]) \n"
   end # for att
 
-  for edge in edges(g)
+  for edge in g.edge_list
     result_str *= 
     "  %$(string(edge)) \n"
-    for att in edge.attributes
+    for att in edge.property
       result_str *= 
       "    %$(att[1]) => $(att[2]) \n"
     end # for att
   end # for edge
 
-  for vert in vertices(g)
+  for vert in g.node_list
     result_str *= 
     "  %$(string(vert)) \n"
-    for att in vert.attributes
+    for att in vert.property
       result_str *= 
       "    %$(att[1]) => $(att[2]) \n"
     end # for att
@@ -82,55 +80,51 @@ function generate_visual_graph( g::GenericGraph, model::Model )::String
 
   QCDct_str_dict = Dict( 0 => "", 1 => " [crossed dot]", 2 => " [red, label = DOUBLE, crossed dot]" )
 
-  edge_list = edges(g)
+  edge_list = g.edge_list
   for edge in edge_list
-    src_v = source(edge)
-    tgt_v = target(edge)
-    src_mark = src_v.attributes["mark"]
-    tgt_mark = tgt_v.attributes["mark"]
-    mark_pair_set = Set([src_mark,tgt_mark])
+    src_mark = edge.src_node_mark
+    dst_mark = edge.dst_node_mark
+    mark_pair_set = Set([src_mark,dst_mark])
 
-    parallel_edge_list = filter( e_ -> Set([source(e_).attributes["mark"],target(e_).attributes["mark"]]) == mark_pair_set, edge_list )
+    parallel_edge_list = filter( e_ -> Set([e_.src_node_mark,e_.dst_node_mark]) == mark_pair_set, edge_list )
 
     if length(parallel_edge_list) <= 1
       half_circle_option = ""
     else 
-      parallel_edge_mark_list = map( e_ -> e_.attributes["mark"], parallel_edge_list )   
+      parallel_edge_mark_list = map( e_ -> e_.property[:mark], parallel_edge_list )   
       max_mark = max(parallel_edge_mark_list...)
       min_mark = min(parallel_edge_mark_list...)
-      if edge.attributes["mark"] == max_mark
-        half_circle_option = src_mark > tgt_mark ? ", half left" : ", half right"
-      elseif edge.attributes["mark"] == min_mark
-        half_circle_option = src_mark > tgt_mark ? ", half right" : ", half left"
+      if edge.property[:mark] == max_mark
+        half_circle_option = src_mark > dst_mark ? ", half left" : ", half right"
+      elseif edge.property[:mark] == min_mark
+        half_circle_option = src_mark > dst_mark ? ", half right" : ", half left"
       else # in the middle
         half_circle_option = "" 
       end # if
     end # end if
 
-    src_QCDct_str = QCDct_str_dict[src_v.attributes["QCDct_order"]]
-    src_mark = src_v.attributes["mark"]
+    src_QCDct_str = QCDct_str_dict[ get_node_mark_prop( g, src_mark, :QCDct_order ) ]
 
-    tgt_QCDct_str = QCDct_str_dict[tgt_v.attributes["QCDct_order"]]
-    tgt_mark = tgt_v.attributes["mark"]
+    dst_QCDct_str = QCDct_str_dict[ get_node_mark_prop( g, dst_mark, :QCDct_order ) ]
 
-    edge_style_str = get_line_style_str(edge.attributes["particle"])
+    edge_style_str = get_line_style_str(edge.property[:particle])
 
     tadpole_option = ""
-    if src_mark == tgt_mark 
+    if src_mark == dst_mark 
       tadpole_option = ", loop, min distance=3cm"
     end # if
    
     src_external_marking_str = ""
-    if src_v.attributes["style"] == "External"
+    if get_node_mark_prop( g, src_mark, :style ) == "External"
       src_external_marking_str = " [particle = \\($(src_mark)\\)]"
     end # if
-    tgt_external_marking_str = ""
-    if tgt_v.attributes["style"] == "External"
-      tgt_external_marking_str = " [particle = \\($(tgt_mark)\\)]"
+    dst_external_marking_str = ""
+    if get_node_mark_prop( g, dst_mark, :style ) == "External"
+      dst_external_marking_str = " [particle = \\($(dst_mark)\\)]"
     end # if
 
 
-    particle_name = edge.attributes["particle"].name
+    particle_name = edge.property[:particle].name
     particle_name = replace( particle_name, "plus" => "^{+}" )
     particle_name = replace( particle_name, "minus" => "^{-}" )
     particle_name = replace( particle_name, "ve" => "\\nu_{e}" )
@@ -143,18 +137,20 @@ function generate_visual_graph( g::GenericGraph, model::Model )::String
       particle_name = "\\overline{"*particle_name[1:end-3]*"}"
     end # if
 
-    mom_str = replace( string(edge.attributes["momentum"]), r"([Kkq]+)(\d+)" => s"\1_{\2}" )
+    mom_str = replace( string(edge.property[:momentum]), r"([Kkq]+)(\d+)" => s"\1_{\2}" )
 
     result_str *= 
-      "$(src_v.label)$(src_QCDct_str)$(src_external_marking_str) -- [$(edge_style_str)$(half_circle_option)$(tadpole_option), edge label' = \\($(particle_name)\\), momentum = \\($(mom_str)\\) ] $(tgt_v.label)$(tgt_QCDct_str)$(tgt_external_marking_str), \n"
+      "$(get_node_mark_prop(g,src_mark,:name))$(src_QCDct_str)$(src_external_marking_str) -- [$(edge_style_str)$(half_circle_option)$(tadpole_option), edge label' = \\($(particle_name)\\), momentum = \\($(mom_str)\\) ] $(get_node_mark_prop(g,dst_mark,:name))$(dst_QCDct_str)$(dst_external_marking_str), \n"
   end # for edge
 
-  result_str *= 
-    "};\n"*
-    "\\end{center}\n"*
-    "\\caption{Diagram$(v0.attributes["diagram_index"]), Sign: $(v0.attributes["sign"]), Symmetry factor: $(v0.attributes["symmetry_factor"])}\n"*
-    "\\end{figure}\n"*
-    "\\newpage\n"
+  result_str *= """
+  };
+  \\end{center}
+  \\caption{Diagram$(g.property[:diagram_index]), Sign: $(g.property[:sign]), Symmetry factor: $(g.property[:symmetry_factor])}
+  \\end{figure}
+  \\newpage
+
+  """
 
   return result_str
 

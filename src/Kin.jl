@@ -1,31 +1,31 @@
 
 ####################################################################
 """
-    generate_gauge_choice( graph_list::Vector{GenericGraph} )::Dict{Basic,Basic}
+    generate_gauge_choice( graph_list::Vector{Graph} )::Dict{Basic,Basic}
 
 Automatically prepare a gauge choice for this process.
 """
-function generate_gauge_choice( graph_list::Vector{GenericGraph} )::Dict{Basic,Basic}
+function generate_gauge_choice( graph_list::Vector{Graph} )::Dict{Basic,Basic}
 ####################################################################
 
   # Only the external fields are needed
   graph0 = first( graph_list )
 
-  ext_edge_list = filter( e_ -> ( e_.attributes["style"]=="External" ), edges(graph0) )
+  ext_edge_list = filter( e_ -> ( e_.property[:style]=="External" ), graph0.edge_list )
 
-  null_ext_edge_list = filter( e_ -> ( is_massless(e_.attributes["particle"]) ), ext_edge_list )
+  null_ext_edge_list = filter( e_ -> ( is_massless(e_.property[:particle]) ), ext_edge_list )
   @assert length(null_ext_edge_list) >= 2
 
   gauge_choice = Dict{Basic,Basic}()
-  push!( gauge_choice, null_ext_edge_list[1].attributes["ref2_MOM"] => null_ext_edge_list[2].attributes["null_MOM"] )
+  push!( gauge_choice, null_ext_edge_list[1].property[:ref2_MOM] => null_ext_edge_list[2].property[:null_MOM] )
 
-  not1st_ext_edge_list = filter( e_ -> ( e_.attributes["mark"] != null_ext_edge_list[1].attributes["mark"] ), ext_edge_list )
+  not1st_ext_edge_list = filter( e_ -> ( e_.property[:mark] != null_ext_edge_list[1].property[:mark] ), ext_edge_list )
 
   for edge in not1st_ext_edge_list
-    if is_massive_fermion(edge.attributes["particle"])
-      push!( gauge_choice, edge.attributes["ref2_MOM"] => Basic("barK$(edge.attributes["mark"])") )
+    if is_massive_fermion(edge.property[:particle])
+      push!( gauge_choice, edge.property[:ref2_MOM] => Basic("barK$(edge.property[:mark])") )
     else
-      push!( gauge_choice, edge.attributes["ref2_MOM"] => null_ext_edge_list[1].attributes["null_MOM"] )
+      push!( gauge_choice, edge.property[:ref2_MOM] => null_ext_edge_list[1].property[:null_MOM] )
     end # if
   end # for edge
 
@@ -316,26 +316,25 @@ end # function generate_kin_relation
 
 ########################################################################################
 """
-    generate_kin_relation( graph_list::Vector{GenericGraph} )::Dict{Basic,Basic}
+    generate_kin_relation( graph_list::Vector{Graph} )::Dict{Basic,Basic}
 
 Generate the kinematic relations for this processes including the internal non-loop propagators.
 """
-function generate_kin_relation( graph_list::Vector{GenericGraph} )::Dict{Basic,Basic}
+function generate_kin_relation( graph_list::Vector{Graph} )::Dict{Basic,Basic}
 ########################################################################################
 
   graph0 = first( graph_list )
 
-  v0 = vertex_from_label( "graph property", graph0 )
-  n_inc = v0.attributes["n_inc"]
-  n_out = v0.attributes["n_out"]
+  n_inc = graph0.property[:n_inc]
+  n_out = graph0.property[:n_out]
   nn = n_inc+n_out
 
-  ext_edge_list = filter( e_ -> ( e_.attributes["style"]=="External" ), edges(graph0) )
+  ext_edge_list = filter( e_ -> ( e_.property[:style]=="External" ), graph0.edge_list )
   @assert n_inc+n_out == length(ext_edge_list)
 
-  sorted_ext_edge_list = sort( ext_edge_list, by=e_->e_.attributes["mark"] )
-  mom = map( e_->e_.attributes["momentum"], sorted_ext_edge_list ) 
-  mass2 = map( e_->e_.attributes["particle"].mass^2, sorted_ext_edge_list )
+  sorted_ext_edge_list = sort( ext_edge_list, by=e_->e_.property[:mark] )
+  mom = map( e_->e_.property[:momentum], sorted_ext_edge_list ) 
+  mass2 = map( e_->e_.property[:particle].mass^2, sorted_ext_edge_list )
   # here mom and mass2 in fact are Vector{Basic}, but for later convenience we do not explicitly show it.
 
   @info "External Momenta" string(mom)
@@ -357,11 +356,11 @@ function generate_kin_relation( graph_list::Vector{GenericGraph} )::Dict{Basic,B
   @funs Den
   den_set = Set{Basic}()
   for g in graph_list
-    int_edge_list = filter( e_->e_.attributes["style"] == "Internal", edges(g) )
+    int_edge_list = filter( e_->e_.property[:style] == "Internal", g.edge_list )
     for edge in int_edge_list
-      den_mom = subs( edge.attributes["momentum"], mom[nn] => mom_n )
-      den_mass = edge.attributes["particle"].mass
-      den_width = edge.attributes["particle"].width
+      den_mom = subs( edge.property[:momentum], mom[nn] => mom_n )
+      den_mass = edge.property[:particle].mass
+      den_width = edge.property[:particle].width
       push!( den_set, Den(den_mom,den_mass,den_width) )
     end # for edge
   end # for g
@@ -382,11 +381,11 @@ function generate_kin_relation( graph_list::Vector{GenericGraph} )::Dict{Basic,B
   end # for one_den
 
   for g in graph_list
-    int_edge_list = filter( e_->e_.attributes["style"] == "Internal", edges(g) )
+    int_edge_list = filter( e_->e_.property[:style] == "Internal", g.edge_list )
     for edge in int_edge_list
-      den_mom = edge.attributes["momentum"]
-      den_mass = edge.attributes["particle"].mass
-      den_width = edge.attributes["particle"].width
+      den_mom = edge.property[:momentum]
+      den_mass = edge.property[:particle].mass
+      den_width = edge.property[:particle].width
 
       subs_den_mom = subs( den_mom, mom[nn] => mom_n )
       if den_mom != subs_den_mom
@@ -403,24 +402,23 @@ end # function generate_kin_relation
 
 #################################################################################
 """
-    generate_ext_mom_list( graph_list::Vector{GenericGraph} )::Vector{Basic}
+    generate_ext_mom_list( graph_list::Vector{Graph} )::Vector{Basic}
 
 Generate the list of external momenta according to this process.
 """
-function generate_ext_mom_list( graph_list::Vector{GenericGraph} )::Vector{Basic}
+function generate_ext_mom_list( graph_list::Vector{Graph} )::Vector{Basic}
 #################################################################################
 
   graph0 = first( graph_list )
 
-  v0 = vertex_from_label( "graph property", graph0 )
-  n_inc = v0.attributes["n_inc"]
-  n_out = v0.attributes["n_out"]
+  n_inc = graph0.property[:n_inc]
+  n_out = graph0.property[:n_out]
 
-  ext_edge_list = filter( e_ -> ( e_.attributes["style"]=="External" ), edges(graph0) )
+  ext_edge_list = filter( e_ -> ( e_.property[:style]=="External" ), graph0.edge_list )
   @assert n_inc+n_out == length(ext_edge_list)
 
-  sorted_ext_edge_list = sort( ext_edge_list, by=e_->e_.attributes["mark"] )
-  ext_mom_list = map( e_->e_.attributes["momentum"], sorted_ext_edge_list ) 
+  sorted_ext_edge_list = sort( ext_edge_list, by=e_->e_.property[:mark] )
+  ext_mom_list = map( e_->e_.property[:momentum], sorted_ext_edge_list ) 
 
   return ext_mom_list
 
