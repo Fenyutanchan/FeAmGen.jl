@@ -1199,214 +1199,135 @@ function contract_Dirac_indices_noexpand(
 end # function contract_Dirac_indices_noexpand
 
 
-
-
-#################################################################################
-"""
-    check_consistency( 
-        diagram_index::Int64, 
-        lorentz_list::Vector{Basic}, 
-        lorentz_noexpand_list::Vector{Basic}, 
-        ext_mom_list::Vector{Basic}, 
-        kin_relation::Dict{Basic,Basic} )::Nothing
-
-Check if the contraction for the amplitude can be consistent with the results 
-obtained from the Mathematica script.
-"""
+##################################
 function check_consistency( 
+    n_loop::Int64, 
     diagram_index::Int64, 
     lorentz_list::Vector{Basic}, 
     lorentz_noexpand_list::Vector{Basic}, 
-    ext_mom_list::Vector{Basic}, 
-    kin_relation::Dict{Basic,Basic} 
+    ext_mom_list::Vector{Basic}
 )::Nothing
-####################################################################################
+##################################
 
-  @funs SP
+  @assert n_loop in [1,2]
+  @vars q1 q2
+  n_ext_mom = length(ext_mom_list)
 
-  sp_relation_list = filter( pair_ -> get_name(pair_[1]) == "SP", kin_relation )
-  n_sp_relation = length(sp_relation_list)
-  kin_relation_str_set = Set{String}()
-  for one_sp_relation ∈ sp_relation_list
-    sp = one_sp_relation[1]
-    mom1 = get_args(sp)[1]
-    mom2 = get_args(sp)[2]
-    sp_expr = one_sp_relation[2] 
-
-    push!( kin_relation_str_set, "SP[$(mom1),$(mom2)] -> $(sp_expr)" )
-    if mom1 != mom2 
-      push!( kin_relation_str_set, "SP[$(mom2),$(mom1)] -> $(sp_expr)" )
-    end # if
-  end # for one_mom
+  box_message( "[ Check consistency between two versions of amplitudes ]" )
 
   n_lorentz = length( lorentz_list )
   @assert n_lorentz == length( lorentz_noexpand_list )
 
-  for lorentz_index ∈ 1:n_lorentz
+  for lorentz_index ∈ 1:n_lorentz, repeat in 1:4 # check for the randomness
     one_lorentz = lorentz_list[lorentz_index]
     one_lorentz_noexpand = lorentz_noexpand_list[lorentz_index]
+    diff = one_lorentz-one_lorentz_noexpand
 
     file_name = "check_diagram$(diagram_index)_lorentz$(lorentz_index)"
 
-    file = open( file_name*".m", "w" )
+    q1_val = sum( ext_mom_list .* map( x->mod(x,256)+16, rand(Int64,n_ext_mom) ) )
+    q2_val = sum( ext_mom_list .* map( x->mod(x,256)+16, rand(Int64,n_ext_mom) ) )
+    
+
+    file = open( "$(file_name).frm", "w" )
     write( file, """
-    expr1 = $( gen_mma_str(one_lorentz) );
-    expr2 = $( gen_mma_str(one_lorentz_noexpand) );
+    #-
     
+    #: workspace 16G
+    #: maxtermsize 40M
     
-    MomList = {q1,q2,q3,$(join(map(string,ext_mom_list),","))};
-    vanishing = Map[# :> 0 &, MomList];
+    Off Statistics;
+    Off FinalStats;
     
-    dummyList = {epMU1,epMU2,epMU3,epMU4,epMU5,dummyMU1,dummyMU2,dummyMU3,dummyMU4,dummyMU5,dummyMU6,dummyMU7,dummyMU8,dummyMU9,dummyMU10};
-    nuList = {NU1,NU2,NU3,NU4,NU5,NU6,NU7,NU8,NU10,NU12,NU13,NU14,NU15,NU16,NU17,NU18,NU19,NU20};
-    muList = {MU1,MU2,MU3,MU4,MU5,MU6,MU7,MU8,MU10,MU12,MU13,MU14,MU15,MU16,MU17,MU18,MU19,MU20};
+    #include model_parameters.frm
+    #include contractor.frm
     
-    makeSP[ mom1_, mom2_ ] := If[ AlphabeticOrder[ ToString[mom1], ToString[mom2] ] == 1, SP[mom1,mom2], SP[mom2,mom1] ];
-    
-    expr2 = expr2 //. DiracTrace[ x1___, GA[mom_/;Coefficient[mom,unity]=!=0], x2___ ] :> DiracTrace[x1,GA[mom/.unity:>0],x2] + Coefficient[mom,unity]*DiracTrace[x1,x2];
-    
-    expr2 = expr2 //. { DiracTrace[ x___, PL, GA[mom_], y___ ] :> DiracTrace[ x, GA[mom], PR, y ],
-                        DiracTrace[ x___, PR, GA[mom_], y___ ] :> DiracTrace[ x, GA[mom], PL, y ],
-                        DiracTrace[ x___, PL, PL ] :> DiracTrace[ x, PL ],
-                        DiracTrace[ x___, PR, PR ] :> DiracTrace[ x, PR ],
-                        DiracTrace[ x___, PL, PR ] :> 0,
-                        DiracTrace[ x___, PR, PL ] :> 0
-                      };
-    
-    expr2 = expr2 //. { DiracTrace[ GA[mu1_], PL ] :> 0,
-                        DiracTrace[ GA[mu1_], PR ] :> 0,
-                        DiracTrace[ GA[mu1_], GA[mu2_], GA[mu3_], PL ] :> 0,
-                        DiracTrace[ GA[mu1_], GA[mu2_], GA[mu3_], PR ] :> 0,
-                        DiracTrace[ GA[mu1_], GA[mu2_], GA[mu3_], GA[mu4_], GA[mu5_], PL ] :> 0,
-                        DiracTrace[ GA[mu1_], GA[mu2_], GA[mu3_], GA[mu4_], GA[mu5_], PR ] :> 0,
-                        DiracTrace[ GA[mu1_] ] :> 0,
-                        DiracTrace[ GA[mu1_], GA[mu2_], GA[mu3_] ] :> 0,
-                        DiracTrace[ GA[mu1_], GA[mu2_], GA[mu3_], GA[mu4_], GA[mu5_] ] :> 0
-                      };
-    
-    expr2 = expr2 //.{ DiracTrace[x1___, GA[mom_/;(mom/.vanishing) == 0], x2___] :> DiracTrace[x1,GA[nuList[[Length[{x1}]+1]]],x2]*FV[mom,nuList[[Length[{x1}]+1]]] };
-    expr2 = expr2 /. { DiracTrace[ GA[mu1_], GA[mu2_] ] :> 4*LMT[mu1,mu2],
-                       DiracTrace[ GA[mu1_], GA[mu2_], GA[mu3_], GA[mu4_] ] :> 4*(LMT[mu1,mu4]*LMT[mu2,mu3]-LMT[mu1,mu3]*LMT[mu2,mu4]+LMT[mu1,mu2]*LMT[mu3,mu4]),
-                       DiracTrace[ GA[mu1_], GA[mu2_], GA[mu3_], GA[mu4_], GA[mu5_], GA[mu6_] ] :> 4*(LMT[mu1, mu6]*LMT[mu2, mu5]*LMT[mu3, mu4] - LMT[mu1, mu5]*LMT[mu2, mu6]*LMT[mu3, mu4] - LMT[mu1, mu6]*LMT[mu2, mu4]*LMT[mu3, mu5] + LMT[mu1, mu4]*LMT[mu2, mu6]*LMT[mu3, mu5] + LMT[mu1, mu5]*LMT[mu2, mu4]*LMT[mu3, mu6] - LMT[mu1, mu4]*LMT[mu2, mu5]*LMT[mu3, mu6] + LMT[mu1, mu6]*LMT[mu2, mu3]*LMT[mu4, mu5] - LMT[mu1, mu3]*LMT[mu2, mu6]*LMT[mu4, mu5] + LMT[mu1, mu2]*LMT[mu3, mu6]*LMT[mu4, mu5] - LMT[mu1, mu5]*LMT[mu2, mu3]*LMT[mu4, mu6] + LMT[mu1, mu3]*LMT[mu2, mu5]*LMT[mu4, mu6] - LMT[mu1, mu2]*LMT[mu3, mu5]*LMT[mu4, mu6] + LMT[mu1, mu4]*LMT[mu2, mu3]*LMT[mu5, mu6] - LMT[mu1, mu3]*LMT[mu2, mu4]*LMT[mu5, mu6] + LMT[mu1, mu2]*LMT[mu3, mu4]*LMT[mu5, mu6]), 
-                       DiracTrace[ PL ] :> 2,
-                       DiracTrace[ PR ] :> 2,
-                       DiracTrace[ GA[mu1_], GA[mu2_], PL ] :> 2*LMT[mu1,mu2],
-                       DiracTrace[ GA[mu1_], GA[mu2_], PR ] :> 2*LMT[mu1,mu2],
-                       DiracTrace[ GA[mu1_], GA[mu2_], GA[mu3_], GA[mu4_], PL ] :> 2*(LMT[mu1,mu4]*LMT[mu2,mu3]-LMT[mu1,mu3]*LMT[mu2,mu4]+LMT[mu1,mu2]*LMT[mu3,mu4]) + 2*im*Levi[mu1,mu2,mu3,mu4],
-                       DiracTrace[ GA[mu1_], GA[mu2_], GA[mu3_], GA[mu4_], PR ] :> 2*(LMT[mu1,mu4]*LMT[mu2,mu3]-LMT[mu1,mu3]*LMT[mu2,mu4]+LMT[mu1,mu2]*LMT[mu3,mu4]) - 2*im*Levi[mu1,mu2,mu3,mu4]
-                     };
-    
-    
-    expr2 = Expand[expr2] //. { FermionChain[ x1__, GA[mu_], x2__ ] * FV[mom_,mu_] :> FermionChain[ x1, GA[mom], x2 ],
-                        FermionChain[ x1__, GA[mu1_], x2__ ] * LMT[mu1_,mu2_] :> FermionChain[ x1, GA[mu2], x2 ],
-                        FermionChain[ x1__, GA[mu1_], x2__ ] * LMT[mu2_,mu1_] :> FermionChain[ x1, GA[mu2], x2 ],
-                        FV[mom_,mu1_] * LMT[mu1_,mu2_] :> FV[mom,mu2],
-                        FV[mom_,mu1_] * LMT[mu2_,mu1_] :> FV[mom,mu2] };
-    
-    expr2 = expr2 //. FermionChain[ x1__, GA[mom_/;Coefficient[mom,unity]=!=0], x2__ ] :> FermionChain[x1,GA[mom/.unity:>0],x2] + Coefficient[mom,unity]*FermionChain[x1,x2];
-    
-    expr2 = expr2 //. FermionChain[x1__, GA[mom_ /; ! MemberQ[MomList, mom] && (mom /. vanishing) == 0], x2__] :> Map[FermionChain[x1, GA[#], x2] &, MomList].((Normal[CoefficientArrays[mom, MomList]])[[2]]);
-    
-    expr2 = expr2 //. FV[ mom_ /; ! MemberQ[MomList, mom] && (mom /. vanishing) == 0, mu_ ] :> Map[FV[#, mu] &, MomList].((Normal[CoefficientArrays[mom, MomList]])[[2]]);
-    
-    expr2 = expr2 //. SP[ mom1_ /; ! MemberQ[MomList, mom1] && (mom1 /. vanishing) == 0, mom2_ ] :> Map[makeSP[#, mom2] &, MomList].((Normal[CoefficientArrays[mom1, MomList]])[[2]]);
-    
-    expr2 = expr2 //. SP[ mom1_, mom2_ /; ! MemberQ[MomList, mom2] && (mom2 /. vanishing) == 0 ] :> Map[makeSP[mom1, #] &, MomList].((Normal[CoefficientArrays[mom2, MomList]])[[2]]);
-    
-    expr2 = expr2 //. { FermionChain[x1__, GA[mom_], PL, x2__] :> FermionChain[x1, PR, GA[mom], x2], 
-                        FermionChain[x1__, GA[mom_], PR, x2__] :> FermionChain[x1, PL, GA[mom], x2],
-                        FermionChain[x1__, PL, PL, x2__ ] :> FermionChain[x1, PL, x2 ],
-                        FermionChain[x1__, PR, PR, x2__ ] :> FermionChain[x1, PR, x2 ],
-                        FermionChain[x1__, PL, PR, x2__ ] :> 0,
-                        FermionChain[x1__, PR, PL, x2__ ] :> 0
-                      };
-    
-    expr2 = Expand[expr2] //. { FermionChain[ x1__, GA[mom_/; MemberQ[MomList, mom]], GA[mom_/; MemberQ[MomList, mom]], x2__ ] :> SP[mom,mom]*FermionChain[x1,x2],
-                                FermionChain[ x1__, GA[mu_/; ! MemberQ[MomList, mu]], GA[mu_/; ! MemberQ[MomList, mu]], x2__ ] :> diim*FermionChain[x1,x2],
-                                FermionChain[ x1__, GA[mu_/; ! MemberQ[MomList, mu]], GA[mom_], GA[mu_/; ! MemberQ[MomList, mu]], x2__ ] :> (2-diim)*FermionChain[x1,GA[mom],x2],
-                                FV[mom1_,mu_]*FV[mom2_,mu_] :> makeSP[mom1,mom2],
-                                FV[mom_,mu_]^2 :> SP[mom,mom] };
-    
-    expr2 = expr2 //. {$( join(collect(kin_relation_str_set),",") )};
-    
-    expr2 = expr2 //. FermionChain[ x1__, GA[mu_/; MemberQ[dummyList, mu]], x__, GA[mu_/; MemberQ[dummyList, mu]], x2__ ] :> FermionChain[ x1, GA[muList[[Length[{x1}]]]], x, GA[muList[[Length[{x1}]]]], x2 ];
-    
-    expr2 = expr2 //. { FV[mom_,mu_]*VecEp[int_, mu_, mom_, ref_, mass_] :> 0, FV[mom_,mu_]*VecEpC[int_, mu_, mom_, ref_, mass_] :> 0,
-                        FermionChain[ x__, GA[mom_], U[int_,mom_,ref_,0] ] :> 0, FermionChain[ x__, GA[mom_], V[int_,mom_,ref_,0] ] :> 0,
-                        FermionChain[ UB[int_,mom_,ref_,0], PL, GA[mom_], x__ ] :> 0, FermionChain[ VB[int_,mom_,ref_,0], PL, GA[mom_], x__ ] :> 0, 
-                        FermionChain[ UB[int_,mom_,ref_,0], PR, GA[mom_], x__ ] :> 0, FermionChain[ VB[int_,mom_,ref_,0], PR, GA[mom_], x__ ] :> 0,
-                        FermionChain[ UB[int_,mom_,ref_,0], GA[mom_], x__ ] :> 0, FermionChain[ VB[int_,mom_,ref_,0], GA[mom_], x__ ] :> 0,
-                        FermionChain[ x__, GA[mom_], U[int_,mom_,ref_,0] ] :> 0, FermionChain[ x__, GA[mom_], V[int_,mom_,ref_,0] ] :> 0,
-                        FermionChain[ x__, GA[mom_], PL, U[int_,mom_,ref_,0] ] :> 0, FermionChain[ x__, GA[mom_], PL, V[int_,mom_,ref_,0] ] :> 0,
-                        FermionChain[ x__, GA[mom_], PR, U[int_,mom_,ref_,0] ] :> 0, FermionChain[ x__, GA[mom_], PR, V[int_,mom_,ref_,0] ] :> 0
-                       };
-    
-    expr1 = expr1 //. { FermionChain[ x1__, GA[mu_], x2__ ] * FV[mom_,mu_] :> FermionChain[ x1, GA[mom], x2 ], 
-                        FermionChain[ x1__, GA[mu1_], x2__ ] * LMT[mu1_,mu2_] :> FermionChain[ x1, GA[mu2], x2 ],
-                        FermionChain[ x1__, GA[mu1_], x2__ ] * LMT[mu2_,mu1_] :> FermionChain[ x1, GA[mu2], x2 ],
-                        FV[mom_,mu1_] * LMT[mu1_,mu2_] :> FV[mom,mu2],
-                        FV[mom_,mu1_] * LMT[mu2_,mu1_] :> FV[mom,mu2],
-                        FV[mom1_,mu_]*FV[mom2_,mu_] :> makeSP[mom1,mom2],
-                        FV[mom_,mu_]^2 :> SP[mom,mom]
-                      };
-    
-    expr1 = expr1 //. { FermionChain[ x1__, GA[mom_/; MemberQ[MomList, mom]], GA[mom_/; MemberQ[MomList, mom]], x2__ ] :> SP[mom,mom]*FermionChain[x1,x2],
-                        FermionChain[ x1__, GA[mu_/; ! MemberQ[MomList, mu]], GA[mu_/; ! MemberQ[MomList, mu]], x2__ ] :> diim*FermionChain[x1,x2],
-                        FermionChain[ x1__, GA[mu_/; ! MemberQ[MomList, mu]], GA[mom_], GA[mu_/; ! MemberQ[MomList, mu]], x2__ ] :> (2-diim)*FermionChain[x1,GA[mom],x2]
-                      };
-    
-    expr1 = expr1 //. {$( join(collect(kin_relation_str_set),",") )};
-    
-    expr1 = expr1 //. FermionChain[ x1__, GA[mu_/; MemberQ[dummyList, mu]], x__, GA[mu_/; MemberQ[dummyList, mu]], x2__ ] :> FermionChain[ x1, GA[muList[[Length[{x1}]]]], x, GA[muList[[Length[{x1}]]]], x2 ];
-    
-    expr1 = expr1 //. { FV[mom_,mu_]*VecEp[int_, mu_, mom_, ref_, mass_] :> 0, FV[mom_,mu_]*VecEpC[int_, mu_, mom_, ref_, mass_] :> 0,
-                        FermionChain[ x__, GA[mom_], U[int_,mom_,ref_,0] ] :> 0, FermionChain[ x__, GA[mom_], V[int_,mom_,ref_,0] ] :> 0,
-                        FermionChain[ UB[int_,mom_,ref_,0], PL, GA[mom_], x__ ] :> 0, FermionChain[ VB[int_,mom_,ref_,0], PL, GA[mom_], x__ ] :> 0, 
-                        FermionChain[ UB[int_,mom_,ref_,0], PR, GA[mom_], x__ ] :> 0, FermionChain[ VB[int_,mom_,ref_,0], PR, GA[mom_], x__ ] :> 0,
-                        FermionChain[ UB[int_,mom_,ref_,0], GA[mom_], x__ ] :> 0, FermionChain[ VB[int_,mom_,ref_,0], GA[mom_], x__ ] :> 0,
-                        FermionChain[ x__, GA[mom_], U[int_,mom_,ref_,0] ] :> 0, FermionChain[ x__, GA[mom_], V[int_,mom_,ref_,0] ] :> 0,
-                        FermionChain[ x__, GA[mom_], PL, U[int_,mom_,ref_,0] ] :> 0, FermionChain[ x__, GA[mom_], PL, V[int_,mom_,ref_,0] ] :> 0,
-                        FermionChain[ x__, GA[mom_], PR, U[int_,mom_,ref_,0] ] :> 0, FermionChain[ x__, GA[mom_], PR, V[int_,mom_,ref_,0] ] :> 0
-                       };
-    
-    Levi0[a__] := Signature[{a}] (Levi0 @@ Sort@{a}) /; ! OrderedQ[{a}];
-    Levi0[a__] := 0 /; ! Unequal[a];
-    
-    expr2 = expr2 //. { Levi[mu1_,mu2_,mu3_,mu4_]*FV[mom_,mu1_] :> Levi[mom,mu2,mu3,mu4],
-                        Levi[mu1_,mu2_,mu3_,mu4_]*FV[mom_,mu2_] :> Levi[mu1,mom,mu3,mu4],
-                        Levi[mu1_,mu2_,mu3_,mu4_]*FV[mom_,mu3_] :> Levi[mu1,mu2,mom,mu4],
-                        Levi[mu1_,mu2_,mu3_,mu4_]*FV[mom_,mu4_] :> Levi[mu1,mu2,mu3,mom]
-                       };
-    
-    diff = (expr1-expr2) //. Levi[a__] -> Levi0[a] //Expand;
-    
-    stream=OpenWrite["$(file_name).out"];
-    Write[ stream, diff ];
-    Close[stream];
-    
-    """ )
-    close(file)
+    format nospaces;
+    format maple;
 
-
-    run( pipeline( `MathKernel -script $(file_name).m`, file_name*".log" ) )
-    @info "Done Mathematica script execution." script="$(file_name).m" thread="#$(Threads.threadid())"
+    vector unity;
   
-    file = open( file_name*".out", "r" )
+    Local expression = $(diff);
+    .sort
+
+    repeat;
+      id FermionChain( ?vars1, GA(mom?), ?vars2 ) = FermionChain( ?vars1, GA(rho), ?vars2 )*FV(mom,rho);
+      sum rho;
+    endrepeat;
+    .sort
+
+    argument;
+      id q1 = $(q1_val);
+      id q2 = $(q2_val);
+    endargument;
+    .sort
+ 
+  
+    *** linearize momenta
+    id FV(rho1?,rho2?) = FV(rho1,rho2);
+    id SP(rho1?,rho2?) = SP(rho1,rho2);
+    id im^2 = -1;
+    .sort
+
+    id FV(unity,rho?)*FermionChain( ?vars1, GA(rho?), ?vars2 ) = FermionChain( ?vars1, ?vars2 );
+    .sort
+    id FV(mom?NonLOOP,rho?)*FermionChain( ?vars1, GA(rho?), ?vars2 ) = FermionChain( ?vars1, GA(mom), ?vars2 );
+    .sort
+
+    repeat;
+      id FV(mom?NULL,rho?)^2 = 0;
+      id LMT(rho1?,rho2?)*LMT(rho2?,rho3?) = LMT(rho1,rho3);
+      id LMT(rho?,rho?) = diim;
+      id LMT(rho1?,rho2?)*FV(mom?,rho1?) = FV(mom,rho2);
+      id FV(mom?,rho?)*FermionChain(?vars1,GA(rho?),?vars2) = FermionChain(?vars1,GA(mom),?vars2);
+      id LMT(rho1?,rho2?)*FermionChain(?vars1,GA(rho2?),?vars2) = FermionChain(?vars1,GA(rho1),?vars2);
+      id FV(mom1?,rho?)*FV(mom2?,rho?) = SP(mom1,mom2);
+      id SP(mom?NULL,mom?NULL) = 0;
+      id FermionChain(?vars,GA(mom?NULL),Spinor?{U,V}(int?,mom?NULL,ref?,0)) = 0;
+      id FermionChain(Spinor?{UB,VB}(int?,mom?NULL,ref?,0),GA?{PL,PR},GA(mom?NULL),?vars) = 0;
+      id FermionChain(?vars1,GA(mom?NULL),GA(mom?NULL),?vars2) = 0;
+      id FermionChain(?vars1,GA(rho?ALLLOR),GA(rho?ALLLOR),?vars2) = diim*FermionChain(?vars1,?vars2);
+    
+      id SP(mom1?NonLOOP,mom2?NonLOOP) = 1;
+    endrepeat;
+    .sort
+    
+    
+    #call SimpleOrdering();
+    .sort
+
+
+    #write <$(file_name).out> "%E", expression
+    #close <$(file_name).out>
+    .sort
+
+    .end
+  
+    """ )
+
+    close( file )
+
+    run( pipeline( `form $(file_name).frm`, "$(file_name).log" ) )
+
+    file = open( "$(file_name).out", "r" )
     result_str = replace( read( file, String ), r"\s"=>"" )
     close(file)
 
     @assert length(result_str) < 4
-    @assert Basic(result_str) == 0
+    @assert (iszero∘Basic)(result_str) 
   
-    rm( file_name*".m" )
-    rm( file_name*".log" )
-    rm( file_name*".out" )
+    rm( "$(file_name).frm" )
+    rm( "$(file_name).log" )
+    rm( "$(file_name).out" )
 
   end # for lorentz_index
 
+  println( "[ CHECK PASS ]" )
 
+  return nothing
 
 end # function check_consistency
+
 
 
 
@@ -1708,7 +1629,9 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
 
     write_out_visual_graph( g, model, couplingfactor, amp_color_list, amp_lorentz_noexpand_list, ext_mom_list, scale2_list, proc_str )
 
-    #check_consistency( diagram_index, amp_lorentz_list, amp_lorentz_noexpand_list, ext_mom_list, kin_relation )
+    if n_loop > 0
+      check_consistency( n_loop, diagram_index, amp_lorentz_list, amp_lorentz_noexpand_list, ext_mom_list )
+    end # if
 
   end # for g
   now()
