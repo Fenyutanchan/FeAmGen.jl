@@ -438,6 +438,20 @@ function make_contractor_script()::String
   
     
   #procedure SimpleOrdering()
+
+  repeat;
+    id FermionChain(?vars1,PL,PL,?vars2) = FermionChain(?vars1,PL,?vars2);
+    id FermionChain(?vars1,PR,PR,?vars2) = FermionChain(?vars1,PR,?vars2);
+    id FermionChain(?vars1,PL,PR,?vars2) = 0;
+    id FermionChain(?vars1,PR,PL,?vars2) = 0;
+  
+    id FermionChain(?vars1,GA(rho?ALLLOR),PL,?vars2) = FermionChain(?vars1,PR,GA(rho),?vars2);
+    id FermionChain(?vars1,GA(rho?ALLLOR),PR,?vars2) = FermionChain(?vars1,PL,GA(rho),?vars2);
+  
+    id FermionChain(?vars1,GA(mom?),PL,?vars2) = FermionChain(?vars1,PR,GA(mom),?vars2);
+    id FermionChain(?vars1,GA(mom?),PR,?vars2) = FermionChain(?vars1,PL,GA(mom),?vars2);
+  endrepeat;
+  .sort
   
   *
   * rearrange the sequence in FermionChain

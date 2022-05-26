@@ -1219,7 +1219,7 @@ function check_consistency(
   write( file, baseINC_script_str )
   close(file)
 
-  box_message( "[ Check consistency between two versions of amplitudes ]" )
+  box_message( "[ Check consistency between two versions of amplitudes ]", color=:green )
 
   n_lorentz = length( lorentz_list )
   @assert n_lorentz == length( lorentz_noexpand_list )
@@ -1239,8 +1239,8 @@ function check_consistency(
     write( file, """
     #-
     
-    #: workspace 16G
-    #: maxtermsize 40M
+    ***#: workspace 16G
+    ***#: maxtermsize 40M
     
     Off Statistics;
     Off FinalStats;
@@ -1321,7 +1321,7 @@ function check_consistency(
 
     close( file )
 
-    run( pipeline( `form $(file_name).frm`, "$(file_name).log" ) )
+    run( pipeline( `tform -w$(Threads.nthreads()) $(file_name).frm`, "$(file_name).log" ) )
 
     file = open( "$(file_name).out", "r" )
     result_str = replace( read( file, String ), r"\s"=>"" )
@@ -1336,7 +1336,7 @@ function check_consistency(
 
   end # for lorentz_index
 
-  println( "[ CHECK PASS ]" )
+  printstyled( "[ CHECK PASS ]\n", color=:green )
 
   return nothing
 
