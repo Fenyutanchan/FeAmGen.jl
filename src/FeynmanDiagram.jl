@@ -1307,6 +1307,9 @@ function check_consistency(
     #call SimpleOrdering();
     .sort
 
+    #call Simplification();
+    .sort
+
     #include kin_relation.frm
     .sort
 
