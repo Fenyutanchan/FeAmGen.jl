@@ -1205,13 +1205,19 @@ function check_consistency(
     diagram_index::Int64, 
     lorentz_list::Vector{Basic}, 
     lorentz_noexpand_list::Vector{Basic}, 
-    ext_mom_list::Vector{Basic}
+    ext_mom_list::Vector{Basic}, 
+    baseINC_script_str::String 
 )::Nothing
 ##################################
 
   @assert n_loop in [1,2]
   @vars q1 q2
   n_ext_mom = length(ext_mom_list)
+
+  # baseINC only needs information from the external fields.
+  file = open( "baseINC.frm", "w" )
+  write( file, baseINC_script_str )
+  close(file)
 
   box_message( "[ Check consistency between two versions of amplitudes ]" )
 
@@ -1245,8 +1251,9 @@ function check_consistency(
     format nospaces;
     format maple;
 
-    vector unity;
-  
+    *** $(one_lorentz)
+    *** $(one_lorentz_noexpand)
+
     Local expression = $(diff);
     .sort
 
@@ -1259,9 +1266,15 @@ function check_consistency(
     argument;
       id q1 = $(q1_val);
       id q2 = $(q2_val);
+      argument;
+        id q1 = $(q1_val);
+        id q2 = $(q2_val);
+      endargument;
     endargument;
     .sort
- 
+
+    #call ArrangeTrace();
+    .sort
   
     *** linearize momenta
     id FV(rho1?,rho2?) = FV(rho1,rho2);
@@ -1269,9 +1282,9 @@ function check_consistency(
     id im^2 = -1;
     .sort
 
-    id FV(unity,rho?)*FermionChain( ?vars1, GA(rho?), ?vars2 ) = FermionChain( ?vars1, ?vars2 );
+    repeat id FV(unity,rho?)*FermionChain( ?vars1, GA(rho?), ?vars2 ) = FermionChain( ?vars1, ?vars2 );
     .sort
-    id FV(mom?NonLOOP,rho?)*FermionChain( ?vars1, GA(rho?), ?vars2 ) = FermionChain( ?vars1, GA(mom), ?vars2 );
+    repeat id FV(mom?NonLOOP,rho?)*FermionChain( ?vars1, GA(rho?), ?vars2 ) = FermionChain( ?vars1, GA(mom), ?vars2 );
     .sort
 
     repeat;
@@ -1287,13 +1300,14 @@ function check_consistency(
       id FermionChain(Spinor?{UB,VB}(int?,mom?NULL,ref?,0),GA?{PL,PR},GA(mom?NULL),?vars) = 0;
       id FermionChain(?vars1,GA(mom?NULL),GA(mom?NULL),?vars2) = 0;
       id FermionChain(?vars1,GA(rho?ALLLOR),GA(rho?ALLLOR),?vars2) = diim*FermionChain(?vars1,?vars2);
-    
-      id SP(mom1?NonLOOP,mom2?NonLOOP) = 1;
     endrepeat;
     .sort
     
     
     #call SimpleOrdering();
+    .sort
+
+    #include kin_relation.frm
     .sort
 
 
@@ -1630,7 +1644,7 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
     write_out_visual_graph( g, model, couplingfactor, amp_color_list, amp_lorentz_noexpand_list, ext_mom_list, scale2_list, proc_str )
 
     if n_loop > 0
-      check_consistency( n_loop, diagram_index, amp_lorentz_list, amp_lorentz_noexpand_list, ext_mom_list )
+      check_consistency( n_loop, diagram_index, amp_lorentz_list, amp_lorentz_noexpand_list, ext_mom_list, baseINC_script_str )
     end # if
 
   end # for g

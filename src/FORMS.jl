@@ -19,6 +19,7 @@ function make_contractor_script()::String
   vector K1,...,K10;
   vector barK1,...,barK10;
   vector mom,mom0,mom1,...,mom10;
+  vector unity;
   
   Set Kn: K1,...,K10;
   Set kn: k1,...,k10;
@@ -374,7 +375,8 @@ function make_contractor_script()::String
    
   id Trace(PL,?vars) = (1+sign_(nargs_(?vars)))/2*Trace(PL,?vars);
   id Trace(PR,?vars) = (1+sign_(nargs_(?vars)))/2*Trace(PR,?vars);
-  id Trace(GA(var?),?vars) = (1+sign_(1+nargs_(?vars)))/2*Trace(GA(var),?vars);
+  id Trace(GA(mom?),?vars) = (1+sign_(1+nargs_(?vars)))/2*Trace(GA(mom),?vars);
+  id Trace(GA(rho?ALLLOR),?vars) = (1+sign_(1+nargs_(?vars)))/2*Trace(GA(rho),?vars);
   .sort
   
   id Trace(PL,?vars) = 1/2*Trace(?vars)-1/2*Trace5(?vars);
@@ -395,6 +397,9 @@ function make_contractor_script()::String
   ***
   
   repeat id Trace(?vars1, GA(var?), ?vars2) = Trace(?vars1, var, ?vars2);
+  .sort
+
+  repeat id Trace(?vars1, unity, ?vars2 ) = Trace( ?vars1, ?vars2 );
   .sort
   
   repeat;
@@ -1297,8 +1302,6 @@ function make_amp_contraction_noexpand_script( expr::Basic, file_name::String ):
   
   format nospaces;
   format maple;
-  
-  symbol unity;
   
   Local expression = $(expr);
   .sort
