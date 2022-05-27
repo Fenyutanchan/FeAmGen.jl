@@ -35,8 +35,11 @@ den_xpt_list: [ 0, 0, 0, 0, 0 ]
 
 numerator: "1"
 
-# 1: i*eta for all 
-# 2: i*eta for only massive
+# ieta_scheme 
+# 0: none has iη 
+# 1: all have iη
+# 2: massive has iη
+# >10: e.g. Int64(0b010100100)+10, indexing position of iη via binary number
 ieta_scheme: 1
 
 comment: "Seed yaml file for IRD"

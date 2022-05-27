@@ -1,4 +1,4 @@
-using SymEngine, FeAmGen, Test, BenchmarkTools, YAML, JLD, Pipe, Dates, Logging
+using SymEngine, FeAmGen, Test, BenchmarkTools, YAML, JLD, JLD2, Pipe, Dates, Logging
 
 io = open("AmpRed_Test.log", "w+")
 logger = SimpleLogger(io)
@@ -50,8 +50,11 @@ den_xpt_list: [ 0, 0, 1, 0, 1, 0, 1, -2, 2 ]
 
 numerator: "$(num_str)"
 
-# 1: i*eta for all 
-# 2: i*eta for only massive
+# ieta_scheme 
+# 0: none has iη 
+# 1: all have iη
+# 2: massive has iη
+# >10: e.g. Int64(0b010100100)+10, indexing position of iη via binary number
 ieta_scheme: 1
 
 comment: "For the tensor reduction of single-top amplitude."
@@ -83,9 +86,16 @@ for index in 1:n_num
   rm( file_name )
 
   @testset "scalar_integral" begin
+    content_dict = JLD2.load( "$(target_dir)/integralDia199_$(rank_str)_SI$(index).jld2" )
+    content_dict_bench = JLD.load( "$(target_dir)_benchmark/integral_Dia199_$(rank_str)_SI$(index)_benchmark.jld" )
 
-    content_dict = load( "$(target_dir)/integral_Dia199_$(rank_str)_SI$(index).jld" )
-    content_dict_bench = load( "$(target_dir)_benchmark/integral_Dia199_$(rank_str)_SI$(index)_benchmark.jld" )
+    key_list = keys(content_dict)
+    bench_key_list = keys(content_dict_bench)
+    @test key_list == bench_key_list
+
+    for one_key in key_list
+      @test content_dict[one_key] == content_dict_bench[one_key]
+    end # for one_key
 
     @test content_dict == content_dict_bench 
 

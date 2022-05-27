@@ -1,4 +1,11 @@
+
+
 ####################################
+# ieta_scheme 
+# 0: none has iη 
+# 1: all have iη
+# 2: massive has iη
+# >10: e.g. Int64(0b010100100)+10, indexing position of iη via binary number
 function has_ieta(
     den_index::Int64,
     den_list::Vector{Basic},

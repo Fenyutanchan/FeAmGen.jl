@@ -1313,6 +1313,8 @@ function check_consistency(
     #include kin_relation.frm
     .sort
 
+    id im^2 = -1;
+    .sort
 
     #write <$(file_name).out> "%E", expression
     #close <$(file_name).out>
@@ -1646,7 +1648,7 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
 
     write_out_visual_graph( g, model, couplingfactor, amp_color_list, amp_lorentz_noexpand_list, ext_mom_list, scale2_list, proc_str )
 
-    if n_loop > 0
+    if input["check_consistency"] 
       check_consistency( n_loop, diagram_index, amp_lorentz_list, amp_lorentz_noexpand_list, ext_mom_list, baseINC_script_str )
     end # if
 

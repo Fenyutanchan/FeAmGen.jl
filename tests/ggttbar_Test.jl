@@ -53,6 +53,10 @@ Amp_Max_Ep_Xpt: 0
 # incoming and outgoing information
 incoming: [ "g", "g" ]          # incoming particles
 outgoing: [ "t", "tbar" ]               # outgoing particles 
+
+# whether to check the consistency between two versions of amplitudes
+check_consistency: true
+
 """
 
 for nloop in [0,1]

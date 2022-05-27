@@ -33,7 +33,7 @@ function make_contractor_script()::String
   set NonLOOP: k1,...,k10,K1,...,K10,r1,...,r10,barK1,...,barK10;
   set ALLMOM: k1,...,k10,K1,...,K10,r1,...,r10,barK1,...,barK10,q1,q2,q3,q1C,q2C,q3C;
   
-  symbol pi, im, I, sqrt2, shat;
+  symbol pi, im, sqrt2, shat;
   auto symbol ver, gc;
   
   ***Dirac indices
@@ -108,7 +108,7 @@ function make_contractor_script()::String
   *----------------------------------------
   #procedure Simplification()
   
-  id I^2 = -1;
+  id im^2 = -1;
   id sqrt2^2 = 2;
   id sqrt2^(-2) = 1/2;
   
@@ -218,7 +218,7 @@ function make_contractor_script()::String
   *** without expansion, we do not expand momentum in FV or GA.
   #procedure SimplificationNoExpand()
   
-  id I^2 = -1;
+  id im^2 = -1;
   id sqrt2^2 = 2;
   id sqrt2^(-2) = 1/2;
   
@@ -415,7 +415,7 @@ function make_contractor_script()::String
   id mom?NULL.mom?NULL = 0;
   id mom1?.mom2? = SP(mom1,mom2);
   id mom?(rho?ALLLOR) = FV(mom,rho);
-  id e_(rho1?,rho2?,rho3?,rho4?) = -I*Levi(rho1,rho2,rho3,rho4);
+  id e_(rho1?,rho2?,rho3?,rho4?) = -im*Levi(rho1,rho2,rho3,rho4);
   .sort
   
   id d_(rho1?,rho2?) = LMT(rho1,rho2);
