@@ -1219,7 +1219,7 @@ function check_consistency(
   write( file, baseINC_script_str )
   close(file)
 
-  box_message( "[ Check consistency between two versions of amplitudes ]", color=:green )
+  box_message( "Check consistency between two versions of amplitudes", color=:green )
 
   n_lorentz = length( lorentz_list )
   @assert n_lorentz == length( lorentz_noexpand_list )
@@ -1625,7 +1625,7 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
   #Threads.@threads for g in graph_list
   for g in graph_list
     diagram_index = g.property[:diagram_index]
-    box_message( "[ Working on diagram #$(diagram_index) ($(length(graph_list))) ]", color=:light_green )
+    box_message( "Working on diagram #$(diagram_index) ($(length(graph_list)))", color=:light_green )
 
     scale2_list = generate_scale2_list( g, kin_relation )
 

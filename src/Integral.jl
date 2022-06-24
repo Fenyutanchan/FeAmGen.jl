@@ -126,32 +126,6 @@ function generate_integral(
     end # if
   end # for den_index
 
-
-
-##positive_pos_list = findall( x_ -> x_ > 0, loop_den_xpt_list )
-##positive_loop_den_list = loop_den_list[positive_pos_list]
-##positive_loop_den_xpt_list = loop_den_xpt_list[positive_pos_list]
-
-##negative_pos_list = findall( x_ -> x_ < 0, loop_den_xpt_list )
-##irreducible_numerator = one(Basic)
-##for negative_pos in negative_pos_list
-##  negative_loop_den = loop_den_list[negative_pos]
-##  negative_xpt = loop_den_xpt_list[negative_pos]
-
-##  den_arg_list = get_args(negative_loop_den)
-##  neg_mass2 = -den_arg_list[2]^2
-##  # Now we still keep the i*eta in the irreducible numerator to be consistent with IBP reduction.
-##  if ieta_scheme == 1 ||
-##     ( ieta_scheme == 2 && !iszero(neg_mass2) )
-##    @vars sqrteta
-##    neg_mass2 += im*sqrteta^2
-##  end # if
-
-##  mom2 = make_SP(den_arg_list[1],den_arg_list[1])
-##  irreducible_numerator *= ( mom2 + neg_mass2 )^(-negative_xpt) 
-##end # for negative_pos
-  # need to further expand SP^n into (FV*FV)^n with different dummy indices, maybe use FORM script.
-
   numerator_expr = irreducible_numerator * Basic( file_dict["numerator"] )
 
   file_name = "numerator_contraction"
@@ -164,7 +138,7 @@ function generate_integral(
   close(file)
 
   file = open( "model_parameters.frm", "w" )
-  write( file, "symbol "*join( map( k_->string(k_), ver_mass_list ), "," )*";\n" )
+  write( file, "symbol $(join( map( k_->string(k_), ver_mass_list ), "," ));\n" )
   close(file)
 
   file = open( "contractor.frm", "w" )
@@ -178,10 +152,10 @@ function generate_integral(
   # baseINC only needs information from the external fields.
   touch( "baseINC.frm" )
 
-  run( pipeline( `form $(file_name).frm`, file_name*".log" ) )
-  @info "[ Done FROM script execution ]" script="$(file_name).frm"
+  run( pipeline( `form $(file_name).frm`, "$(file_name).log" ) )
+  #@info "[ Done FORM script execution ]" script="$(file_name).frm"
 
-  file = open( file_name*".out", "r" )
+  file = open( "$(file_name).out", "r" )
   result_str = read( file, String ) 
   close( file )
 
@@ -192,9 +166,9 @@ function generate_integral(
   rm( "kin_relation.frm" )
   rm( "model_parameters.frm" )
 
-  rm( file_name*".frm" )
-  rm( file_name*".out" )
-  rm( file_name*".log" )
+  rm( "$(file_name).frm" )
+  rm( "$(file_name).out" )
+  rm( "$(file_name).log" )
 
   # write out
   jldopen( joinpath( dir_path, "integral$(name_str).jld2" ), "w" ) do file 

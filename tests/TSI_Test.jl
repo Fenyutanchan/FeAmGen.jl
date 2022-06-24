@@ -1,4 +1,4 @@
-using SymEngine, FeAmGen, Test, BenchmarkTools, YAML, JLD, Pipe, Dates, Logging
+using SymEngine, FeAmGen, Test, BenchmarkTools, YAML, JLD2, Dates, Logging
 
 io = open("TSI_Test.log", "w+")
 logger = SimpleLogger(io)
@@ -71,7 +71,7 @@ end # for one_yaml
   delete!( yaml_file1_dict, "comment" )
   @test yaml_file0_dict == yaml_file1_dict
 
-  jld_name = "integral_$(file_name[1:end-5]).jld"
+  jld_name = "integral_$(file_name[1:end-5]).jld2"
   jld_file0_dict = load( joinpath( "TSI_integrals_benchmark", jld_name ) )
   jld_file1_dict = load( joinpath( "TSI_integrals", jld_name ) )
   @test jld_file0_dict == jld_file1_dict

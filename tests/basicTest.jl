@@ -1,4 +1,4 @@
-using SymEngine, FeAmGen, Test, BenchmarkTools, YAML, JLD, Pipe, Logging, Dates
+using SymEngine, FeAmGen, Test, BenchmarkTools, YAML, Pipe, Logging, Dates
 
 io = open("basicTest.log", "w+")
 logger = SimpleLogger(io)

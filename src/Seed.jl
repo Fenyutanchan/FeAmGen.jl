@@ -17,7 +17,7 @@ function digest_seed_proc( seed_file::String )::Nothing
   #----------------------------------------------------------------------------------------------
   parton_proc_str = join( [ input["incoming"]; "TO"; input["outgoing"]; "$(input["n_loop"])Loop" ], "_" )
 
-  box_message( "[ Read in model \"$(input["model_name"])\" for $(parton_proc_str) ]" )
+  box_message( "Read in model \"$(input["model_name"])\" for $(parton_proc_str)" )
 
   #-------------------------------------------------------
   @info "Choose model" model=input["model_name"]
