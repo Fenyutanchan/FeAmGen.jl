@@ -1637,7 +1637,7 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
     amp_color_list = simplify_color_factors( g, amp_color_list )
 
     #-------------------------------------------
-    perm = sortperm( amp_color_list, by=gen_mma_str )
+    perm = sortperm( amp_color_list, by=gen_sorted_str )
     amp_color_list = amp_color_list[perm]
     amp_lorentz_list = amp_lorentz_list[perm]
     amp_lorentz_noexpand_list = amp_lorentz_noexpand_list[perm]

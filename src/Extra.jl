@@ -288,105 +288,57 @@ end # function make_SP
 
 
 ###########################################
-gen_mma_str( ::Val{:Symbol}, expr::Basic )::String = string(expr)
-gen_mma_str( ::Val{:Integer}, expr::Basic )::String = string(expr)
-gen_mma_str( ::Val{:Rational}, expr::Basic )::String = string(expr)
-gen_mma_str( ::Val{:Complex}, expr::Basic )::String = string(expr)
+gen_sorted_str( ::Val{:Symbol}, expr::Basic )::String = string(expr)
+gen_sorted_str( ::Val{:Integer}, expr::Basic )::String = string(expr)
+gen_sorted_str( ::Val{:Rational}, expr::Basic )::String = string(expr)
+gen_sorted_str( ::Val{:Complex}, expr::Basic )::String = string(expr)
 ###########################################
 
 
 ###########################################
-function gen_mma_str( ::Val{:Pow}, expr::Basic )::String
+function gen_sorted_str( ::Val{:Pow}, expr::Basic )::String
 ###########################################
   arglist = get_args(expr)
-  return "Power[ $(gen_mma_str(arglist[1])), $(arglist[2]) ]"
-end # function gen_mma_str
+  return ":Pow( $(gen_sorted_str(arglist[1])), $(arglist[2]) )"
+end # function gen_sorted_str
 
 ###########################################
-function gen_mma_str( ::Val{:FunctionSymbol}, expr::Basic )::String
+function gen_sorted_str( ::Val{:FunctionSymbol}, expr::Basic )::String
 ###########################################
   name = replace( get_name(expr), "Trace" => "DiracTrace" )
-  return "$(name)[ $(join( map( gen_mma_str, get_args(expr) ), "," )) ]"
-end # function gen_mma_str
+  return "$(name)( $(join( map( gen_sorted_str, get_args(expr) ), "," )) )"
+end # function gen_sorted_str
 
 ###########################################
-function gen_mma_str( ::Val{:Mul}, expr::Basic )::String
+function gen_sorted_str( ::Val{:Mul}, expr::Basic )::String
 ###########################################
-  return "Times[ $(join( (sort∘map)( gen_mma_str, get_args(expr) ), "," )) ]"
-end # function gen_mma_str
+  return ":Mul( $(join( (sort∘map)( gen_sorted_str, get_args(expr) ), "," )) )"
+end # function gen_sorted_str
 
 ###########################################
-function gen_mma_str( ::Val{:Add}, expr::Basic )::String
+function gen_sorted_str( ::Val{:Add}, expr::Basic )::String
 ###########################################
-  return "Plus[ $(join( (sort∘map)( gen_mma_str, get_args(expr) ), "," )) ]"
-end # function gen_mma_str
+  return ":Add( $(join( (sort∘map)( gen_sorted_str, get_args(expr) ), "," )) )"
+end # function gen_sorted_str
 
 
 ###########################################
 """
-    gen_mma_str( expr::Basic )::String
+    gen_sorted_str( expr::Basic )::String
 
 This is a generic interface for different classes of the `expr`.
-And it will generate the mathematica code for the expression `expr`.
+And it will generate the sorted string format for the expression `expr`.
 """
-function gen_mma_str( expr::Basic )::String
+function gen_sorted_str( expr::Basic )::String
 ###########################################
 
   expr_class = SymEngine.get_symengine_class(expr)
-  return gen_mma_str( Val(expr_class), expr )
+  return gen_sorted_str( Val(expr_class), expr )
 
-end # function gen_mma_str
+end # function gen_sorted_str
 
 
 
-###########################################
-"""
-    gen_mma_str_old( expr::Basic )::String
-
-This is deprecated function for gen_mma_str.
-Mostly the new version has similar efficiency than this old one. 
-
-```julia
-@vars k1, k2, k3, k4, q1, q2
-test_mom = 2*k1+3*k2+k3+5*k4+6*q1+7*q2
-expr = expand(test_mom^3+test_mom)
-
-println( "FeAmGen.gen_mma_str(expr)" )
-@btime FeAmGen.gen_mma_str(expr)
-println( "FeAmGen.gen_mma_str_old(expr)" )
-@btime FeAmGen.gen_mma_str_old(expr)
-```
-
-FeAmGen.gen_mma_str(expr)
-  1.344 ms (2554 allocations: 115.23 KiB)
-FeAmGen.gen_mma_str_old(expr)
-  1.330 ms (2554 allocations: 115.23 KiB)
-
-"""
-function gen_mma_str_old( expr::Basic )::String
-###########################################
-
-  expr_class = SymEngine.get_symengine_class(expr)
-
-  if expr_class == :Add
-    return "Plus[ $(join( (sort∘map)( gen_mma_str, get_args(expr) ), "," )) ]"
-  elseif expr_class == :Mul
-    return "Times[ $(join( (sort∘map)( gen_mma_str, get_args(expr) ), "," )) ]"
-  elseif expr_class == :FunctionSymbol
-    name = replace( get_name(expr), "Trace" => "DiracTrace" )
-    return "$(name)[ $(join( map( gen_mma_str, get_args(expr) ), "," )) ]"
-  elseif expr_class == :Pow
-    arglist = get_args(expr)
-    return "Power[ $(gen_mma_str(arglist[1])), $(arglist[2]) ]"
-  elseif expr_class in [:Symbol,:Integer,:Rational,:Complex]
-    return string(expr)
-  else
-    error("Excpetion: $(expr)")
-  end # if
-
-  return string(expr)
-
-end # function gen_mma_str
 
 #####################################################
 function get_add_vector( expr::Basic )::Vector{Basic}
