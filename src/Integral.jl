@@ -78,13 +78,24 @@ function generate_integral(
   min_ep_xpt = file_dict["min_ep_xpt"]::Int64
   max_ep_xpt = file_dict["max_ep_xpt"]::Int64
   ext_mom_list = map( Basic, file_dict["external_momenta"] )
-  kin_relation = Dict{Basic,Basic}( map( p_->(Basic(p_[1]),Basic(p_[2])), file_dict["kin_relation"] ) )
+  kin_relation = (Dict∘map)( p_->(Basic(p_[1]),Basic(p_[2])), file_dict["kin_relation"] ) 
   loop_den_list = map( Basic, file_dict["den_list"] )
   loop_den_xpt_list = file_dict["den_xpt_list"]
   ieta_scheme = file_dict["ieta_scheme"]
 
   #-----------------------
-  ver_mass_list = free_symbols( vcat( collect( values(kin_relation) ), map(d_->get_args(d_)[2],loop_den_list) ) )
+  ver_mass_list = (free_symbols∘vcat)( (collect∘values)(kin_relation), map(d_->get_args(d_)[2],loop_den_list) ) 
+
+
+
+  #------------------------------------------------------------------
+  # Prepare variable list and kinematic combo list
+  var_list = (union∘free_symbols∘collect∘filter)( !is_FunctionSymbol, keys(kin_relation) )
+  ver_mass_list = setdiff( ver_mass_list, var_list )
+
+  var_list = union( var_list, ver_mass_list )
+  var_list = sort( collect(var_list), by=gen_sorted_str )
+  var_str_list = map( string, var_list )
 
   scale2_list = Vector{Basic}( undef, length(ver_mass_list) )
   for index in 1:length(ver_mass_list)
@@ -138,7 +149,7 @@ function generate_integral(
   close(file)
 
   file = open( "model_parameters.frm", "w" )
-  write( file, "symbol $(join( map( k_->string(k_), ver_mass_list ), "," ));\n" )
+  write( file, "symbol $(join( map( string, ver_mass_list ), "," ));\n" )
   close(file)
 
   file = open( "contractor.frm", "w" )
@@ -178,13 +189,13 @@ function generate_integral(
     write( file, "min_ep_xpt", min_ep_xpt )
     write( file, "max_ep_xpt", max_ep_xpt )
     write( file, "couplingfactor", "1" )
-    write( file, "ext_mom_list", map( string, ext_mom_list ) )
-    write( file, "scale2_list", map( string, scale2_list ) )
-    write( file, "loop_den_list",  map( string, positive_loop_den_list ) )
+    write( file, "ext_mom_list", string.(ext_mom_list) )
+    write( file, "scale2_list", string.(scale2_list) )
+    write( file, "loop_den_list", string.(positive_loop_den_list) )
     write( file, "loop_den_xpt_list", positive_loop_den_xpt_list )
-    write( file, "kin_relation", map( p_->(string(p_[1]),string(p_[2])), collect(kin_relation) ) )
+    write( file, "kin_relation", convert_to_String(kin_relation) ) 
     write( file, "baseINC_script_str", string() )
-    write( file, "model_parameter_dict", map( v_->(string(v_),"0"), ver_mass_list ) )
+    write( file, "model_parameter_dict", (Dict∘map)( x->string(x)=>"0", ver_mass_list ) )
     write( file, "amp_color_list",  String["1"] )
     write( file, "amp_lorentz_list",  String[result_str] )
   end # file
@@ -200,13 +211,13 @@ end # function generate_integral
 
 
 
-#-------------------------------------------------------------
+#########################################
 function generate_multi_yaml( 
     original_yaml::String, 
     indices_list::Vector{Vector{Int64}}, 
     target_dir::String 
 )::Vector{String}
-#-------------------------------------------------------------
+#########################################
 
   if isdir( target_dir ) || isfile( target_dir )
     mv( target_dir, "$(target_dir)_$(now())" )
@@ -246,7 +257,10 @@ end # function generate_multi_yaml
 This is used to generate the derivative to the set of master integrals.
 [0,-1,1,1] => [ [0,-1,2,1], [0,-1,1,2] ]
 """
-function generate_shiftUP_yaml( scalar_yaml_list::Vector{String}, target_dir::String )::Vector{String}
+function generate_shiftUP_yaml( 
+    scalar_yaml_list::Vector{String}, 
+    target_dir::String 
+)::Vector{String}
 #---------------------------------------------------------------------
 
   n_scalar = length(scalar_yaml_list)

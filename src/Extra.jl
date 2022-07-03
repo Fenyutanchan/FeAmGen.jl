@@ -424,6 +424,37 @@ function generate_SPcombo(
 end # function generate_SPcombo
 
 
+###############################
+function convert_to_String(
+    dict::Dict{Basic,Basic}
+)::Dict{String,String}
+###############################
+
+  return (Dict∘map)( x -> string(x[1]) => string(x[2]), collect(dict) )
+
+end # function convert_to_String
+
+###############################
+function convert_to_Basic(
+    dict::Dict{String,String}
+)::Dict{Basic,Basic}
+###############################
+
+  return (Dict∘map)( x -> Basic(x[1]) => Basic(x[2]), collect(dict) )
+
+end # function convert_to_Basic
 
 
+
+
+
+####################
+function is_FunctionSymbol( 
+    expr::Basic
+)::Bool
+####################
+
+  return SymEngine.get_symengine_class(expr) == :FunctionSymbol
+
+end # function is_FunctionSymbol
 

@@ -66,6 +66,7 @@ function add_edge!( g::Graph, edge::Edge )::Nothing
   return nothing
 end # function add_edge!
 
+
 function add_edge!( g::Graph, edge_mark::Int64, src_mark::Int64, dst_mark::Int64 )::Nothing
   @assert (isempty∘filter)( e -> e.mark == edge_mark, g.edge_list )
   push!( g.edge_list, Edge( edge_mark, src_mark, dst_mark, Dict{Symbol,Any}() ) )
@@ -146,4 +147,10 @@ function get_out_edge_list( g::Graph, node_index::Int64 )::Vector{Edge}
   return filter( e_ -> e_.src_node_mark == node_mark, g.edge_list )
 
 end # function get_out_edge_list
+
+
+###############################################################
+@inline is_external( edge::Edge)::Bool = edge.property[:style] == "External"
+###############################################################
+
 

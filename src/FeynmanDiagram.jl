@@ -20,14 +20,15 @@ function prepare_qgraf_dat( model::Model, input::Dict{Any,Any} )
                           out_idx_str_list, out_part_list )
 
   file = open( "qgraf.dat", "w" )
-  write( file, 
-    "output='qgraf_out.dat';\n"*
-    "style='miracle.sty';\n"*
-    "model='model.qgraf';\n"*
-    "in = "*join( inc_mom_str_list, "," )*";\n"*
-    "out = "*join( out_mom_str_list, "," )*";\n"*
-    "loops = "*string(input["n_loop"]+input["QCDCT_order"])*";\n"*
-    "loop_momentum = q;\n" )
+  write( file, """
+    output='qgraf_out.dat';
+    style='miracle.sty';
+    model='model.qgraf';
+    in = $( join( inc_mom_str_list, "," ) );
+    out = $( join( out_mom_str_list, "," ) );
+    loops = $(input["n_loop"]+input["QCDCT_order"]);
+    loop_momentum = q;
+    """ )
   if input["DropTadpole"] == true && input["DropWFcorrection"] == true 
     write( file, 
     "options = notadpole, onshell;\n" )
@@ -41,10 +42,11 @@ function prepare_qgraf_dat( model::Model, input::Dict{Any,Any} )
     write( file, 
     "options =;\n" )
   end # if
-  write( file, 
-    "true = vsum[ gspow, "*string(input["Amp_QCD_order"])*", "*string(input["Amp_QCD_order"])*"];\n"*
-    "true = vsum[ epow, "*string(input["Amp_QED_order"])*", "*string(input["Amp_QED_order"])*"];\n"*
-    "true = vsum[ qcdctpow, "*string(input["QCDCT_order"])*", "*string(input["QCDCT_order"])*"];\n" )
+  write( file, """
+    true = vsum[ gspow, $(input["Amp_QCD_order"]), "*string(input["Amp_QCD_order"])*"];
+    true = vsum[ epow, $(input["Amp_QED_order"]), $(input["Amp_QED_order"])];
+    true = vsum[ qcdctpow, $(input["QCDCT_order"]), $(input["QCDCT_order"])];
+    """ )
   close(file)
 
   file = open( "miracle.sty", "w" )
@@ -1411,13 +1413,14 @@ function write_out_amplitude( n_loop::Int64, diagram_index::Int64, couplingfacto
 
   printstyled( "\n[ Generate amplitude_diagram$(diagram_index).out ]\n", color=:green )
   amp_file = open( "$(proc_str)_amplitudes/amplitude_diagram$(diagram_index).out", "w" )
-  write( amp_file, 
-    "n_loop: $(n_loop)\n"*
-    "couplingfactor: $(couplingfactor)\n"*
-    "ext_mom_list: $(ext_mom_list)\n"*
-    "scale2_list: $(scale2_list)\n"*
-    "Diagram #$(diagram_index): \n"*
-    "  Denominators: \n" )
+  write( amp_file, """
+    n_loop: $(n_loop)
+    couplingfactor: $(couplingfactor)
+    ext_mom_list: $(ext_mom_list)
+    scale2_list: $(scale2_list)
+    Diagram #$(diagram_index): 
+      Denominators: 
+    """ )
   for one_den in loop_den_list
     write( amp_file, 
     "    $(one_den)\n" )
@@ -1427,7 +1430,7 @@ function write_out_amplitude( n_loop::Int64, diagram_index::Int64, couplingfacto
     "Kinematics Relations: \n" )
   for one_pair in kin_relation
     write( amp_file, 
-    "  "*string(one_pair)*"\n" )
+    "  $(one_pair)\n" )
   end # for one_pair
 
   write( amp_file, 
@@ -1452,7 +1455,7 @@ function write_out_amplitude( n_loop::Int64, diagram_index::Int64, couplingfacto
     "Model Parameters: \n" )
   for one_pair in parameter_dict
     write( amp_file, 
-    "  "*string(one_pair)*"\n" )
+    "  $(one_pair)\n" )
   end # for one_pair
 
   close( amp_file )
@@ -1467,15 +1470,15 @@ function write_out_amplitude( n_loop::Int64, diagram_index::Int64, couplingfacto
     write( file, "min_ep_xpt", min_ep_xpt )
     write( file, "max_ep_xpt", max_ep_xpt )
     write( file, "couplingfactor", string(couplingfactor) )
-    write( file, "ext_mom_list", map( string, ext_mom_list ) )
-    write( file, "scale2_list", map( string, scale2_list ) )
-    write( file, "loop_den_list",  map( string, loop_den_list ) )
+    write( file, "ext_mom_list", string.(ext_mom_list) )
+    write( file, "scale2_list", string.(scale2_list) )
+    write( file, "loop_den_list",  string.(loop_den_list) )
     write( file, "loop_den_xpt_list", loop_den_xpt_list )
-    write( file, "kin_relation", map( p_->(string(p_[1]),string(p_[2])), collect(kin_relation) ) )
+    write( file, "kin_relation", convert_to_String(kin_relation) )
     write( file, "baseINC_script_str", baseINC_script_str )
-    write( file, "model_parameter_dict", map( p_->(string(p_[1]),string(p_[2])), collect(parameter_dict) ) )
-    write( file, "amp_color_list",  map( string, amp_color_list ) )
-    write( file, "amp_lorentz_list",  map( string, amp_lorentz_list ) )
+    write( file, "model_parameter_dict", convert_to_String(parameter_dict) ) 
+    write( file, "amp_color_list",  string.(amp_color_list) )
+    write( file, "amp_lorentz_list",  string.(amp_lorentz_list) )
   end # file
 
   return nothing
@@ -1586,7 +1589,7 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
   # Calculate amplitude for each graph
 
   file = open( "model_parameters.frm", "w" )
-  write( file, "symbol $(join( map( k_->string(k_), collect(keys(model.parameter_dict)) ), "," ));\n" )
+  write( file, "symbol $(join( map( string, (collect∘keys)(model.parameter_dict) ), "," ));\n" )
   close(file)
 
   file = open( "contractor.frm", "w" )

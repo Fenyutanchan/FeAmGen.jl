@@ -1071,7 +1071,8 @@ function make_baseINC_script( graph::Graph, gauge_choice::Dict{Basic,Basic} )::S
   n_out = graph.property[:n_out]
   n_leg = n_inc+n_out
 
-  ext_edge_list = filter( e_ -> e_.property[:style]=="External", graph.edge_list )
+  #ext_edge_list = filter( x -> x.property[:style]=="External", graph.edge_list )
+  ext_edge_list = filter( is_external, graph.edge_list )
   sorted_ext_edge_list = sort( ext_edge_list, by=x->x.property[:mark] ) 
 
   momN = sorted_ext_edge_list[n_leg].property[:momentum]
@@ -1079,7 +1080,7 @@ function make_baseINC_script( graph::Graph, gauge_choice::Dict{Basic,Basic} )::S
   momNm2 = sorted_ext_edge_list[n_leg-2].property[:momentum]
 
   #-------------------------------------------------------------
-  sorted_notN_ext_edge_list = filter( e_ -> ( e_.property[:mark] != n_leg ), sorted_ext_edge_list )
+  sorted_notN_ext_edge_list = filter( x -> x.property[:mark] != n_leg, sorted_ext_edge_list )
 
   result_str *= "id FV($(momN),rho?) = ";
   for edge in sorted_notN_ext_edge_list
@@ -1110,7 +1111,7 @@ function make_baseINC_script( graph::Graph, gauge_choice::Dict{Basic,Basic} )::S
   result_str *= ";\n"
 
   #-------------------------------------------------------------
-  sorted_notNm1_ext_edge_list = filter( e_ -> e_.property[:mark] != n_leg-1, sorted_ext_edge_list )
+  sorted_notNm1_ext_edge_list = filter( x -> x.property[:mark] != n_leg-1, sorted_ext_edge_list )
   Nm1_sign = n_leg-1 <= n_inc ? (-1) : (+1)
 
   result_str *=
@@ -1134,7 +1135,7 @@ function make_baseINC_script( graph::Graph, gauge_choice::Dict{Basic,Basic} )::S
   result_str *= ";\n"
 
   #-------------------------------------------------------------
-  sorted_notNm2_ext_edge_list = filter( e_ -> e_.property[:mark] != n_leg-2, sorted_ext_edge_list )
+  sorted_notNm2_ext_edge_list = filter( x -> x.property[:mark] != n_leg-2, sorted_ext_edge_list )
   Nm2_sign = n_leg-2 <= n_inc ? (-1) : (+1)
   
   result_str *=
@@ -1203,7 +1204,10 @@ end # function make_baseINC_script
 
 Prepare the FORM script for the amplitude contraction.
 """
-function make_amp_contraction_script( expr::Basic, file_name::String )::String
+function make_amp_contraction_script( 
+    expr::Basic, 
+    file_name::String 
+)::String
 ##############################################################################
 
   result_str = """
