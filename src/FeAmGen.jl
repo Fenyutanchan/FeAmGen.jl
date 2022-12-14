@@ -9,20 +9,26 @@ module FeAmGen
 
 # for reading input YAML file "SeedProcess.yaml"
 using YAML
+
 using OrderedCollections
+
 # for read model python file
 using PyCall
+
 # for using @test and @testset
 using Test
+
 # for symbolic calculation
 using SymEngine
+using SymEngineExt
+
 # for Feynman diagram
 using Dates
 using JLD2
 using Pipe
 
 export digest_seed_proc, generate_amp, generate_integral, generate_multi_yaml, generate_shiftUP_yaml
-export generate_SPcombo, gen_sorted_str, box_message
+export generate_SPcombo, box_message
 
 include("Graph.jl")
 include("Message.jl")

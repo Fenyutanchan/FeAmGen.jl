@@ -193,7 +193,7 @@ function generate_integral(
     write( file, "scale2_list", string.(scale2_list) )
     write( file, "loop_den_list", string.(positive_loop_den_list) )
     write( file, "loop_den_xpt_list", positive_loop_den_xpt_list )
-    write( file, "kin_relation", convert_to_String(kin_relation) ) 
+    write( file, "kin_relation", convert_to_String_dict(kin_relation) ) 
     write( file, "baseINC_script_str", string() )
     write( file, "model_parameter_dict", (Dict∘map)( x->string(x)=>"0", ver_mass_list ) )
     write( file, "amp_color_list",  String["1"] )

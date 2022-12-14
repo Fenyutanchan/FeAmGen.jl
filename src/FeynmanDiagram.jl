@@ -1474,9 +1474,9 @@ function write_out_amplitude( n_loop::Int64, diagram_index::Int64, couplingfacto
     write( file, "scale2_list", string.(scale2_list) )
     write( file, "loop_den_list",  string.(loop_den_list) )
     write( file, "loop_den_xpt_list", loop_den_xpt_list )
-    write( file, "kin_relation", convert_to_String(kin_relation) )
+    write( file, "kin_relation", convert_to_String_dict(kin_relation) )
     write( file, "baseINC_script_str", baseINC_script_str )
-    write( file, "model_parameter_dict", convert_to_String(parameter_dict) ) 
+    write( file, "model_parameter_dict", convert_to_String_dict(parameter_dict) ) 
     write( file, "amp_color_list",  string.(amp_color_list) )
     write( file, "amp_lorentz_list",  string.(amp_lorentz_list) )
   end # file
