@@ -1,0 +1,15 @@
+name = "FeAmGen"
+uuid = "92bc0bee-949a-4e30-bda4-7bc0a90d92b9"
+authors = ["zhaoli-IHEP <zhaoli@ihep.ac.cn>"]
+version = "0.1.0"
+
+[deps]
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
+OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
+Pipe = "b98c9c47-44ae-5843-9183-064241ee97a0"
+PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
+SymEngine = "123dc426-2d89-5057-bbad-38513e3affd8"
+SymEngineExt = "eb43aea2-30a6-470d-b25b-3f3789752db4"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
