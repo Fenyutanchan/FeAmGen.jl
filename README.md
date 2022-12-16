@@ -4,6 +4,14 @@ FeAmGen: Julia program for Feynman Amplitude Generation
 
 -----------------------------------------------
 
+Install this package.
+
+```julia
+(@v1.8) pkg> add https://github.com/zhaoli-IHEP/FeAmGen.jl.git
+```
+
+-----------------------------------------------
+
 ```julia
 digest_seed_proc( "seed_proc.yaml", "Models" )
 ```
