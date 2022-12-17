@@ -1,7 +1,6 @@
-using SymEngine, FeAmGen, Test, YAML, JLD2, Dates
+using SymEngine, SymEngineExt, FeAmGen, Test, YAML, JLD2, Dates
 
 @info "AmpRed_Test starts @ $(now())"
-
 
 #--------------------------------------------------------------------
 # JLD file generation for single-top amplitude reduction.
@@ -59,7 +58,7 @@ comment: "For the tensor reduction of single-top amplitude."
 @vars k1, k2, K3
 rank_str = "q1q1q1"
 num_list = generate_SPcombo( rank_str, [k1,k2,K3] )
-num_list = sort( num_list, by=gen_mma_str )
+num_list = sort( num_list, by=gen_sorted_str )
 n_num = length( num_list )
 
 target_dir = "AmpRed_integrals"
@@ -81,9 +80,9 @@ for index in 1:n_num
 
   rm( file_name )
 
-  @testset "scalar_integral" begin
-    content_dict = JLD2.load( "$(target_dir)/integralDia199_$(rank_str)_SI$(index).jld2" )
-    content_dict_bench = JLD.load( "$(target_dir)_benchmark/integral_Dia199_$(rank_str)_SI$(index)_benchmark.jld" )
+  @testset "scalar_integral SI$(index)" begin
+    content_dict = load( "$(target_dir)/integralDia199_$(rank_str)_SI$(index).jld2" )
+    content_dict_bench = load( "$(target_dir)_benchmark/integralDia199_$(rank_str)_SI$(index).jld2" )
 
     key_list = keys(content_dict)
     bench_key_list = keys(content_dict_bench)

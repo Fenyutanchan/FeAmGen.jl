@@ -35,7 +35,7 @@ numerator: "1"
 # 0: none has iη 
 # 1: all have iη
 # 2: massive has iη
-# >10: e.g. Int64(0b010100100)+10, indexing position of iη via binary number
+# >10: e.g. Int64(0b01010)+10, indexing position of iη via binary number
 ieta_scheme: 1
 
 comment: "Seed yaml file for TSI"
