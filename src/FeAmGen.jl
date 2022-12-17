@@ -32,7 +32,6 @@ export generate_SPcombo, box_message
 
 include("Graph.jl")
 include("Message.jl")
-include("Extra.jl")
 include("Universe.jl")
 include("SimpleDigest.jl")
 include("Digest.jl")
