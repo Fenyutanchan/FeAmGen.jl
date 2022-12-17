@@ -1,8 +1,4 @@
-using SymEngine, FeAmGen, Test, BenchmarkTools, YAML, JLD, JLD2, Pipe, Dates, Logging
-
-io = open("AmpRed_Test.log", "w+")
-logger = SimpleLogger(io)
-global_logger(logger)
+using SymEngine, FeAmGen, Test, YAML, JLD2, Dates
 
 @info "AmpRed_Test starts @ $(now())"
 
@@ -105,5 +101,4 @@ end # for index
 
 @info "AmpRed_Test ends @ $(now())"
 
-close(io)
 

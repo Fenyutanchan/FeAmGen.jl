@@ -10,6 +10,17 @@ Install this package.
 (@v1.8) pkg> add https://github.com/zhaoli-IHEP/FeAmGen.jl.git
 ```
 
+This package needs SymEngineExt.jl, which can be installed via
+```julia
+(@v1.8) pkg> add https://github.com/zhaoli-IHEP/SymEngineExt.jl.git
+```
+
+-----------------------------------------------
+This package can be used for the following missions.
+1. Generate scalar integral ( example: `TSI_Test.jl` )
+2. Generate scalar integral with irreducible numerators ( example: `IRD_Test.jl` )
+3. Generate tensor integral ( example: `AmpRed_Test.jl` )
+4. Generate process amplitude ( examples: `DrellYan_Test.jl` etc. )
 -----------------------------------------------
 
 ```julia

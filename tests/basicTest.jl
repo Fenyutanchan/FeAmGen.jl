@@ -1,8 +1,4 @@
-using SymEngine, FeAmGen, Test, BenchmarkTools, Logging, Dates
-
-io = open("basicTest.log", "w+")
-logger = SimpleLogger(io)
-global_logger(logger)
+using SymEngine, FeAmGen, Test, Dates
 
 @info "basicTest starts @ $(now())"
 
@@ -31,6 +27,4 @@ end # @testset
 end # @testset
 
 @info "basicTest ends @ $(now())"
-
-close(io)
 
