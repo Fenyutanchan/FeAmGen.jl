@@ -1212,6 +1212,10 @@ function check_consistency(
 )::Nothing
 ##################################
 
+  if is_zero(n_loop)
+    return nothing
+  end # if
+
   @assert n_loop in [1,2]
   @vars q1 q2
   n_ext_mom = length(ext_mom_list)
