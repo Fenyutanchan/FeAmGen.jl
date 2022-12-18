@@ -1,0 +1,8 @@
+(* coupling factor: *) 
+1
+(* color factor \#1: *)
+1
+
+(* color factor coefficient \#1: *)
+
+-im*ver9*gcsub3*VecEpC(4, epMU4, K4, r4, mz)*gcsub57*gcsub72*FermionChain(VB(2, k2, r2, 0), GA(epMU4), U(1, k1, r1, 0)) + im*ver9*diim*gcsub3*VecEpC(4, epMU4, K4, r4, mz)*gcsub57*gcsub72*FermionChain(VB(2, k2, r2, 0), GA(epMU4), U(1, k1, r1, 0))

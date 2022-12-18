@@ -1,16 +1,10 @@
-using SymEngine, FeAmGen, Test, BenchmarkTools, YAML, JLD, Pipe, Dates, Logging
-
-io = open("eeHZ_Test.log", "w+")
-logger = SimpleLogger(io)
-global_logger(logger)
+using SymEngine, FeAmGen, Test, YAML, JLD2, Pipe, Dates
 
 @info "eeHZ_Test starts @ $(now())"
 
 
-
-
 #----------------------------------------------------------------------------
-# ee->HZ 0-loop, 1-loop tests
+# ee->HZ 0-loop, 1-loop, 2-loop tests
 #----------------------------------------------------------------------------
 generic_eeHZ_seed_proc_yaml_str( ; nloop::Int64 = 2::Int64 ) = """
 # input file for calculation details
@@ -61,11 +55,11 @@ check_consistency: false
 
 """
 
-for nloop in [0,1,2]
+for nloop in [0,1]
 
   open( "eeHZ_seed_proc_$(nloop)Loop.yaml", "w" ) do infile
     write( infile, generic_eeHZ_seed_proc_yaml_str(nloop=nloop) )
-  end 
+  end # close
 
   digest_seed_proc( "eeHZ_seed_proc_$(nloop)Loop.yaml" )
 
@@ -73,14 +67,15 @@ for nloop in [0,1,2]
 
 end # for nloop
 
-@testset "ee->HZ" for nloop in [0,1]
+for nloop in [0,1]
 
-  n_diagram = @pipe readdir( "eminus_eplus_TO_H_Z_$(nloop)Loop_amplitudes" ) |> filter( name->name[end-3:end]==".jld", _ ) |> length
+  n_diagram = @pipe readdir( "eminus_eplus_TO_H_Z_$(nloop)Loop_amplitudes" ) |> filter( name->name[end-4:end]==".jld2", _ ) |> length
 
-  @testset "$(nloop)-loop diagrams" for diagram_index in 1:n_diagram
+  @testset "ee->HZ $(nloop)-loop diagrams" begin
+  for diagram_index in 1:n_diagram
 
-    content_dict = load( "eminus_eplus_TO_H_Z_$(nloop)Loop_amplitudes/amplitude_diagram$(diagram_index).jld" )
-    content_dict_bench = load( "eminus_eplus_TO_H_Z_$(nloop)Loop_amplitudes_benchmark/amplitude_diagram$(diagram_index).jld" )
+    content_dict = load( "eminus_eplus_TO_H_Z_$(nloop)Loop_amplitudes/amplitude_diagram$(diagram_index).jld2" )
+    content_dict_bench = load( "eminus_eplus_TO_H_Z_$(nloop)Loop_amplitudes_benchmark/amplitude_diagram$(diagram_index).jld2" )
 
     @test content_dict == content_dict_bench 
 
@@ -93,13 +88,13 @@ end # for nloop
     close( visual_file )
 
     @test visual_list == visual_list_bench 
-  end # testset for diagram_index
+  end # for diagram_index
+  end # testset 
 
-end # testset
+end # for nloop
 
 
 
 @info "eeHZ_Test ends @ $(now())"
 
-close(io)
 

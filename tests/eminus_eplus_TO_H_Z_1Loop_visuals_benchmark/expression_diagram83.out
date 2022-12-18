@@ -1,0 +1,8 @@
+(* coupling factor: *) 
+1
+(* color factor \#1: *)
+ca
+
+(* color factor coefficient \#1: *)
+
+-ver9*gcsub2*gcsub3*VecEpC(4, epMU4, K4, r4, mz)*gcsub51*gcsub94*FermionChain(VB(2, k2, r2, 0), GA(dummyMU1), U(1, k1, r1, 0))*Trace(GA(q1 + mt*unity), PL, GA(K3 + q1 + mt*unity), GA(dummyMU1), GA(-K4 + q1 + mt*unity), GA(epMU4), PL) - ver9*gcsub2*gcsub3*VecEpC(4, epMU4, K4, r4, mz)*gcsub51*gcsub94*FermionChain(VB(2, k2, r2, 0), GA(dummyMU1), U(1, k1, r1, 0))*Trace(GA(q1 + mt*unity), PR, GA(K3 + q1 + mt*unity), GA(dummyMU1), GA(-K4 + q1 + mt*unity), GA(epMU4), PL) - ver9*gcsub2*gcsub3*VecEpC(4, epMU4, K4, r4, mz)*gcsub58*gcsub94*FermionChain(VB(2, k2, r2, 0), GA(dummyMU1), U(1, k1, r1, 0))*Trace(GA(q1 + mt*unity), PL, GA(K3 + q1 + mt*unity), GA(dummyMU1), GA(-K4 + q1 + mt*unity), GA(epMU4), PL) - 4*ver9*gcsub2*gcsub3*VecEpC(4, epMU4, K4, r4, mz)*gcsub58*gcsub94*FermionChain(VB(2, k2, r2, 0), GA(dummyMU1), U(1, k1, r1, 0))*Trace(GA(q1 + mt*unity), PL, GA(K3 + q1 + mt*unity), GA(dummyMU1), GA(-K4 + q1 + mt*unity), GA(epMU4), PR) - ver9*gcsub2*gcsub3*VecEpC(4, epMU4, K4, r4, mz)*gcsub58*gcsub94*FermionChain(VB(2, k2, r2, 0), GA(dummyMU1), U(1, k1, r1, 0))*Trace(GA(q1 + mt*unity), PR, GA(K3 + q1 + mt*unity), GA(dummyMU1), GA(-K4 + q1 + mt*unity), GA(epMU4), PL) - 4*ver9*gcsub2*gcsub3*VecEpC(4, epMU4, K4, r4, mz)*gcsub58*gcsub94*FermionChain(VB(2, k2, r2, 0), GA(dummyMU1), U(1, k1, r1, 0))*Trace(GA(q1 + mt*unity), PR, GA(K3 + q1 + mt*unity), GA(dummyMU1), GA(-K4 + q1 + mt*unity), GA(epMU4), PR)

@@ -1,0 +1,8 @@
+(* coupling factor: *) 
+1
+(* color factor \#1: *)
+1
+
+(* color factor coefficient \#1: *)
+
+ver9*ver7*gcsub3^2*FV(k1 + k2 - q1, dummyMU1)*VecEpC(4, epMU4, K4, r4, mz)*FV(K3, epMU4)*gcsub73*gcsub60*FermionChain(VB(2, k2, r2, 0), GA(dummyMU1), U(1, k1, r1, 0)) - ver9*ver7*gcsub3^2*FV(k1 + k2 - q1, dummyMU1)*VecEpC(4, epMU4, K4, r4, mz)*FV(-K3 - K4, epMU4)*gcsub73*gcsub60*FermionChain(VB(2, k2, r2, 0), GA(dummyMU1), U(1, k1, r1, 0)) + ver9*ver7*gcsub3^2*VecEpC(4, epMU4, K4, r4, mz)*FV(K3, epMU4)*gcsub73*gcsub60*FermionChain(VB(2, k2, r2, 0), GA(dummyMU1), U(1, k1, r1, 0))*FV(-k1 - k2, dummyMU1) - ver9*ver7*gcsub3^2*VecEpC(4, epMU4, K4, r4, mz)*FV(-K3 - K4, epMU4)*gcsub73*gcsub60*FermionChain(VB(2, k2, r2, 0), GA(dummyMU1), U(1, k1, r1, 0))*FV(-k1 - k2, dummyMU1)
