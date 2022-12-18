@@ -1212,7 +1212,7 @@ function check_consistency(
 )::Nothing
 ##################################
 
-  if is_zero(n_loop)
+  if iszero(n_loop)
     return nothing
   end # if
 
