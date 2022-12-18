@@ -67,12 +67,13 @@ for nloop in [0,1]
 
 end # for nloop
 
-@testset "gg->ttbar" begin
+#@testset "gg->ttbar" begin
 for nloop in [0,1]
 
-  n_diagram = @pipe readdir( "g_g_TO_t_tbar_$(nloop)Loop_amplitudes" ) |> filter( name->name[end-3:end]==".jld2", _ ) |> length
+  n_diagram = @pipe readdir( "g_g_TO_t_tbar_$(nloop)Loop_amplitudes" ) |> filter( name->name[end-4:end]==".jld2", _ ) |> length
 
-  @testset "$(nloop)-loop diagrams" for diagram_index in 1:n_diagram
+  @testset "gg->ttbar $(nloop)-loop diagrams" begin
+  for diagram_index in 1:n_diagram
 
     content_dict = load( "g_g_TO_t_tbar_$(nloop)Loop_amplitudes/amplitude_diagram$(diagram_index).jld2" )
     content_dict_bench = load( "g_g_TO_t_tbar_$(nloop)Loop_amplitudes_benchmark/amplitude_diagram$(diagram_index).jld2" )
@@ -88,10 +89,11 @@ for nloop in [0,1]
     close( visual_file )
 
     @test visual_list == visual_list_bench 
+  end # for diagram_index
   end # testset for diagram_index
 
 end # for nloop
-end # testset
+#end # testset
 
 
 @info "ggttbar_Test ends @ $(now())"
