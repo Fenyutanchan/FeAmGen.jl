@@ -1,8 +1,4 @@
-using SymEngine, FeAmGen, Test, BenchmarkTools, YAML, JLD, Pipe, Dates, Logging
-
-io = open("ggttbar_Test.log", "w+")
-logger = SimpleLogger(io)
-global_logger(logger)
+using SymEngine, FeAmGen, Test, YAML, JLD2, Dates, Pipe
 
 @info "ggttbar_Test starts @ $(now())"
 
@@ -63,7 +59,7 @@ for nloop in [0,1]
 
   open( "ggttbar_seed_proc_$(nloop)Loop.yaml", "w" ) do infile
     write( infile, generic_ggttbar_seed_proc_yaml_str(nloop=nloop) )
-  end 
+  end # close
 
   digest_seed_proc( "ggttbar_seed_proc_$(nloop)Loop.yaml" )
 
@@ -71,14 +67,15 @@ for nloop in [0,1]
 
 end # for nloop
 
-@testset "gg->ttbar" for nloop in [0,1]
+@testset "gg->ttbar" begin
+for nloop in [0,1]
 
-  n_diagram = @pipe readdir( "g_g_TO_t_tbar_$(nloop)Loop_amplitudes" ) |> filter( name->name[end-3:end]==".jld", _ ) |> length
+  n_diagram = @pipe readdir( "g_g_TO_t_tbar_$(nloop)Loop_amplitudes" ) |> filter( name->name[end-3:end]==".jld2", _ ) |> length
 
   @testset "$(nloop)-loop diagrams" for diagram_index in 1:n_diagram
 
-    content_dict = load( "g_g_TO_t_tbar_$(nloop)Loop_amplitudes/amplitude_diagram$(diagram_index).jld" )
-    content_dict_bench = load( "g_g_TO_t_tbar_$(nloop)Loop_amplitudes_benchmark/amplitude_diagram$(diagram_index).jld" )
+    content_dict = load( "g_g_TO_t_tbar_$(nloop)Loop_amplitudes/amplitude_diagram$(diagram_index).jld2" )
+    content_dict_bench = load( "g_g_TO_t_tbar_$(nloop)Loop_amplitudes_benchmark/amplitude_diagram$(diagram_index).jld2" )
 
     @test content_dict == content_dict_bench 
 
@@ -93,13 +90,10 @@ end # for nloop
     @test visual_list == visual_list_bench 
   end # testset for diagram_index
 
+end # for nloop
 end # testset
-
-
-
 
 
 @info "ggttbar_Test ends @ $(now())"
 
-close(io)
 
