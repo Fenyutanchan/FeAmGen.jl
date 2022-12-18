@@ -16,7 +16,7 @@ Color Factors:
     DeltaFun(clb1, clb2); 
 Lorentz Factors: 
   amp_lorentz #1: 
-    VecEpsC(3, epsMU3, K3, r3, mw)*FermionChain(VB(1, k1, r1, 0), PR, GA(epsMU3), U(2, k2, r2, 0))*gcsub100; 
+    VecEpC(3, epMU3, K3, r3, mw)*FermionChain(VB(1, k1, r1, 0), PR, GA(epMU3), U(2, k2, r2, 0))*gcsub100; 
 Model Parameters: 
   as => 0.118
   aws => 0.808

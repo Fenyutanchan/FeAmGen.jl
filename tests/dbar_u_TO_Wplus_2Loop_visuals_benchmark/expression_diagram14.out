@@ -1,0 +1,8 @@
+(* coupling factor: *) 
+1
+(* color factor \#1: *)
+(-1/4)*DeltaFun(clb1, clb2)/ca + (1/4)*ca*DeltaFun(clb1, clb2)
+
+(* color factor coefficient \#1: *)
+
+-Trace(GA(q2 + mt*unity), GA(dummyMU3), GA(-k1 - q1 + q2 + mt*unity), GA(dummyMU4))*FermionChain(VB(1, k1, r1, 0), GA(dummyMU3), GA(dummyMU1), GA(epMU3), PL, GA(dummyMU2), GA(dummyMU4), U(2, k2, r2, 0))*VecEpC(3, epMU3, K3, r3, mw)*gcsub11^4*FV(q1, dummyMU1)*FV(K3 + q1, dummyMU2)*gcsub100

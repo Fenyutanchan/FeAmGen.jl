@@ -1,0 +1,8 @@
+(* coupling factor: *) 
+1
+(* color factor \#1: *)
+DeltaFun(clb1, clb2)
+
+(* color factor coefficient \#1: *)
+
+VecEpC(3, epMU3, K3, r3, mw)*gcsub100*FermionChain(VB(1, k1, r1, 0), GA(epMU3), PL, U(2, k2, r2, 0))
