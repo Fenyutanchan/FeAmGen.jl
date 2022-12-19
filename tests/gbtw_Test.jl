@@ -1,12 +1,6 @@
-using SymEngine, FeAmGen, Test, BenchmarkTools, YAML, JLD, Pipe, Dates, Logging
-
-io = open("gbtw_Test.log", "w+")
-logger = SimpleLogger(io)
-global_logger(logger)
+using SymEngine, FeAmGen, Test, YAML, JLD2, Pipe, Dates
 
 @info "gbtw_Test starts @ $(now())"
-
-
 
 #----------------------------------------------------------------------------
 # single-top gb->tW 0-loop, 1-loop, 2-loop tests
@@ -72,14 +66,16 @@ for nloop in [0,1,2]
 
 end # for nloop
 
-@testset "gb->tW" for nloop in [0,1,2]
+for nloop in [0,1,2]
 
-  n_diagram = @pipe readdir( "b_g_TO_Wminus_t_$(nloop)Loop_amplitudes" ) |> filter( name->name[end-3:end]==".jld", _ ) |> length
+  n_diagram = @pipe readdir( "b_g_TO_Wminus_t_$(nloop)Loop_amplitudes" ) |> filter( name->name[end-4:end]==".jld2", _ ) |> length
 
-  @testset "$(nloop)-loop diagrams" for diagram_index in 1:n_diagram
+  @testset "gb->tW $(nloop)-loop diagrams" begin
 
-    content_dict = load( "b_g_TO_Wminus_t_$(nloop)Loop_amplitudes/amplitude_diagram$(diagram_index).jld" )
-    content_dict_bench = load( "b_g_TO_Wminus_t_$(nloop)Loop_amplitudes_benchmark/amplitude_diagram$(diagram_index).jld" )
+  for diagram_index in 1:n_diagram
+
+    content_dict = load( "b_g_TO_Wminus_t_$(nloop)Loop_amplitudes/amplitude_diagram$(diagram_index).jld2" )
+    content_dict_bench = load( "b_g_TO_Wminus_t_$(nloop)Loop_amplitudes_benchmark/amplitude_diagram$(diagram_index).jld2" )
 
     @test content_dict == content_dict_bench 
 
@@ -92,11 +88,11 @@ end # for nloop
     close( visual_file )
 
     @test visual_list == visual_list_bench 
-  end # testset for diagram_index
+  end # for diagram_index
+  end # testset 
 
-end # testset
+end # for nloop
 
 @info "gbtw_Test ends @ $(now())"
 
-close(io)
 

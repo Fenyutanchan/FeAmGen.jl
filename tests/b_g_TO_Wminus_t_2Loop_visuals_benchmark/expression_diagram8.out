@@ -1,0 +1,20 @@
+(* coupling factor: *) 
+1
+(* color factor \#1: *)
+(-1/4)*SUNT(clb2, cla4, clb1)/ca^2 + (-1/2)*cf*SUNT(clb2, cla4, clb1)/ca + (1/4)*SUNT(clb2, cla4, clb1)
+
+(* color factor coefficient \#1: *)
+
+VecEpC(3, epMU3, K3, r3, mw)*gcsub49*gcsub12*gcsub11^3*FV(q2, dummyMU1)*FV(K3 + q1, dummyMU2)*FermionChain(UB(4, K4, r4, mt), GA(dummyMU4), GA(dummyMU3), GA(epMU3), PL, GA(dummyMU2), GA(dummyMU4), GA(dummyMU1), GA(epMU2), U(1, k1, r1, 0))*FV(q1 + mt*unity, dummyMU3)*VecEp(2, epMU2, k2, r2, 0) - VecEpC(3, epMU3, K3, r3, mw)*FermionChain(UB(4, K4, r4, mt), GA(epMU2), GA(dummyMU3), GA(epMU3), PL, GA(dummyMU2), GA(dummyMU4), GA(dummyMU1), GA(dummyMU4), U(1, k1, r1, 0))*gcsub49*gcsub12*gcsub11^3*FV(q2, dummyMU1)*FV(K3 + q1, dummyMU2)*FV(q1 + mt*unity, dummyMU3)*VecEp(2, epMU2, k2, r2, 0)
+(* color factor \#2: *)
+(1/2)*cf*ca*SUNT(clb2, cla4, clb1) + (1/4)*SUNT(clb2, cla4, clb1)
+
+(* color factor coefficient \#2: *)
+
+FermionChain(UB(4, K4, r4, mt), GA(dummyMU4), GA(dummyMU3), GA(epMU3), PL, GA(dummyMU2), GA(epMU2), GA(dummyMU1), GA(dummyMU4), U(1, k1, r1, 0))*VecEpC(3, epMU3, K3, r3, mw)*gcsub49*gcsub12*gcsub11^3*FV(q2, dummyMU1)*FV(K3 + q1, dummyMU2)*FV(q1 + mt*unity, dummyMU3)*VecEp(2, epMU2, k2, r2, 0) - VecEpC(3, epMU3, K3, r3, mw)*gcsub49*gcsub12*gcsub11^3*FV(q2, dummyMU1)*FV(K3 + q1, dummyMU2)*FermionChain(UB(4, K4, r4, mt), GA(dummyMU4), GA(dummyMU3), GA(epMU3), PL, GA(dummyMU2), GA(dummyMU4), GA(dummyMU1), GA(epMU2), U(1, k1, r1, 0))*FV(q1 + mt*unity, dummyMU3)*VecEp(2, epMU2, k2, r2, 0)
+(* color factor \#3: *)
+(1/2)*cf*ca*SUNT(clb2, cla4, clb1) + (1/4)*SUNT(clb2, cla4, clb1)
+
+(* color factor coefficient \#3: *)
+
+FermionChain(UB(4, K4, r4, mt), GA(dummyMU4), GA(dummyMU3), GA(epMU3), PL, GA(dummyMU2), GA(epMU2), GA(dummyMU1), GA(dummyMU4), U(1, k1, r1, 0))*VecEpC(3, epMU3, K3, r3, mw)*gcsub49*gcsub12*gcsub11^3*FV(q2, dummyMU1)*FV(K3 + q1, dummyMU2)*FV(q1 + mt*unity, dummyMU3)*VecEp(2, epMU2, k2, r2, 0) - VecEpC(3, epMU3, K3, r3, mw)*FermionChain(UB(4, K4, r4, mt), GA(epMU2), GA(dummyMU3), GA(epMU3), PL, GA(dummyMU2), GA(dummyMU4), GA(dummyMU1), GA(dummyMU4), U(1, k1, r1, 0))*gcsub49*gcsub12*gcsub11^3*FV(q2, dummyMU1)*FV(K3 + q1, dummyMU2)*FV(q1 + mt*unity, dummyMU3)*VecEp(2, epMU2, k2, r2, 0)

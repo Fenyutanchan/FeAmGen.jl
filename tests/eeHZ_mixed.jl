@@ -1,4 +1,4 @@
-using SymEngine, FeAmGen, Test, BenchmarkTools, YAML, JLD, Pipe, Dates, Logging
+using SymEngine, FeAmGen, Test, YAML, JLD2, Pipe, Dates
 
 file = open( "eeHZ_mixed_proc.yaml", "w" )
 write( file, """
@@ -47,7 +47,7 @@ incoming: [ "eplus", "eminus" ]          # incoming particles
 outgoing: [ "H", "Z" ]               # outgoing particles 
 
 # whether to check the consistency between two versions of amplitudes
-check_consistency: false
+check_consistency: true
 
 """)
 close( file )
