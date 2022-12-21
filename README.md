@@ -10,8 +10,10 @@ Install this package.
 (@v1.8) pkg> add https://github.com/zhaoli-IHEP/FeAmGen.jl.git
 ```
 
-This package needs SymEngineExt.jl, which can be installed via
+
+This package needs SymEngineExt.jl and others, which can be installed via
 ```julia
+(@v1.8) pkg> add YAML, OrderedCollections, PyCall, Test, SymEngine, Dates, JLD2, Pipe
 (@v1.8) pkg> add https://github.com/zhaoli-IHEP/SymEngineExt.jl.git
 ```
 
