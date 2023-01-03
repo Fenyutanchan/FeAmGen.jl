@@ -303,28 +303,16 @@ function generate_QGRAF_model( model::Model )::Nothing
 
     n_link = length(inter.link_list)
     if n_link > 2 
-      base_vertex_str = """[$(part_list_str); 
-        epow = '$(inter.QED_order)', 
-        gspow = '$(inter.QCD_order)', 
-        spcpow = '$(inter.SPC_order)', 
-        qcdctpow = '0' ]"""
+      base_vertex_str = "[$(part_list_str); epow = '$(inter.QED_order)', gspow = '$(inter.QCD_order)', spcpow = '$(inter.SPC_order)', qcdctpow = '0' ]\n"
       write( file, base_vertex_str )
     end # if
 
     deg_matrix = map( ele_ -> get_degree(ele_,Basic("CTorder")), inter.couplings_matrix )
     max_QCDCT_order = maximum( deg_matrix ) # i.e. maximum degree 
     if max_QCDCT_order == 2 
-      QCDct1_vertex_str = """[$(part_list_str), QCDct1bar, QCDct1; 
-        epow = '$(inter.QED_order)', 
-        gspow = '$(inter.QCD_order+2)', 
-        spcpow = '$(inter.SPC_order)', 
-        qcdctpow = '1' ]"""
+      QCDct1_vertex_str = "[$(part_list_str), QCDct1bar, QCDct1; epow = '$(inter.QED_order)', gspow = '$(inter.QCD_order+2)', spcpow = '$(inter.SPC_order)', qcdctpow = '1' ]\n"
       write( file, QCDct1_vertex_str )
-      QCDct2_vertex_str = """[$(part_list_str), QCDct2bar, QCDct2; 
-        epow = '$(inter.QED_order)', 
-        gspow = '$(inter.QCD_order+4)', 
-        spcpow = '$(inter.SPC_order)', 
-        qcdctpow = '2' ]"""
+      QCDct2_vertex_str = "[$(part_list_str), QCDct2bar, QCDct2; epow = '$(inter.QED_order)', gspow = '$(inter.QCD_order+4)', spcpow = '$(inter.SPC_order)', qcdctpow = '2' ]\n"
       write( file, QCDct2_vertex_str )
     end # if
 
