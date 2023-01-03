@@ -45,8 +45,8 @@ function prepare_qgraf_dat( model::Model, input::Dict{Any,Any} )
   write( file, """
     true = vsum[ gspow, $(input["Amp_QCD_order"]), $(input["Amp_QCD_order"])];
     true = vsum[ epow, $(input["Amp_QED_order"]), $(input["Amp_QED_order"])];
-    true = vsum[ qcdctpow, $(input["QCDCT_order"]), $(input["QCDCT_order"])];
-    true = vsum[ spcpow, $(input["Amp_SPC_order"]), $(input["Amp_SPC_order"])];
+    true = vsum[ qcdct, $(input["QCDCT_order"]), $(input["QCDCT_order"])];
+    true = vsum[ spc, $(input["Amp_SPC_order"]), $(input["Amp_SPC_order"])];
     """ )
   close(file)
 
