@@ -3,6 +3,140 @@ using SymEngine, FeAmGen, Test, YAML, JLD2, Dates, Pipe
 @info "ggttbar_Test starts @ $(now())"
 
 
+##########################################################################
+function generate_amp_debug( proc_file::String )::Nothing
+######################################################################
+
+  #------------------------------------------------------------------
+  @assert isfile(proc_file) "The first argument is not a file!"
+  input = YAML.load_file( proc_file )
+  #------------------------------------------------------------------
+
+
+  #------------------------------------------------------------------
+  @info "Choose model" model=input["model_name"]
+  model = FeAmGen.readin_model( input )
+  FeAmGen.generate_QGRAF_model( model )
+  FeAmGen.logging_model( model )
+  #------------------------------------------------------------------
+
+  @info "Usage of unitary gauge" unitary_gauge=input["unitary_gauge"]
+
+  @info "Drop Tadpole" DropTadpole=input["DropTadpole"]
+
+  @info "Drop WFcorrection" DropWFcorrection=input["DropWFcorrection"]
+
+  @info "Number of loops" n_loop=input["n_loop"]
+
+  @info "QCD CT-order" QCDCT_order=input["QCDCT_order"]
+
+  @info "Order of QCD coupling gs in the amplitude" Amp_QCD_order=input["Amp_QCD_order"]
+
+  @info "Order of QED coupling gs in the amplitude" Amp_QED_order=input["Amp_QED_order"]
+
+  @info "Min ep power in the amplitude" Amp_Min_Ep_Xpt=input["Amp_Min_Ep_Xpt"]
+  @info "Max ep power in the amplitude" Amp_Max_Ep_Xpt=input["Amp_Max_Ep_Xpt"]
+
+  @info "Incoming" input["incoming"]
+  @info "Outgoing" input["outgoing"]
+
+  @info "Coupling factor" couplingfactor=input["couplingfactor"]
+
+  #----------------------------------------------------------------------
+  # Run the QGRAF
+  FeAmGen.generate_Feynman_diagram( model, input )
+
+  generate_amplitude_debug( model, input )
+
+  return nothing
+
+end # function generate_amp_debug
+
+
+
+
+##########################################################################
+function generate_amplitude_debug( model::FeAmGen.Model, input::Dict{Any,Any} )::Nothing
+##########################################################################
+
+  proc_str = join( [ input["incoming"]; "TO"; input["outgoing"]; "$(input["n_loop"])Loop" ], "_" )
+
+  n_loop = input["n_loop"]
+  couplingfactor = Basic(input["couplingfactor"]) 
+
+  qgraf_out = YAML.load_file( "qgraf_out.dat" )
+
+  qgraf_list = qgraf_out["FeynmanDiagrams"]
+
+  #------------------------------------------------  
+  # Convert qgraf to Graph
+  graph_list = @pipe qgraf_list |> 
+               map( q -> FeAmGen.convert_qgraf_TO_Graph( q, model ), _ ) |>
+               convert( Array{FeAmGen.Graph,1}, _ ) |>
+               filter( !isnothing, _ ) |>
+               sort( _, by= g->g.property[:diagram_index] )
+  #------------------------------------------------  
+
+
+  #------------------------------------------------  
+  # Generate Gauge choice
+  gauge_choice = generate_gauge_choice_debug( graph_list )
+
+  return nothing
+
+end 
+
+####################################################################
+function generate_gauge_choice_debug( graph_list::Vector{FeAmGen.Graph} )::Dict{Basic,Basic}
+####################################################################
+
+  # Only the external fields are needed
+  graph0 = first( graph_list )
+
+  ext_edge_list = filter( e_ -> ( e_.property[:style]=="External" ), graph0.edge_list )
+
+  null_ext_edge_list = filter( e_ -> ( FeAmGen.is_massless(e_.property[:particle]) ), ext_edge_list )
+ # @assert length(null_ext_edge_list) >= 2
+
+  gauge_choice = Dict{Basic,Basic}()
+  push!( gauge_choice, null_ext_edge_list[1].property[:ref2_MOM] => null_ext_edge_list[2].property[:null_MOM] )
+
+  not1st_ext_edge_list = filter( e_ -> ( e_.property[:mark] != null_ext_edge_list[1].property[:mark] ), ext_edge_list )
+
+  for edge in not1st_ext_edge_list
+    if FeAmGen.is_massive_fermion(edge.property[:particle])
+      push!( gauge_choice, edge.property[:ref2_MOM] => Basic("barK$(edge.property[:mark])") )
+    else
+      push!( gauge_choice, edge.property[:ref2_MOM] => null_ext_edge_list[1].property[:null_MOM] )
+    end # if
+  end # for edge
+
+@show gauge_choice
+error("DEBUG")
+
+  return gauge_choice
+
+end # function generate_gauge_choice_debug
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #----------------------------------------------------------------------------
 # gg->ttbar 0-loop, 1-loop tests
 #----------------------------------------------------------------------------
@@ -63,7 +197,7 @@ for nloop in [0,1]
 
   digest_seed_proc( "ggttbar_seed_proc_$(nloop)Loop.yaml" )
 
-  generate_amp( "g_g_TO_t_tbar_$(nloop)Loop/g_g_TO_t_tbar.yaml" )
+  generate_amp_debug( "g_g_TO_t_tbar_$(nloop)Loop/g_g_TO_t_tbar.yaml" )
 
 end # for nloop
 

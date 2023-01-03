@@ -446,6 +446,8 @@ function write_card( proc_str::String, n_inc::Int64, input::Dict{Any,Any} )::Not
   Amp_QCD_order: $(input["Amp_QCD_order"])
   # order of QED coupling ee in the amplitude
   Amp_QED_order: $(input["Amp_QED_order"])
+  # order of special coupling in the amplitude
+  Amp_SPC_order: $(input["Amp_SPC_order"])
   
   # min ep power in the amplitude
   Amp_Min_Ep_Xpt: $(input["Amp_Min_Ep_Xpt"])
