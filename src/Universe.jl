@@ -63,6 +63,7 @@ end # struct Particle
   couplings_matrix::Array{Basic,2} # NxM
   QCD_order::Int64
   QED_order::Int64
+  SPC_order::Int64
 ```
 """
 struct Interaction
@@ -74,6 +75,7 @@ struct Interaction
   couplings_matrix::Array{Basic,2} # NxM
   QCD_order::Int64
   QED_order::Int64
+  SPC_order::Int64
 end # struct Interaction
 #########################
 
@@ -187,14 +189,17 @@ function to_string( inter::Interaction )::String
 
   link_name_list = map( p_ -> p_.name, inter.link_list )
 
+  # UFO convention is outgoing particle, but in our convention is incoming
   return inter.name*
-    # UFO convention is outgoing particle, but in our convention is incoming
-    "  Outgoing: ("* join( link_name_list, "," ) *")\n"*
-    "  Color: "*string( inter.color_row_list )*"\n"*
-    "  Lorentz: "*string( inter.lorentz_col_list )*"\n"*
-    "  Couplings_matrix: "*string( inter.couplings_matrix )*"\n"*
-    "  QCD_order: "*string(inter.QCD_order)*"\n"*
-    "  QED_order: "*string(inter.QED_order)
+    """
+      Outgoing: ($( join( link_name_list, "," ) ))
+      Color: $( inter.color_row_list )
+      Lorentz: $( inter.lorentz_col_list )
+      Couplings_matrix: $( inter.couplings_matrix )
+      QCD_order: $(inter.QCD_order)
+      QED_order: $(inter.QED_order)
+      SPC_order: $(inter.SPC_order)
+    """
 end # function to_string
 
 
@@ -282,7 +287,7 @@ function generate_QGRAF_model( model::Model )::Nothing
 
   nonnegkf_part_list = filter( p_ -> p_.kf >= 0, model.particle_list )
   sign_str_list = map( p_ -> p_.spin in [:fermion,:ghost] ? "-" : "+", nonnegkf_part_list )
-  nonnegkf_part_info_list = map( (p_, s_) -> "[ "*p_.name*","*p_.antiname*","*s_*" ]\n", nonnegkf_part_list, sign_str_list )
+  nonnegkf_part_info_list = map( (p_, s_) -> "[ $(p_.name),$(p_.antiname),$(s_) ]\n", nonnegkf_part_list, sign_str_list )
 
   write( file, join( nonnegkf_part_info_list, "" ) )
   write( file, "[ QCDct1, QCDct1bar, - ]\n" )
@@ -298,25 +303,28 @@ function generate_QGRAF_model( model::Model )::Nothing
 
     n_link = length(inter.link_list)
     if n_link > 2 
-      base_vertex_str = "["*part_list_str*"; "*
-        "epow = '"*string(inter.QED_order)*"', "*
-        "gspow = '"*string(inter.QCD_order)*"', "*
-        "qcdctpow = '0' ]\n"
+      base_vertex_str = """[$(part_list_str); 
+        epow = '$(inter.QED_order)', 
+        gspow = '$(inter.QCD_order)', 
+        spcpow = '$(inter.SPC_order)', 
+        qcdctpow = '0' ]"""
       write( file, base_vertex_str )
     end # if
 
     deg_matrix = map( ele_ -> get_degree(ele_,Basic("CTorder")), inter.couplings_matrix )
     max_QCDCT_order = maximum( deg_matrix ) # i.e. maximum degree 
     if max_QCDCT_order == 2 
-      QCDct1_vertex_str = "["*part_list_str*", QCDct1bar, QCDct1; "*
-        "epow = '"*string(inter.QED_order)*"', "*
-        "gspow = '"*string(inter.QCD_order+2)*"', "*
-        "qcdctpow = '1' ]\n"
+      QCDct1_vertex_str = """[$(part_list_str), QCDct1bar, QCDct1; 
+        epow = '$(inter.QED_order)', 
+        gspow = '$(inter.QCD_order+2)', 
+        spcpow = '$(inter.SPC_order)', 
+        qcdctpow = '1' ]"""
       write( file, QCDct1_vertex_str )
-      QCDct2_vertex_str = "["*part_list_str*", QCDct2bar, QCDct2; "*
-        "epow = '"*string(inter.QED_order)*"', "*
-        "gspow = '"*string(inter.QCD_order+4)*"', "*
-        "qcdctpow = '2' ]\n"
+      QCDct2_vertex_str = """[$(part_list_str), QCDct2bar, QCDct2; 
+        epow = '$(inter.QED_order)', 
+        gspow = '$(inter.QCD_order+4)', 
+        spcpow = '$(inter.SPC_order)', 
+        qcdctpow = '2' ]"""
       write( file, QCDct2_vertex_str )
     end # if
 

@@ -18,16 +18,17 @@ end # function check_has_yt
 
 ##################################################################################
 """
-    extract_QCD_QED_order( coupling_dict::Dict{Any,Any} )::Tuple{Int64,Int64}
+    extract_QCD_QED_order( coupling_dict::Dict{Any,Any} )::Tuple{Int64,Int64,Int64}
 
-Extract the QCD and QED orders from the python model file 
+Extract the QCD, QED and special orders from the python model file 
   for the "couplings" property in one "Vertex".
 """
-function extract_QCD_QED_order( coupling_dict::Dict{Any,Any} )::Tuple{Int64,Int64}
+function extract_QCD_QED_order( coupling_dict::Dict{Any,Any} )::Tuple{Int64,Int64,Int64}
 ##################################################################################
   QCD_order_set = Set{Int64}( map( v_ -> haskey(v_.order,"QCD") ? v_.order["QCD"] : 0, values(coupling_dict) ) )
   QED_order_set = Set{Int64}( map( v_ -> haskey(v_.order,"QED") ? v_.order["QED"] : 0, values(coupling_dict) ) )
   HIG_order_set = Set{Int64}( map( v_ -> haskey(v_.order,"HIG") ? v_.order["HIG"] : 0, values(coupling_dict) ) )
+  SPC_order_set = Set{Int64}( map( v_ -> haskey(v_.order,"SPC") ? v_.order["SPC"] : 0, values(coupling_dict) ) )
 
   @assert length(QCD_order_set) == 1
   QCD_order = first(QCD_order_set)
@@ -35,8 +36,10 @@ function extract_QCD_QED_order( coupling_dict::Dict{Any,Any} )::Tuple{Int64,Int6
   QED_order = first(QED_order_set)
   @assert length(HIG_order_set) == 1
   HIG_order = first(HIG_order_set)
+  @assert length(SPC_order_set) == 1
+  SPC_order = first(SPC_order_set)
 
-  return QCD_order, max(QED_order,HIG_order)
+  return QCD_order, max(QED_order,HIG_order), SPC_order
 
 end # function extract_QCD_QED_order
 
@@ -198,7 +201,7 @@ function readin_model( input::Dict{Any,Any} )::Model
     vert_link_list = map( p_ -> particle_name_dict[to_qgraf_name(p_.antiname)], vert.particles )
     
     has_yt = check_has_yt( vert.couplings )
-    QCD_order, QED_order = extract_QCD_QED_order( vert.couplings )
+    QCD_order, QED_order, SPC_order = extract_QCD_QED_order( vert.couplings )
     CTcoeff = calculate_CTcoeff( vert_link_list, has_yt, QCD_order )
 
     color_row_list = map( Basic, vert.color )
@@ -211,7 +214,7 @@ function readin_model( input::Dict{Any,Any} )::Model
 
     new_interaction = Interaction( vert.name, vert_link_list, 
                                    color_row_list, lorentz_col_list, couplings_matrix,
-                                   QCD_order, QED_order )
+                                   QCD_order, QED_order, SPC_order )
 
     push!( interaction_list, new_interaction )
 
@@ -232,7 +235,7 @@ function readin_model( input::Dict{Any,Any} )::Model
 
     new_interaction = Interaction( vert_name, vert_link_list, 
                                    color_row_list, lorentz_col_list, couplings_matrix,
-                                   0 #=QCD_order=#, 0#=QED_order=# )
+                                   0 #=QCD_order=#, 0#=QED_order=#, 0#=SPC_order=# )
 
     push!( interaction_list, new_interaction )
 
