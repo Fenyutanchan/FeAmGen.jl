@@ -35,7 +35,7 @@ function generate_amp( proc_file::String )::Nothing
 
   @info "Order of QCD coupling gs in the amplitude" Amp_QCD_order=input["Amp_QCD_order"]
 
-  @info "Order of QED coupling g in the amplitude" Amp_QED_order=input["Amp_QED_order"]
+  @info "Order of QED coupling ee in the amplitude" Amp_QED_order=input["Amp_QED_order"]
 
   @info "Order of special coupling in the amplitude" Amp_SPC_order=input["Amp_SPC_order"]
 

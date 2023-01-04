@@ -14,12 +14,18 @@ function generate_gauge_choice( graph_list::Vector{Graph} )::Dict{Basic,Basic}
   ext_edge_list = filter( e_ -> ( e_.property[:style]=="External" ), graph0.edge_list )
 
   null_ext_edge_list = filter( e_ -> ( is_massless(e_.property[:particle]) ), ext_edge_list )
-  @assert length(null_ext_edge_list) >= 2
+  #@assert length(null_ext_edge_list) >= 2
 
   gauge_choice = Dict{Basic,Basic}()
-  push!( gauge_choice, null_ext_edge_list[1].property[:ref2_MOM] => null_ext_edge_list[2].property[:null_MOM] )
+  if length(null_ext_edge_list) >= 2
+    push!( gauge_choice, null_ext_edge_list[1].property[:ref2_MOM] => null_ext_edge_list[2].property[:null_MOM] )
+  end # if
 
-  not1st_ext_edge_list = filter( e_ -> ( e_.property[:mark] != null_ext_edge_list[1].property[:mark] ), ext_edge_list )
+  if length(null_ext_edge_list) >= 1
+    not1st_ext_edge_list = filter( e_ -> ( e_.property[:mark] != null_ext_edge_list[1].property[:mark] ), ext_edge_list )
+  else
+    not1st_ext_edge_list = ext_edge_list
+  end # if
 
   for edge in not1st_ext_edge_list
     if is_massive_fermion(edge.property[:particle])
