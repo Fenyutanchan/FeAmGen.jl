@@ -122,8 +122,6 @@ function generate_Feynman_diagram( model::Model, input::Dict{Any,Any} )
   run( pipeline( `qgraf`, "qgraf.log" ) )
   @assert isfile( "qgraf_out.dat" )
 
-error("DEBUG")
-
   rm( "qgraf.dat" )
   rm( "model.qgraf" )
   rm( "miracle.sty" )
