@@ -435,29 +435,46 @@ function generate_kin_relation_v2(
   end # for ii
 
 
+  # Assuming momenta are all outgoing, 
+  k2_sign = n_inc == 2 ? (-1) : (+1) 
+  # k1 is always incoming
+  sign_list = Int64[ -1, k2_sign, fill(1,nn-2)... ]
+  pp_list = sign_list .* mom
+  #pp_list = [ -mom[1], k2_sign*mom[2], mom[3:nn]... ]
 
-  # Then p_1\cdot p_n, \dots, p_{n-1}\cdot p_n
-  for ii = 1:(nn-1)
-    SP_expr = subs( make_SP( mom[ii], mom_n ), kin_relation )
-    push!( kin_relation, make_SP(mom[ii],mom[nn]) => SP_expr )
+  # Then solve p_1\cdot p_n, \dots, p_{n-3}\cdot p_n via
+  #   \sum_{j=1;~j\ne i}^{n} s_{ij} = -m_i^2 for i = 1,...,n-3
+  for ii = 1:(nn-3)
+    sum_pi_not_n = sum(pp_list[1:nn-1])-pp_list[ii]
+    SP_expr = (expand∘subs)( -mass2[ii] - make_SP( pp_list[ii], sum_pi_not_n ), kin_relation )
+    push!( kin_relation, make_SP(mom[ii],mom[nn]) => expand(sign_list[ii]*SP_expr) )
   end # for ii
 
+  # solve p_{n-2}\cdot p_{n-1} via 
+  #   \sum_{i=1}^{n-1}\sum_{j=1}^{n-1} p_i\cdot p_j = m_n^2 
+  SP_expr = subs( half*(mass2[nn] - make_SP( sum(pp_list[1:nn-1]), sum(pp_list[1:nn-1]) ) + 2*make_SP(pp_list[nn-2],pp_list[nn-1])), kin_relation )
+  push!( kin_relation, make_SP( mom[nn-2], mom[nn-1] ) => expand( sign_list[nn-2]*sign_list[nn-1]*SP_expr) )
+
   if nn >= 4
-    # k1 is always incoming
-    k2_sign = n_inc == 2 ? (-1) : (+1) 
-    pp_list = [ -mom[1], k2_sign*mom[2], mom[3:nn]... ]
-    # Assuming momenta are all outgoing, 
-    # p_{n-2}\cdot p_{n-1} via 
-    #   p_{n-1}\cdot(p_1+\cdots+p_{n-2}+p_n) = -m_{n-1}^2
-    #   p_n\cdot(p_1+\cdots+p_{n-1}) = -m_n^2
-    # Then p_{n-1}\cdot(p_1+\cdots+p_{n-2}) - p_n\cdot(p_1+\cdots+p_{n-2}) = -m_{n-1}^2 + m_n^2
-    # Finally 
-    #   p_{n-1}\cdot p_{n-2} = -m_{n-1}^2 + m_n^2 + p_n\cdot(p_1+\cdots+p_{n-2}) - p_{n-1}\cdot(p_1+\cdots+p_{n-3})
-    SP1 = make_SP( mom[nn], sum(pp_list[1:nn-2]) )
-    SP2 = make_SP( mom[nn-1], sum(pp_list[1:nn-3]) )
-    SP_expr = subs( -mass2[nn-1] + mass2[nn] + SP1 - SP2, kin_relation )
-    push!( kin_relation, make_SP(mom[nn-1],mom[nn-2]) => SP_expr )
+  # solve p_n\cdot p_{n-2} via
+  #   \sum_{j=1;~j\ne n-2}^{n} s_{n-2,j} = -m_{n-2}^2 
+    SP_expr = subs( mass2[nn-2] - make_SP( pp_list[nn-2], sum(pp_list[1:nn-3]) ) - make_SP(pp_list[nn-2],pp_list[nn-1]), kin_relation )
+    push!( kin_relation, make_SP( mom[nn], mom[nn-2] ) => expand( sign_list[nn]*sign_list[nn-2]*SP_expr ) )
   end # if
+
+
+##if nn >= 4
+##  # p_{n-2}\cdot p_{n-1} via 
+##  #   p_{n-1}\cdot(p_1+\cdots+p_{n-2}+p_n) = -m_{n-1}^2
+##  #   p_n\cdot(p_1+\cdots+p_{n-1}) = -m_n^2
+##  # Then p_{n-1}\cdot(p_1+\cdots+p_{n-2}) - p_n\cdot(p_1+\cdots+p_{n-2}) = -m_{n-1}^2 + m_n^2
+##  # Finally 
+##  #   p_{n-1}\cdot p_{n-2} = -m_{n-1}^2 + m_n^2 + p_n\cdot(p_1+\cdots+p_{n-2}) - p_{n-1}\cdot(p_1+\cdots+p_{n-3})
+##  SP1 = make_SP( mom[nn], sum(pp_list[1:nn-2]) )
+##  SP2 = make_SP( mom[nn-1], sum(pp_list[1:nn-3]) )
+##  SP_expr = subs( -mass2[nn-1] + mass2[nn] + SP1 - SP2, kin_relation )
+##  push!( kin_relation, make_SP(mom[nn-1],mom[nn-2]) => SP_expr )
+##end # if
 
   return kin_relation
 
