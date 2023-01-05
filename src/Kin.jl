@@ -355,32 +355,33 @@ end # function generate_kin_relation
         mass2::Vector{Basic} 
     )::Dict{Basic,Basic}
 
-Following the argument on the website:
-   https://9to5science.com/mandelstam-variables-for-2-to-3-particle-scattering
-
-Generate the kinematic relations, e.g. Mandelstam variables, according to the external fields.
-
-Consider all momentum are out-going, 
-  the Lorentz invariants for n-external-fields are defined as 
-    s^\prime_{i_1 \cdots i_\ell} = (p_{i_1}+\cdots+p_{i_\ell})^2.
-However, the expansion of the RHS shows that all of the s_{i_1 \cdots i_\ell} can be expressed 
-  as the linear combination of p_i\cdot p_j.
-Therefore, the Lorentz invariants for n-external-fields are 
-  s_{ij} = p_i\cdot p_j
-The counting number is C_n^2 = n(n-1)/2. 
-
-Furthermore, we have the n-equation of nullity
-  \sum_{j=1;~j\ne i}^{n} s_{ij} = -m_i^2.
-So we need to remove n invariants, and the remaining counting number is
-  n(n-1)/2-n = n(n-3)/2.
-Specifically we remove the scalar products
-  p_1\cdot p_n, \dots, p_{n-1}\cdot p_n, and p_{n-2}\cdot p_{n-1}. 
-Finally the independent invariants are 
-  p_1\cdot p_2, \dots, p_1\cdot p_{n-1}, 
-  p_2\cdot p_3, \dots, p_2\cdot p_{n-1}, 
-    \cdots
-  p_{n-3}\cdot p_{n-2}, p_{n-3}\cdot p_{n-1}. 
 """
+# Following the argument on the website:
+#    https://9to5science.com/mandelstam-variables-for-2-to-3-particle-scattering
+# 
+# Generate the kinematic relations, e.g. Mandelstam variables, according to the external fields.
+# 
+# Consider all momentum are out-going, 
+#   the Lorentz invariants for n-external-fields are defined as 
+#     s^\prime_{i_1 \cdots i_\ell} = (p_{i_1}+\cdots+p_{i_\ell})^2.
+# However, the expansion of the RHS shows that all of the s_{i_1 \cdots i_\ell} can be expressed 
+#   as the linear combination of p_i\cdot p_j.
+# Therefore, the Lorentz invariants for n-external-fields are 
+#   s_{ij} = p_i\cdot p_j
+# The counting number is C_n^2 = n(n-1)/2. 
+# 
+# Furthermore, we have the n-equation of nullity
+#   \sum_{j=1;~j\ne i}^{n} s_{ij} = -m_i^2.
+# So we need to remove n invariants, and the remaining counting number is
+#   n(n-1)/2-n = n(n-3)/2.
+# Specifically we remove the scalar products
+#   p_1\cdot p_n, \dots, p_{n-1}\cdot p_n, and p_{n-2}\cdot p_{n-1}. 
+# Finally the independent invariants are 
+#   p_1\cdot p_2, \dots, p_1\cdot p_{n-1}, 
+#   p_2\cdot p_3, \dots, p_2\cdot p_{n-1}, 
+#     \cdots
+#   p_{n-3}\cdot p_{n-2}, p_{n-3}\cdot p_{n-1}. 
+
 function generate_kin_relation_v2( 
     n_inc::Int64, 
     n_out::Int64, 
