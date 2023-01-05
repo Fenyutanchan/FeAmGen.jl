@@ -399,9 +399,12 @@ function generate_kin_relation_v2(
   @assert n_inc in [1,2]
   mom_n = n_inc == 1 ?  mom[1] - sum(mom[2:nn-1]) : mom[1]+mom[2] - sum(mom[3:nn-1])
 
-  if n_inc == 1
-  else # n_inc
-  end # if
+  # Assuming momenta are all outgoing, 
+  k2_sign = n_inc == 2 ? (-1) : (+1) 
+  # k1 is always incoming
+  sign_list = Int64[ -1, k2_sign, fill(1,nn-2)... ]
+  pp_list = sign_list .* mom
+  #pp_list = [ -mom[1], k2_sign*mom[2], mom[3:nn]... ]
 
   kin_relation = Dict{Basic,Basic}()
 
@@ -424,7 +427,7 @@ function generate_kin_relation_v2(
         continue
       end # if 
 
-      push!( kin_relation, make_SP(mom[ii],mom[jj]) => Basic("ver$(ver_index)") )
+      push!( kin_relation, make_SP(mom[ii],mom[jj]) => sign_list[ii]*sign_list[jj]*half*( Basic("ver$(ver_index)") - mass2[ii] - mass2[jj] ) )
       ver_index += 1
     end # for jj
   end # for ii
@@ -435,12 +438,6 @@ function generate_kin_relation_v2(
   end # for ii
 
 
-  # Assuming momenta are all outgoing, 
-  k2_sign = n_inc == 2 ? (-1) : (+1) 
-  # k1 is always incoming
-  sign_list = Int64[ -1, k2_sign, fill(1,nn-2)... ]
-  pp_list = sign_list .* mom
-  #pp_list = [ -mom[1], k2_sign*mom[2], mom[3:nn]... ]
 
   # Then solve p_1\cdot p_n, \dots, p_{n-3}\cdot p_n via
   #   \sum_{j=1;~j\ne i}^{n} s_{ij} = -m_i^2 for i = 1,...,n-3
