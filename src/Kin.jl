@@ -155,14 +155,24 @@ end # function generate_gauge_choice
 # \textbf{For the 1-(n-1) decay mode, we can simply change the sign of
 # \(k_2\).}
 #
-#########################################################################################################################
+##################################################################################################
 """
-    generate_kin_relation( n_inc::Int64, n_out::Int64, mom::Vector{Basic}, mass2::Vector{Basic} )::Dict{Basic,Basic}
+    generate_kin_relation( 
+        n_inc::Int64, 
+        n_out::Int64, 
+        mom::Vector{Basic}, 
+        mass2::Vector{Basic} 
+    )::Dict{Basic,Basic}
 
 Generate the kinematic relations, e.g. Mandelstam variables, according to the external fields.
 """
-function generate_kin_relation( n_inc::Int64, n_out::Int64, mom::Vector{Basic}, mass2::Vector{Basic} )::Dict{Basic,Basic}
-#########################################################################################################################
+function generate_kin_relation( 
+    n_inc::Int64, 
+    n_out::Int64, 
+    mom::Vector{Basic}, 
+    mass2::Vector{Basic} 
+)::Dict{Basic,Basic}
+##################################################################################################
 
   @funs SP
   @vars shat
@@ -320,6 +330,142 @@ function generate_kin_relation( n_inc::Int64, n_out::Int64, mom::Vector{Basic}, 
 
 end # function generate_kin_relation
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+########################################################################################
+"""
+    generate_kin_relation( 
+        n_inc::Int64, 
+        n_out::Int64, 
+        mom::Vector{Basic}, 
+        mass2::Vector{Basic} 
+    )::Dict{Basic,Basic}
+
+Following the argument on the website:
+   https://9to5science.com/mandelstam-variables-for-2-to-3-particle-scattering
+
+Generate the kinematic relations, e.g. Mandelstam variables, according to the external fields.
+
+Consider all momentum are out-going, 
+  the Lorentz invariants for n-external-fields are defined as 
+    s^\prime_{i_1 \cdots i_\ell} = (p_{i_1}+\cdots+p_{i_\ell})^2.
+However, the expansion of the RHS shows that all of the s_{i_1 \cdots i_\ell} can be expressed 
+  as the linear combination of p_i\cdot p_j.
+Therefore, the Lorentz invariants for n-external-fields are 
+  s_{ij} = p_i\cdot p_j
+The counting number is C_n^2 = n(n-1)/2. 
+
+Furthermore, we have the n-equation of nullity
+  \sum_{j=1;~j\ne i}^{n} s_{ij} = -m_i^2.
+So we need to remove n invariants, and the remaining counting number is
+  n(n-1)/2-n = n(n-3)/2.
+Specifically we remove the scalar products
+  p_1\cdot p_n, \dots, p_{n-1}\cdot p_n, and p_{n-2}\cdot p_{n-1}. 
+Finally the independent invariants are 
+  p_1\cdot p_2, \dots, p_1\cdot p_{n-1}, 
+  p_2\cdot p_3, \dots, p_2\cdot p_{n-1}, 
+    \cdots
+  p_{n-3}\cdot p_{n-2}, p_{n-3}\cdot p_{n-1}. 
+"""
+function generate_kin_relation_v2( 
+    n_inc::Int64, 
+    n_out::Int64, 
+    mom::Vector{Basic}, 
+    mass2::Vector{Basic} 
+)::Dict{Basic,Basic}
+########################################################################################
+
+  @funs SP
+  @vars shat
+  half = Basic(1)/Basic(2)
+
+  nn = n_inc+n_out
+
+  @assert n_inc in [1,2]
+  mom_n = n_inc == 1 ?  mom[1] - sum(mom[2:nn-1]) : mom[1]+mom[2] - sum(mom[3:nn-1])
+
+  if n_inc == 1
+  else # n_inc
+  end # if
+
+  kin_relation = Dict{Basic,Basic}()
+
+  ver_index = 1
+  for ii in 1:(nn-3)
+    for jj in (ii+1):(nn-1)
+
+      if ii == 1 && jj == 2
+        #------------
+        if n_inc == 1 && n_out == 1
+          push!( kin_relation, make_SP(mom[1],mom[2]) => mass2[1] )
+        elseif n_inc == 2 && n_out == 1
+          push!( kin_relation, make_SP(mom[1],mom[2]) => half*( mass2[3] - mass2[1] - mass2[2] ) )
+        elseif n_inc == 1 && n_out == 2
+          push!( kin_relation, make_SP(mom[1],mom[2]) => half*( mass2[1] + mass2[2] - mass2[3] ) )
+        elseif n_inc == 2 && n_out == 2
+          push!( kin_relation, make_SP(mom[1],mom[2]) => half*( shat - mass2[1] - mass2[2] ) )
+        end # if
+        #------------
+        continue
+      end # if 
+
+      push!( kin_relation, make_SP(mom[ii],mom[jj]) => Basic("ver$(ver_index)") )
+      ver_index += 1
+    end # for jj
+  end # for ii
+
+  # on-shell conditions 
+  for ii in 1:nn
+    push!( kin_relation, make_SP(mom[ii],mom[ii]) => mass2[ii] )
+  end # for ii
+
+
+
+  # Then p_1\cdot p_n, \dots, p_{n-1}\cdot p_n
+  for ii = 1:(nn-1)
+    SP_expr = subs( make_SP( mom[1], mom_n ), kin_relation )
+    push!( kin_relation, make_SP(mom[1],mom[nn]) => SP_expr )
+  end # for ii
+
+  if nn >= 5
+    # k1 is always incoming
+    k2_sign = n_inc == 2 ? (-1) : (+1) 
+    # Assuming momenta are all outgoing, 
+    # p_{n-2}\cdot p_{n-1} via 
+    #   p_{n-1}\cdot(p_1+\cdots+p_{n-2}+p_n) = -m_{n-1}^2
+    #   p_n\cdot(p_1+\cdots+p_{n-1}) = -m_n^2
+    # Then p_{n-1}\cdot(p_1+\cdots+p_{n-2}) - p_n\cdot(p_1+\cdots+p_{n-2}) = -m_{n-1}^2 + m_n^2
+    # Finally 
+    #   p_{n-1}\cdot p_{n-2} = -m_{n-1}^2 + m_n^2 + p_n\cdot(p_1+\cdots+p_{n-2}) - p_{n-1}\cdot(p_1+\cdots+p_{n-3})
+    SP1 = make_SP( mom[nn], -mom[1]+k2_sign*mom[2]+sum(mom[3:nn-2]) )
+    SP2 = make_SP( mom[nn-1], -mom[1]+k2_sign*mom[2]+sum(mom[3:nn-3]) )
+    SP_expr = subs( -mass2[nn-1] + mass2[nn] + SP1 - SP2, kin_relation )
+    push!( kin_relation, make_SP(mom[nn-1],mom[nn-2]) => SP_expr )
+  end # if
+
+  return kin_relation
+
+end # function generate_kin_relation_v2
+
+
+
+
+
+
 ########################################################################################
 """
     generate_kin_relation( graph_list::Vector{Graph} )::Dict{Basic,Basic}
@@ -347,7 +493,9 @@ function generate_kin_relation( graph_list::Vector{Graph} )::Dict{Basic,Basic}
 
   kin_relation = generate_kin_relation( n_inc, n_out, mom, mass2 )
 
-
+  #--------------------------------------------------------
+  # Next we need to define the denominators of propagators.
+  #--------------------------------------------------------
   mom_n = Basic(0)
   for ii in 1:n_inc
     mom_n += mom[ii]
@@ -372,7 +520,7 @@ function generate_kin_relation( graph_list::Vector{Graph} )::Dict{Basic,Basic}
   end # for g
 
   # we know at most n(n-1)/2-1 verI's have been occupied
-  ver_index_pre = nn*(nn-1)/Basic(2) - 1
+  ver_index_pre = nn*(nn-1)/Basic(2) - Basic(1)
   ver_index = ver_index_pre + 1
   for one_den in den_set
     push!( kin_relation, one_den => Basic("ver$(ver_index)") )
