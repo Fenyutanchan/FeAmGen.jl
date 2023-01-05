@@ -438,8 +438,8 @@ function generate_kin_relation_v2(
 
   # Then p_1\cdot p_n, \dots, p_{n-1}\cdot p_n
   for ii = 1:(nn-1)
-    SP_expr = subs( make_SP( mom[1], mom_n ), kin_relation )
-    push!( kin_relation, make_SP(mom[1],mom[nn]) => SP_expr )
+    SP_expr = subs( make_SP( mom[ii], mom_n ), kin_relation )
+    push!( kin_relation, make_SP(mom[ii],mom[nn]) => SP_expr )
   end # for ii
 
   if nn >= 5
