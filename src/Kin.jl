@@ -427,6 +427,7 @@ function generate_kin_relation_v2(
         continue
       end # if 
 
+      # v_ij = (p_i+p_j)^2, note here p_i may have minus sign compared to k_i
       push!( kin_relation, make_SP(mom[ii],mom[jj]) => sign_list[ii]*sign_list[jj]*half*( Basic("ver$(ver_index)") - mass2[ii] - mass2[jj] ) )
       ver_index += 1
     end # for jj
@@ -458,20 +459,6 @@ function generate_kin_relation_v2(
     SP_expr = subs( mass2[nn-2] - make_SP( pp_list[nn-2], sum(pp_list[1:nn-3]) ) - make_SP(pp_list[nn-2],pp_list[nn-1]), kin_relation )
     push!( kin_relation, make_SP( mom[nn], mom[nn-2] ) => expand( sign_list[nn]*sign_list[nn-2]*SP_expr ) )
   end # if
-
-
-##if nn >= 4
-##  # p_{n-2}\cdot p_{n-1} via 
-##  #   p_{n-1}\cdot(p_1+\cdots+p_{n-2}+p_n) = -m_{n-1}^2
-##  #   p_n\cdot(p_1+\cdots+p_{n-1}) = -m_n^2
-##  # Then p_{n-1}\cdot(p_1+\cdots+p_{n-2}) - p_n\cdot(p_1+\cdots+p_{n-2}) = -m_{n-1}^2 + m_n^2
-##  # Finally 
-##  #   p_{n-1}\cdot p_{n-2} = -m_{n-1}^2 + m_n^2 + p_n\cdot(p_1+\cdots+p_{n-2}) - p_{n-1}\cdot(p_1+\cdots+p_{n-3})
-##  SP1 = make_SP( mom[nn], sum(pp_list[1:nn-2]) )
-##  SP2 = make_SP( mom[nn-1], sum(pp_list[1:nn-3]) )
-##  SP_expr = subs( -mass2[nn-1] + mass2[nn] + SP1 - SP2, kin_relation )
-##  push!( kin_relation, make_SP(mom[nn-1],mom[nn-2]) => SP_expr )
-##end # if
 
   return kin_relation
 
