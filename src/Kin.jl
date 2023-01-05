@@ -442,9 +442,10 @@ function generate_kin_relation_v2(
     push!( kin_relation, make_SP(mom[ii],mom[nn]) => SP_expr )
   end # for ii
 
-  if nn >= 5
+  if nn >= 4
     # k1 is always incoming
     k2_sign = n_inc == 2 ? (-1) : (+1) 
+    pp_list = [ -mom[1], k2_sign*mom[2], mom[3:nn]... ]
     # Assuming momenta are all outgoing, 
     # p_{n-2}\cdot p_{n-1} via 
     #   p_{n-1}\cdot(p_1+\cdots+p_{n-2}+p_n) = -m_{n-1}^2
@@ -452,8 +453,8 @@ function generate_kin_relation_v2(
     # Then p_{n-1}\cdot(p_1+\cdots+p_{n-2}) - p_n\cdot(p_1+\cdots+p_{n-2}) = -m_{n-1}^2 + m_n^2
     # Finally 
     #   p_{n-1}\cdot p_{n-2} = -m_{n-1}^2 + m_n^2 + p_n\cdot(p_1+\cdots+p_{n-2}) - p_{n-1}\cdot(p_1+\cdots+p_{n-3})
-    SP1 = make_SP( mom[nn], -mom[1]+k2_sign*mom[2]+sum(mom[3:nn-2]) )
-    SP2 = make_SP( mom[nn-1], -mom[1]+k2_sign*mom[2]+sum(mom[3:nn-3]) )
+    SP1 = make_SP( mom[nn], sum(pp_list[1:nn-2]) )
+    SP2 = make_SP( mom[nn-1], sum(pp_list[1:nn-3]) )
     SP_expr = subs( -mass2[nn-1] + mass2[nn] + SP1 - SP2, kin_relation )
     push!( kin_relation, make_SP(mom[nn-1],mom[nn-2]) => SP_expr )
   end # if
