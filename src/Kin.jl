@@ -408,22 +408,23 @@ function generate_kin_relation_v2(
 
   kin_relation = Dict{Basic,Basic}()
 
+  #------------
+  if n_inc == 1 && n_out == 1
+    push!( kin_relation, make_SP(mom[1],mom[2]) => mass2[1] )
+  elseif n_inc == 2 && n_out == 1
+    push!( kin_relation, make_SP(mom[1],mom[2]) => half*( mass2[3] - mass2[1] - mass2[2] ) )
+  elseif n_inc == 1 && n_out == 2
+    push!( kin_relation, make_SP(mom[1],mom[2]) => half*( mass2[1] + mass2[2] - mass2[3] ) )
+  elseif n_inc == 2 && n_out == 2
+    push!( kin_relation, make_SP(mom[1],mom[2]) => half*( shat - mass2[1] - mass2[2] ) )
+  end # if
+  #------------
+
+
   ver_index = 1
   for ii in 1:(nn-3)
     for jj in (ii+1):(nn-1)
-
       if ii == 1 && jj == 2
-        #------------
-        if n_inc == 1 && n_out == 1
-          push!( kin_relation, make_SP(mom[1],mom[2]) => mass2[1] )
-        elseif n_inc == 2 && n_out == 1
-          push!( kin_relation, make_SP(mom[1],mom[2]) => half*( mass2[3] - mass2[1] - mass2[2] ) )
-        elseif n_inc == 1 && n_out == 2
-          push!( kin_relation, make_SP(mom[1],mom[2]) => half*( mass2[1] + mass2[2] - mass2[3] ) )
-        elseif n_inc == 2 && n_out == 2
-          push!( kin_relation, make_SP(mom[1],mom[2]) => half*( shat - mass2[1] - mass2[2] ) )
-        end # if
-        #------------
         continue
       end # if 
 
@@ -438,8 +439,6 @@ function generate_kin_relation_v2(
     push!( kin_relation, make_SP(mom[ii],mom[ii]) => mass2[ii] )
   end # for ii
 
-
-
   # Then solve p_1\cdot p_n, \dots, p_{n-3}\cdot p_n via
   #   \sum_{j=1;~j\ne i}^{n} s_{ij} = -m_i^2 for i = 1,...,n-3
   for ii = 1:(nn-3)
@@ -448,15 +447,17 @@ function generate_kin_relation_v2(
     push!( kin_relation, make_SP(mom[ii],mom[nn]) => expand(sign_list[ii]*SP_expr) )
   end # for ii
 
-  # solve p_{n-2}\cdot p_{n-1} via 
-  #   \sum_{i=1}^{n-1}\sum_{j=1}^{n-1} p_i\cdot p_j = m_n^2 
-  SP_expr = subs( half*(mass2[nn] - make_SP( sum(pp_list[1:nn-1]), sum(pp_list[1:nn-1]) ) + 2*make_SP(pp_list[nn-2],pp_list[nn-1])), kin_relation )
-  push!( kin_relation, make_SP( mom[nn-2], mom[nn-1] ) => expand( sign_list[nn-2]*sign_list[nn-1]*SP_expr) )
+  if nn >= 3
+    # solve p_{n-2}\cdot p_{n-1} via 
+    #   \sum_{i=1}^{n-1}\sum_{j=1}^{n-1} p_i\cdot p_j = m_n^2 
+    SP_expr = subs( half*(mass2[nn] - make_SP( sum(pp_list[1:nn-1]), sum(pp_list[1:nn-1]) ) + 2*make_SP(pp_list[nn-2],pp_list[nn-1])), kin_relation )
+    push!( kin_relation, make_SP( mom[nn-2], mom[nn-1] ) => expand( sign_list[nn-2]*sign_list[nn-1]*SP_expr) )
+  end # if
 
-  if nn >= 4
-  # solve p_n\cdot p_{n-2} via
-  #   \sum_{j=1;~j\ne n-2}^{n} s_{n-2,j} = -m_{n-2}^2 
-    SP_expr = subs( mass2[nn-2] - make_SP( pp_list[nn-2], sum(pp_list[1:nn-3]) ) - make_SP(pp_list[nn-2],pp_list[nn-1]), kin_relation )
+  if nn >= 3
+    # solve p_n\cdot p_{n-2} via
+    #   \sum_{j=1;~j\ne n-2}^{n} s_{n-2,j} = -m_{n-2}^2 
+    SP_expr = subs( -mass2[nn-2] - make_SP( pp_list[nn-2], sum(pp_list[1:nn-3]) ) - make_SP(pp_list[nn-2],pp_list[nn-1]), kin_relation )
     push!( kin_relation, make_SP( mom[nn], mom[nn-2] ) => expand( sign_list[nn]*sign_list[nn-2]*SP_expr ) )
   end # if
 
