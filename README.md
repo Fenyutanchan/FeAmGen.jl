@@ -17,6 +17,9 @@ This package needs SymEngineExt.jl and others, which can be installed via
 (@v1.8) pkg> add https://github.com/zhaoli-IHEP/SymEngineExt.jl.git
 ```
 
+FYI, the test scripts can be found in another repository
+`https://github.com/zhaoli-IHEP/FeAmGen_tests.git`
+
 -----------------------------------------------
 This package can be used for the following missions.
 1. Generate scalar integral ( example: `TSI_Test.jl` )
