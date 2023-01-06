@@ -459,6 +459,11 @@ function generate_kin_relation_v2(
     #   \sum_{j=1;~j\ne n-2}^{n} s_{n-2,j} = -m_{n-2}^2 
     SP_expr = subs( -mass2[nn-2] - make_SP( pp_list[nn-2], sum(pp_list[1:nn-3]) ) - make_SP(pp_list[nn-2],pp_list[nn-1]), kin_relation )
     push!( kin_relation, make_SP( mom[nn], mom[nn-2] ) => expand( sign_list[nn]*sign_list[nn-2]*SP_expr ) )
+
+    # solve p_n\cdot p_{n-1} via
+    #   \sum_{j=1;~j\ne n-1}^{n} s_{n-1,j} = -m_{n-1}^2 
+    SP_expr = subs( -mass2[nn-1] - make_SP( pp_list[nn-1], sum(pp_list[1:nn-2]) ), kin_relation )
+    push!( kin_relation, make_SP( mom[nn], mom[nn-1] ) => expand( sign_list[nn]*sign_list[nn-1]*SP_expr ) )
   end # if
 
   return kin_relation
@@ -495,7 +500,7 @@ function generate_kin_relation( graph_list::Vector{Graph} )::Dict{Basic,Basic}
 
   @info "External Momenta" string(mom)
 
-  kin_relation = generate_kin_relation( n_inc, n_out, mom, mass2 )
+  kin_relation = generate_kin_relation_v2( n_inc, n_out, mom, mass2 )
 
   #--------------------------------------------------------
   # Next we need to define the denominators of propagators.
@@ -523,10 +528,15 @@ function generate_kin_relation( graph_list::Vector{Graph} )::Dict{Basic,Basic}
     end # for edge
   end # for g
 
-  # we know at most n(n-1)/2-1 verI's have been occupied
-  ver_index_pre = nn*(nn-1)/Basic(2) - Basic(1)
+  symbol_list = (free_symbols∘collect∘values)(kin_relation)
+  ver_list = filter( x-> (length∘string)(x)>3&&string(x)[1:3]=="ver", symbol_list )
+  @assert length(ver_list) in [ nn*(nn-3)/Basic(2), nn*(nn-3)/Basic(2)-one(Basic) ]
+
+  # we know at most n(n-3)/2 verI's have been occupied
+  ver_index_pre = length(ver_list) 
   ver_index = ver_index_pre + 1
   for one_den in den_set
+    @assert Basic("ver$(ver_index)") ∉ symbol_list 
     push!( kin_relation, one_den => Basic("ver$(ver_index)") )
 
     arg_list = get_args(one_den)
