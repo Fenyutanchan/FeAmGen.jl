@@ -7,6 +7,8 @@ FeAmGen represents `Fe`ynman diagram and `Am`plitude `Gen`erator.
 """
 module FeAmGen
 
+using Combinatorics
+
 # for reading input YAML file "SeedProcess.yaml"
 using YAML
 

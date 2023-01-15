@@ -13,7 +13,7 @@ function make_contractor_script()::String
   symbol diim, epsilon;
   dimension diim;
   
-  vector q1, q2, q3, q1C, q2C, q3C;
+  vector q1, q2, q3, q4, q1C, q2C, q3C, q4C;
   vector k1,...,k10;
   vector r1,...,r10;
   vector K1,...,K10;
@@ -27,11 +27,11 @@ function make_contractor_script()::String
   Set NULL: k1,...,k10,r1,...,r10,barK1,...,barK10;
   Set MASSIVE: K1,...,K10;
   
-  set ALLLOOP: q1,q2,q3,q1C,q2C,q3C;
-  set LOOP: q1,q2,q3;
-  set LOOPC: q1C,q2C,q3C;
+  set ALLLOOP: q1,q2,q3,q4,q1C,q2C,q3C,q4C;
+  set LOOP: q1,q2,q3,q4;
+  set LOOPC: q1C,q2C,q3C,q4C;
   set NonLOOP: k1,...,k10,K1,...,K10,r1,...,r10,barK1,...,barK10;
-  set ALLMOM: k1,...,k10,K1,...,K10,r1,...,r10,barK1,...,barK10,q1,q2,q3,q1C,q2C,q3C;
+  set ALLMOM: k1,...,k10,K1,...,K10,r1,...,r10,barK1,...,barK10,q1,q2,q3,q4,q1C,q2C,q3C,q4C;
   
   symbol pi, im, sqrt2, shat;
   auto symbol ver, gc;
@@ -650,6 +650,20 @@ function make_contractor_script()::String
       #enddo
     #enddo
   endrepeat;
+
+  *
+  * Rearrange the sequence of qi in FermionChain
+  * We assume no more than 4
+  *
+  repeat;
+    #do MOMIDX1 = 1, 3, 1
+      #do MOMIDX2 = `MOMIDX1'+1, 4, 1
+        id FermionChain(?vars1, GA(q`MOMIDX2'), GA(q`MOMIDX1'), ?vars2)
+          = 2*SP(q`MOMIDX1',q`MOMIDX2')*FermionChain(?vars1,?vars2)-FermionChain(?vars1,GA(q`MOMIDX1'),GA(q`MOMIDX2'),?vars2);
+      #enddo
+    #enddo
+  endrepeat;
+
   
   *
   * Contract adjacent momentum slash or lorent indices in FermionChain
@@ -1071,9 +1085,27 @@ function make_baseINC_script( graph::Graph, gauge_choice::Dict{Basic,Basic} )::S
   n_out = graph.property[:n_out]
   n_leg = n_inc+n_out
 
-  #ext_edge_list = filter( x -> x.property[:style]=="External", graph.edge_list )
   ext_edge_list = filter( is_external, graph.edge_list )
   sorted_ext_edge_list = sort( ext_edge_list, by=x->x.property[:mark] ) 
+
+  #---------------------
+  if n_leg == 2
+
+    @assert sorted_ext_edge_list[1].property[:mark] == 1
+    mom1 = sorted_ext_edge_list[1].property[:momentum]
+    @assert sorted_ext_edge_list[2].property[:mark] == 2
+    mom2 = sorted_ext_edge_list[2].property[:momentum]
+    result_str = """
+    argument Levi;
+      id $(mom2) = $(mom1);
+    endargument;
+
+    """
+
+    return result_str
+  end # if
+  #---------------------
+
 
   momN = sorted_ext_edge_list[n_leg].property[:momentum]
   momNm1 = sorted_ext_edge_list[n_leg-1].property[:momentum]
@@ -1210,6 +1242,8 @@ function make_amp_contraction_script(
 )::String
 ##############################################################################
 
+  symbol_str_list = filter( s->(s[1:2]=="gc"||s[1:1]=="m")&&s[1:2]!="mu", map(string,free_symbols(expr)) )
+
   result_str = """
   #-
   
@@ -1220,6 +1254,8 @@ function make_amp_contraction_script(
   #include contractor.frm
   
   symbol sqrteta;
+
+  CFunctions Coeff;
   
   format nospaces;
   format maple;
@@ -1232,16 +1268,14 @@ function make_amp_contraction_script(
   #call Simplification();
   
   #call contractDiracIndices();
+
+  ***#call SimpleOrdering();
   
   #call Simplification();
   
   #include kin_relation.frm
   .sort
   
-  repeat;
-    id once FermionChain(?vars1, GA(mom?), ?vars2 ) = FV(mom,rho100)*FermionChain(?vars1, GA(rho100), ?vars2 );
-    sum rho100;
-  endrepeat;
   
   
   id FV(mom?,rho?)*VecEpsilon?{VecEp,VecEpC}(int?,rho?,mom?,ref?,mass?) = 0;
@@ -1256,16 +1290,25 @@ function make_amp_contraction_script(
   * We assume this should give the canonical form of FermionChain, 
   *   since it seems dummy indices Nm_? can make canonical form of an expression automatically.
   *
-  
-  repeat;
-  if( match( SP(mom1?{q1,q2,q3}\$MOM1,mom2?\$MOM2) ) );
-    id once SP(\$MOM1,\$MOM2) = FV(\$MOM1,rho1)*FV(\$MOM2,rho2)*LMT(rho1,rho2);
-    sum rho1;
-    sum rho2;
-  endif;
-  endrepeat; 
+
+  bracket FermionChain, FV, SP, LMT, $(join(symbol_str_list,", ")), im;
+  .sort
+  collect Coeff;
   .sort
   
+  ***repeat;
+  ***if( match( SP(mom1?{q1,q2,q3,q4}\$MOM1,mom2?\$MOM2) ) );
+  ***  id once SP(\$MOM1,\$MOM2) = FV(\$MOM1,rho1)*FV(\$MOM2,rho2)*LMT(rho1,rho2);
+  ***  sum rho1;
+  ***  sum rho2;
+  ***endif;
+  ***endrepeat; 
+  ***.sort
+  
+  ***repeat;
+  ***  id once FermionChain(?vars1, GA(mom?), ?vars2 ) = FV(mom,rho100)*FermionChain(?vars1, GA(rho100), ?vars2 );
+  ***  sum rho100;
+  ***endrepeat;
   
   #do MUIDX = 1, 20, 1
     Multiply replace_(N`MUIDX'_?,dummyMU`MUIDX');
@@ -1275,14 +1318,16 @@ function make_amp_contraction_script(
   id FV(rho1?,rho2?) = FV(rho1,rho2);
   id SP(rho1?,rho2?) = SP(rho1,rho2);
   .sort
+
+
   
   #write <$(file_name).out> "%E", expression
   #close <$(file_name).out>
   .sort
   
-  #system tr -d "[:space:]" < $(file_name).out > $(file_name).out.trim
-  #system mv $(file_name).out.trim $(file_name).out
-  .sort
+  ***#system tr -d "[:space:]" < $(file_name).out > $(file_name).out.trim
+  ***#system mv $(file_name).out.trim $(file_name).out
+  ***.sort
   
   .end
   
@@ -1335,10 +1380,10 @@ function make_amp_contraction_noexpand_script( expr::Basic, file_name::String ):
   #include kin_relation.frm
   .sort
   
-  repeat;
-    id once FermionChain(?vars1, GA(mom?), ?vars2 ) = FV(mom,rho100)*FermionChain(?vars1, GA(rho100), ?vars2 );
-    sum rho100;
-  endrepeat;
+  ***repeat;
+  ***  id once FermionChain(?vars1, GA(mom?), ?vars2 ) = FV(mom,rho100)*FermionChain(?vars1, GA(rho100), ?vars2 );
+  ***  sum rho100;
+  ***endrepeat;
   
   
   id FV(mom?,rho?)*VecEpsilon?{VecEp,VecEpC}(int?,rho?,mom?,ref?,mass?) = 0;
@@ -1354,14 +1399,14 @@ function make_amp_contraction_noexpand_script( expr::Basic, file_name::String ):
   *   since it seems dummy indices Nm_? can make canonical form of an expression automatically.
   *
   
-  repeat;
-  if( match( SP(mom1?{q1,q2,q3}\$MOM1,mom2?\$MOM2) ) );
-    id once SP(\$MOM1,\$MOM2) = FV(\$MOM1,rho1)*FV(\$MOM2,rho2)*LMT(rho1,rho2);
-    sum rho1;
-    sum rho2;
-  endif;
-  endrepeat; 
-  .sort
+  ***repeat;
+  ***if( match( SP(mom1?{q1,q2,q3,q4}\$MOM1,mom2?\$MOM2) ) );
+  ***  id once SP(\$MOM1,\$MOM2) = FV(\$MOM1,rho1)*FV(\$MOM2,rho2)*LMT(rho1,rho2);
+  ***  sum rho1;
+  ***  sum rho2;
+  ***endif;
+  ***endrepeat; 
+  ***.sort
   
   
   #do MUIDX = 1, 20, 1
@@ -1377,9 +1422,9 @@ function make_amp_contraction_noexpand_script( expr::Basic, file_name::String ):
   #close <$(file_name).out>
   .sort
   
-  #system tr -d "[:space:]" < $(file_name).out > $(file_name).out.trim
-  #system mv $(file_name).out.trim $(file_name).out
-  .sort
+  ***#system tr -d "[:space:]" < $(file_name).out > $(file_name).out.trim
+  ***#system mv $(file_name).out.trim $(file_name).out
+  ***.sort
   
   .end
   
@@ -1591,9 +1636,9 @@ function make_simplify_color_factor_script( color_factor::Basic, file_name::Stri
   #close <$(file_name).out>
   .sort
   
-  #system tr -d "[:space:]" < $(file_name).out > $(file_name).out.trim
-  #system mv $(file_name).out.trim $(file_name).out
-  .sort
+  ***#system tr -d "[:space:]" < $(file_name).out > $(file_name).out.trim
+  ***#system mv $(file_name).out.trim $(file_name).out
+  ***.sort
   
   .end
   """

@@ -530,7 +530,9 @@ function generate_kin_relation( graph_list::Vector{Graph} )::Dict{Basic,Basic}
 
   symbol_list = (free_symbols∘collect∘values)(kin_relation)
   ver_list = filter( x-> (length∘string)(x)>3&&string(x)[1:3]=="ver", symbol_list )
-  @assert length(ver_list) in [ nn*(nn-3)/Basic(2), nn*(nn-3)/Basic(2)-one(Basic) ]
+  if nn >= 3
+    @assert length(ver_list) in [ nn*(nn-3)/Basic(2), nn*(nn-3)/Basic(2)-one(Basic) ]
+  end # if
 
   # we know at most n(n-3)/2 verI's have been occupied
   ver_index_pre = length(ver_list) 

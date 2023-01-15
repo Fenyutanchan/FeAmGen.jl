@@ -10,15 +10,17 @@ function prepare_qgraf_dat( model::Model, input::Dict{Any,Any} )
 
   inc_part_list = map( s_ -> model.particle_name_dict[s_], input["incoming"] )
   inc_idx_str_list = map( i_ -> string(i_), eachindex(inc_part_list) )
-  inc_mom_str_list = map( (i_,p_) -> is_massless(p_) ? p_.name*"[k"*i_*"]" : p_.name*"[K"*i_*"]", 
+  inc_mom_str_list = map( (i_,p_) -> is_massless(p_) ? "$(p_.name)[k$(i_)]" : "$(p_.name)[K$(i_)]", 
                           inc_idx_str_list, inc_part_list )
 
   n_inc = length(inc_part_list)
   out_part_list = map( s_ -> model.particle_name_dict[s_], input["outgoing"] )
   out_idx_str_list = map( i_ -> string(i_+n_inc), eachindex(out_part_list) )
-  out_mom_str_list = map( (i_,p_) -> is_massless(p_) ? p_.name*"[k"*i_*"]" : p_.name*"[K"*i_*"]", 
+  out_mom_str_list = map( (i_,p_) -> is_massless(p_) ? "$(p_.name)[k$(i_)]" : "$(p_.name)[K$(i_)]", 
                           out_idx_str_list, out_part_list )
 
+  # In this file `loops` is chosen as `n_loop+QCDCT_order`
+  #   because we implement the counterterm via tadpole loop of auxiliary field.
   file = open( "qgraf.dat", "w" )
   write( file, """
     output='qgraf_out.dat';
@@ -63,6 +65,7 @@ function prepare_qgraf_dat( model::Model, input::Dict{Any,Any} )
   - # Diagram<diagram_index>
     diagram_index: <diagram_index>
     symmetry_factor: <symmetry_factor>
+    n_loop: $(input["n_loop"])
     sign: <sign>1
     incoming_propagators:<in_loop>
       - # incoming particle <in_index>
@@ -696,10 +699,7 @@ function convert_qgraf_TO_Graph(
     ## Also correct the sign if there is QCDct1 or QCDct2, 
     ##   since they are defined as anti-commutative fields to avoid changing symmetry factor.
     :sign => one_qgraf["sign"]*(-1)^n_QCDct, 
-###### For sake of function vertex_from_mark, we also need "mark" for v0
-####:mark => 0,
-###### For filtering the "style"
-####:style => "", 
+    :n_loop => one_qgraf["n_loop"], 
     ## For distinguishing incoming and outgoing edges
     :n_inc => n_inc, 
     :n_out => n_out 
@@ -1105,6 +1105,7 @@ end # function factor_out_loop_den
 """
     contract_Dirac_indices( 
         g::Graph, 
+        graph_index::Int64, 
         lorentz_expr_list::Vector{Basic} 
     )::Vector{Basic}
 
@@ -1112,17 +1113,19 @@ Contract the Dirac indices in the `lorentz_expr_list` by using FORM scripts.
 """
 function contract_Dirac_indices( 
     g::Graph, 
+    graph_index::Int64, 
     lorentz_expr_list::Vector{Basic} 
 )::Vector{Basic}
 ##################################################################################
 
-  diagram_index = g.property[:diagram_index]
-  printstyled( "[ Contract the Dirac indices for diagram #$(diagram_index) ]\n", color=:green )
+  printstyled( "[ Contract the Dirac indices for diagram #$(graph_index) ]\n", color=:green )
 
   new_lorentz_expr_list = Vector{Basic}( undef, length(lorentz_expr_list) )
+
+  cost_time = @elapsed begin
   for index in 1:length(lorentz_expr_list)
     lorentz_expr = lorentz_expr_list[index]
-    file_name = "contract_lorentz_expr$(index)_diagram$(diagram_index)"
+    file_name = "contract_lorentz_expr$(index)_diagram$(graph_index)"
     form_script_str = make_amp_contraction_script( lorentz_expr, file_name )
 
     file = open( "$(file_name).frm", "w" )
@@ -1130,7 +1133,7 @@ function contract_Dirac_indices(
     close(file)
 
     println( "  [ form $(file_name).frm ]" )
-    run( pipeline( `form $(file_name).frm`, "$(file_name).log" ) )
+    run( pipeline( `tform -w$(Threads.nthreads()) $(file_name).frm`, "$(file_name).log" ) )
 
     file = open( "$(file_name).out", "r" )
     result_str = read( file, String )
@@ -1143,6 +1146,8 @@ function contract_Dirac_indices(
     rm( "$(file_name).log" )
 
   end # for index
+  end # cost_time
+  println( "<$(cost_time) sec>" )
 
   return new_lorentz_expr_list
 
@@ -1158,6 +1163,7 @@ end # function contract_Dirac_indices
 """
     contract_Dirac_indices_noexpand( 
         g::Graph, 
+        graph_index::Int64, 
         lorentz_expr_list::Vector{Basic} 
     )::Vector{Basic}
 
@@ -1165,17 +1171,19 @@ Contract the Dirac indices in the `lorentz_expr_list` by using FORM scripts, but
 """
 function contract_Dirac_indices_noexpand( 
     g::Graph, 
+    graph_index::Int64, 
     lorentz_expr_list::Vector{Basic} 
 )::Vector{Basic}
 ##################################################################################
 
-  diagram_index = g.property[:diagram_index]
-  printstyled( "\n[ Contract the Dirac indices (no expansion) for diagram #$(diagram_index) ]\n", color=:green )
+  printstyled( "\n[ Contract the Dirac indices (no expansion) for diagram #$(graph_index) ]\n", color=:green )
 
   new_lorentz_expr_list = Vector{Basic}( undef, length(lorentz_expr_list) )
+
+  cost_time = @elapsed begin
   for index in 1:length(lorentz_expr_list)
     lorentz_expr = lorentz_expr_list[index]
-    file_name = "contract_lorentz_expr$(index)_diagram$(diagram_index)_noexpand"
+    file_name = "contract_lorentz_expr$(index)_diagram$(graph_index)_noexpand"
     form_script_str = make_amp_contraction_noexpand_script( lorentz_expr, file_name )
 
     file = open( "$(file_name).frm", "w" )
@@ -1183,7 +1191,7 @@ function contract_Dirac_indices_noexpand(
     close(file)
 
     println( "  [ form $(file_name).frm ]" )
-    run( pipeline( `form $(file_name).frm`, "$(file_name).log" ) )
+    run( pipeline( `tform -w$(Threads.nthreads()) $(file_name).frm`, "$(file_name).log" ) )
 
     file = open( "$(file_name).out", "r" )
     result_str = read( file, String )
@@ -1196,6 +1204,8 @@ function contract_Dirac_indices_noexpand(
     rm( "$(file_name).log" )
 
   end # for index
+  end # cost_time
+  println( "<$(cost_time) sec>" )
 
   return new_lorentz_expr_list
 
@@ -1205,7 +1215,7 @@ end # function contract_Dirac_indices_noexpand
 ##################################
 function check_consistency( 
     n_loop::Int64, 
-    diagram_index::Int64, 
+    graph_index::Int64, 
     lorentz_list::Vector{Basic}, 
     lorentz_noexpand_list::Vector{Basic}, 
     ext_mom_list::Vector{Basic}, 
@@ -1217,8 +1227,8 @@ function check_consistency(
     return nothing
   end # if
 
-  @assert n_loop in [1,2]
-  @vars q1 q2
+  @assert n_loop >= 1
+  @vars q1 q2 q3 q4
   n_ext_mom = length(ext_mom_list)
 
   # baseINC only needs information from the external fields.
@@ -1236,10 +1246,12 @@ function check_consistency(
     one_lorentz_noexpand = lorentz_noexpand_list[lorentz_index]
     diff = one_lorentz-one_lorentz_noexpand
 
-    file_name = "check_diagram$(diagram_index)_lorentz$(lorentz_index)"
+    file_name = "check_diagram$(graph_index)_lorentz$(lorentz_index)"
 
     q1_val = sum( ext_mom_list .* map( x->mod(x,256)+16, rand(Int64,n_ext_mom) ) )
     q2_val = sum( ext_mom_list .* map( x->mod(x,256)+16, rand(Int64,n_ext_mom) ) )
+    q3_val = sum( ext_mom_list .* map( x->mod(x,256)+16, rand(Int64,n_ext_mom) ) )
+    q4_val = sum( ext_mom_list .* map( x->mod(x,256)+16, rand(Int64,n_ext_mom) ) )
     
 
     file = open( "$(file_name).frm", "w" )
@@ -1255,6 +1267,9 @@ function check_consistency(
     #include model_parameters.frm
     #include contractor.frm
     
+    CFunctions Coeff;
+    Symbol expr;
+
     format nospaces;
     format maple;
 
@@ -1264,18 +1279,22 @@ function check_consistency(
     Local expression = $(diff);
     .sort
 
-    repeat;
-      id FermionChain( ?vars1, GA(mom?), ?vars2 ) = FermionChain( ?vars1, GA(rho), ?vars2 )*FV(mom,rho);
-      sum rho;
-    endrepeat;
-    .sort
+    ***repeat;
+    ***  id FermionChain( ?vars1, GA(mom?), ?vars2 ) = FermionChain( ?vars1, GA(rho), ?vars2 )*FV(mom,rho);
+    ***  sum rho;
+    ***endrepeat;
+    ***.sort
 
     argument;
       id q1 = $(q1_val);
       id q2 = $(q2_val);
+      id q3 = $(q3_val);
+      id q4 = $(q4_val);
       argument;
         id q1 = $(q1_val);
         id q2 = $(q2_val);
+        id q3 = $(q3_val);
+        id q4 = $(q4_val);
       endargument;
     endargument;
     .sort
@@ -1287,6 +1306,13 @@ function check_consistency(
     id FV(rho1?,rho2?) = FV(rho1,rho2);
     id SP(rho1?,rho2?) = SP(rho1,rho2);
     id im^2 = -1;
+    .sort
+
+    repeat;
+      id SP(mom?NULL,mom?NULL) = 0;
+      id LMT(rho1?,rho2?)*FV(mom?,rho1?) = FV(mom,rho2);
+      id FV(mom?NULL,rho?)^2 = 0;
+    endrepeat;
     .sort
 
     repeat id FV(unity,rho?)*FermionChain( ?vars1, GA(rho?), ?vars2 ) = FermionChain( ?vars1, ?vars2 );
@@ -1336,7 +1362,8 @@ function check_consistency(
     run( pipeline( `tform -w$(Threads.nthreads()) $(file_name).frm`, "$(file_name).log" ) )
 
     file = open( "$(file_name).out", "r" )
-    result_str = replace( read( file, String ), r"\s"=>"" )
+    result_str = read( file, String )
+    result_str = replace( result_str, r"\s"=>"" )
     close(file)
 
     @assert length(result_str) < 4
@@ -1362,22 +1389,31 @@ end # function check_consistency
 
 
 
-###################################################################################################
+#########################################################
 """
-    simplify_color_factors( g::Graph, color_factor_list::Vector{Basic} )::Vector{Basic}
+    simplify_color_factors( 
+        g::Graph, 
+        graph_index::Int64, 
+        color_factor_list::Vector{Basic} 
+    )::Vector{Basic}
 
 Simplify the color factors by using FORM scripts.
 """
-function simplify_color_factors( g::Graph, color_factor_list::Vector{Basic} )::Vector{Basic}
-###################################################################################################
+function simplify_color_factors( 
+    g::Graph, 
+    graph_index::Int64, 
+    color_factor_list::Vector{Basic} 
+)::Vector{Basic}
+#########################################################
 
-  diagram_index = g.property[:diagram_index]
-  printstyled( "\n[ Simplify the color factor for diagram #$(diagram_index) ]\n", color=:green )
+  printstyled( "\n[ Simplify the color factor for diagram #$(graph_index) ]\n", color=:green )
 
   new_color_factor_list = Vector{Basic}( undef, length(color_factor_list) )
+
+  cost_time = @elapsed begin
   for index in 1:length(color_factor_list)
     one_color_factor = color_factor_list[index]
-    file_name = "simplify_color_factor$(index)_diagram$(diagram_index)"
+    file_name = "simplify_color_factor$(index)_diagram$(graph_index)"
     form_script_str = make_simplify_color_factor_script( one_color_factor, file_name )
 
     file = open( "$(file_name).frm", "w" )
@@ -1395,6 +1431,8 @@ function simplify_color_factors( g::Graph, color_factor_list::Vector{Basic} )::V
 
     run( `rm $(file_name).frm $(file_name).out $(file_name).log` )
   end # for index
+  end # cost_time
+  println( "<$(cost_time) sec>" )
 
   return new_color_factor_list
 
@@ -1404,26 +1442,55 @@ end # function simplify_color_factors
 
 ###########################################################################################################
 """
-    write_out_amplitude( n_loop::Int64, diagram_index::Int64, couplingfactor::Basic, parameter_dict::Dict{Basic,Basic}, ext_mom_list::Vector{Basic}, scale2_list::Vector{Basic}, kin_relation::Dict{Basic,Basic}, baseINC_script_str::String, amp_color_list::Vector{Basic}, amp_lorentz_list::Vector{Basic}, loop_den_list::Vector{Basic}, loop_den_xpt_list::Vector{Int64}, min_ep_xpt::Int64, max_ep_xpt::Int64, proc_str::String, the_lock::ReentrantLock )::Nothing
+    write_out_amplitude( 
+        n_loop::Int64, 
+        graph_index::Int64, 
+        couplingfactor::Basic, 
+        parameter_dict::Dict{Basic,Basic}, 
+        ext_mom_list::Vector{Basic}, 
+        scale2_list::Vector{Basic}, 
+        kin_relation::Dict{Basic,Basic}, 
+        baseINC_script_str::String, 
+        amp_color_list::Vector{Basic}, 
+        amp_lorentz_list::Vector{Basic}, 
+        loop_den_list::Vector{Basic}, 
+        loop_den_xpt_list::Vector{Int64}, 
+        min_ep_xpt::Int64, 
+        max_ep_xpt::Int64, 
+        proc_str::String, 
+        the_lock::ReentrantLock )::Nothing
 
 Write out the amplitude information into the file that can be read easily.
 """
-function write_out_amplitude( n_loop::Int64, diagram_index::Int64, couplingfactor::Basic, parameter_dict::Dict{Basic,Basic}, 
-    ext_mom_list::Vector{Basic}, scale2_list::Vector{Basic}, kin_relation::Dict{Basic,Basic}, baseINC_script_str::String, 
-    amp_color_list::Vector{Basic}, amp_lorentz_list::Vector{Basic}, 
-    loop_den_list::Vector{Basic}, loop_den_xpt_list::Vector{Int64},
-    min_ep_xpt::Int64, max_ep_xpt::Int64, proc_str::String, the_lock::ReentrantLock )::Nothing
+function write_out_amplitude( 
+    n_loop::Int64, 
+    graph_index::Int64, 
+    couplingfactor::Basic, 
+    parameter_dict::Dict{Basic,Basic}, 
+    ext_mom_list::Vector{Basic}, 
+    scale2_list::Vector{Basic}, 
+    kin_relation::Dict{Basic,Basic}, 
+    baseINC_script_str::String, 
+    amp_color_list::Vector{Basic}, 
+    amp_lorentz_list::Vector{Basic}, 
+    loop_den_list::Vector{Basic}, 
+    loop_den_xpt_list::Vector{Int64},
+    min_ep_xpt::Int64, 
+    max_ep_xpt::Int64, 
+    proc_str::String, 
+    the_lock::ReentrantLock 
+)::Nothing
 ###########################################################################################################
 
 
-  printstyled( "\n[ Generate amplitude_diagram$(diagram_index).out ]\n", color=:green )
-  amp_file = open( "$(proc_str)_amplitudes/amplitude_diagram$(diagram_index).out", "w" )
+  printstyled( "\n[ Generate amplitude_diagram$(graph_index).out ]\n", color=:green )
+  amp_file = open( "$(proc_str)_amplitudes/amplitude_diagram$(graph_index).out", "w" )
   write( amp_file, """
     n_loop: $(n_loop)
     couplingfactor: $(couplingfactor)
     ext_mom_list: $(ext_mom_list)
     scale2_list: $(scale2_list)
-    Diagram #$(diagram_index): 
+    Graph #$(graph_index): 
       Denominators: 
     """ )
   for one_den in loop_den_list
@@ -1465,11 +1532,11 @@ function write_out_amplitude( n_loop::Int64, diagram_index::Int64, couplingfacto
 
   close( amp_file )
 
-  if isfile( "$(proc_str)_amplitudes/amplitude_diagram$(diagram_index).jld2" )
-    rm( "$(proc_str)_amplitudes/amplitude_diagram$(diagram_index).jld2" )
+  if isfile( "$(proc_str)_amplitudes/amplitude_diagram$(graph_index).jld2" )
+    rm( "$(proc_str)_amplitudes/amplitude_diagram$(graph_index).jld2" )
   end # if
 
-  jldopen( "$(proc_str)_amplitudes/amplitude_diagram$(diagram_index).jld2", "w" ) do file 
+  jldopen( "$(proc_str)_amplitudes/amplitude_diagram$(graph_index).jld2", "w" ) do file 
     write( file, "Generator", "FeAmGen.jl" )
     write( file, "n_loop", n_loop )
     write( file, "min_ep_xpt", min_ep_xpt )
@@ -1492,22 +1559,42 @@ end # function write_out_amplitude
 
 #########################################################################
 """
-    write_out_visual_graph( g::Graph, model::Model, couplingfactor::Basic, color_list::Vector{Basic}, lorentz_list::Vector{Basic}, ext_mom_list::Vector{Basic}, scale2_list::Vector{Basic}, proc_str::String )::Nothing
+    write_out_visual_graph( 
+        g::Graph, 
+        graph_index::Int64, 
+        model::Model, 
+        couplingfactor::Basic, 
+        color_list::Vector{Basic}, 
+        lorentz_list::Vector{Basic}, 
+        loop_den_list::Vector{Basic}, 
+        loop_den_xpt_list::Vector{Int64}, 
+        ext_mom_list::Vector{Basic}, 
+        scale2_list::Vector{Basic}, 
+        proc_str::String 
+    )::Nothing
 
 Write out the diagrams into the file that can be complied or read easily.
 """
-function write_out_visual_graph( g::Graph, model::Model, 
-    couplingfactor::Basic, color_list::Vector{Basic}, lorentz_list::Vector{Basic},
-    ext_mom_list::Vector{Basic}, scale2_list::Vector{Basic}, proc_str::String )::Nothing
+function write_out_visual_graph( 
+    g::Graph, 
+    graph_index::Int64,
+    model::Model, 
+    couplingfactor::Basic, 
+    color_list::Vector{Basic}, 
+    lorentz_list::Vector{Basic},
+    loop_den_list::Vector{Basic}, 
+    loop_den_xpt_list::Vector{Int64}, 
+    ext_mom_list::Vector{Basic}, 
+    scale2_list::Vector{Basic}, 
+    proc_str::String 
+)::Nothing
 #########################################################################
-
-  diagram_index = g.property[:diagram_index]
 
   graph_str = generate_visual_graph( g, model )
   graph_str = replace( graph_str, "SymEngine.Basic"=>"Basic" )
 
-  printstyled( "\n[ Generate visual_diagram$(diagram_index).tex ]\n", color=:green )
-  visual_file = open( "$(proc_str)_visuals/visual_diagram$(diagram_index).tex", "w" )
+  printstyled( "\n[ Generate visual_diagram$(graph_index).tex ]\n", color=:green )
+  visual_file = open( "$(proc_str)_visuals/visual_diagram$(graph_index).tex", "w" )
   write( visual_file, """
   \\documentclass{revtex4}
   \\usepackage{tikz-feynman}
@@ -1524,7 +1611,18 @@ function write_out_visual_graph( g::Graph, model::Model,
   close( visual_file )
 
 
-  expression_file = open( "$(proc_str)_visuals/expression_diagram$(diagram_index).out", "w" ) 
+  #--------------------------------
+  expression_file = open( "$(proc_str)_visuals/expression_diagram$(graph_index).out", "w" ) 
+  #--------------------------------
+
+  write( expression_file, """
+  Loop Denominators: $(loop_den_list)
+
+  Loop Denominator Exponents: $(loop_den_xpt_list) 
+
+  """ )
+
+
   write( expression_file, """
   (* coupling factor: *) 
   $(couplingfactor)
@@ -1551,13 +1649,100 @@ end # function write_out_visual_graph
 
 
 
+############################
+"""
+    function is_null_graph(
+        one_graph::Graph
+    )::Bool
+
+Since QGRAF may keep massless tadpole in some cases, 
+  we find the null graph including massless tadpole 
+"""
+function is_null_graph(
+    one_graph::Graph
+)::Bool
+############################
+
+  n_loop = one_graph.property[:n_loop]
+
+  qi_list = [ Basic("q$(index)") for index in 1:n_loop ]
+
+  loop_mom_list = Vector{Basic}()
+  loop_mass_list = Vector{Basic}()
+  for one_edge in one_graph.edge_list
+    if one_edge.property[:style] != "Loop" 
+      continue
+    end # if
+    push!( loop_mom_list, one_edge.property[:momentum] )
+    push!( loop_mass_list, one_edge.property[:particle].mass )
+  end # for one_edge
+
+  for n_sub in 1:n_loop
+    sub_qi_list_powerset = (collect∘powerset)(qi_list,n_sub,n_sub)
+    for sub_qi_list in sub_qi_list_powerset
+      remnant_qi_list = setdiff( qi_list, sub_qi_list )
+      # find the positions of momentums containing any qi from sub_qi_list
+      sub_qi_mom_pos_list = findall( mom->has_qi(mom,sub_qi_list), loop_mom_list )
+      # check if these above propagators has mass, i.e. scale
+      if any( !iszero, loop_mass_list[sub_qi_mom_pos_list] )
+        continue
+      end # if
+      # check if these above propagators has other qi from remnant_qi_list
+      if any( mom->has_qi(mom,remnant_qi_list), loop_mom_list[sub_qi_mom_pos_list] )
+        continue
+      end # if
+      return true
+    end # for sub_qi_list
+  end # for n_qi
+
+  return false
+
+end # function is_null_graph
+
+####################
+function has_qi( 
+    mom::Basic,
+    qi::Basic
+)::Bool
+####################
+
+  return !(iszero∘coeff)(mom,qi) 
+
+end # function has_qi
+
+
+####################
+function has_qi(
+    mom::Basic,
+    qi_list::Vector{Basic}
+)::Bool
+####################
+
+  for qi in qi_list
+    if has_qi(mom,qi)
+      return true
+    end # if
+  end # for qi
+
+  return false
+
+end # function has_qi
+
+
+
+
+
+
 ##########################################################################
 """
     generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
 
 Generate amplitudes after `model` has been prepared.
 """
-function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
+function generate_amplitude( 
+    model::Model, 
+    input::Dict{Any,Any} 
+)::Nothing
 ##########################################################################
 
   proc_str = join( [ input["incoming"]; "TO"; input["outgoing"]; "$(input["n_loop"])Loop" ], "_" )
@@ -1576,6 +1761,14 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
                convert( Array{Graph,1}, _ ) |>
                filter( !isnothing, _ ) |>
                sort( _, by= g->g.property[:diagram_index] )
+###------------------------------------------------  
+##null_graph_list = filter( is_null_graph, graph_list )
+##@show map( g->g.property[:diagram_index], null_graph_list ) 
+###------------------------------------------------  
+##not_null_graph_list = filter( !is_null_graph, graph_list )
+##@show map( g->g.property[:diagram_index], not_null_graph_list ) 
+  #------------------------------------------------  
+  graph_list = filter( !is_null_graph, graph_list )
   #------------------------------------------------  
 
 
@@ -1631,18 +1824,25 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
 
   now()
   #Threads.@threads for g in graph_list
-  for g in graph_list
-    diagram_index = g.property[:diagram_index]
-    box_message( "Working on diagram #$(diagram_index) ($(length(graph_list)))", color=:light_green )
+  for graph_index in 1:length(graph_list)
+    g = graph_list[graph_index]
+    #diagram_index = g.property[:diagram_index]
+    box_message( "Working on diagram #$(graph_index) ($(length(graph_list)))", color=:light_green )
 
     scale2_list = generate_scale2_list( g, kin_relation )
 
     amp_color_list, amp_lorentz_list = assemble_amplitude( g )
-    amp_lorentz_list_pre, loop_den_list, loop_den_xpt_list = factor_out_loop_den( g, amp_lorentz_list )
-    amp_lorentz_list = contract_Dirac_indices( g, amp_lorentz_list_pre )
-    amp_lorentz_noexpand_list = contract_Dirac_indices_noexpand( g, amp_lorentz_list_pre )
 
-    amp_color_list = simplify_color_factors( g, amp_color_list )
+    amp_color_list = simplify_color_factors( g, graph_index, amp_color_list )
+    nonzero_pos_list = findall( !iszero, amp_color_list )
+    amp_color_list = amp_color_list[nonzero_pos_list]
+
+    amp_lorentz_list_pre, loop_den_list, loop_den_xpt_list = factor_out_loop_den( g, amp_lorentz_list )
+    amp_lorentz_list_pre = amp_lorentz_list_pre[nonzero_pos_list]
+
+    amp_lorentz_list = contract_Dirac_indices( g, graph_index, amp_lorentz_list_pre )
+    amp_lorentz_noexpand_list = contract_Dirac_indices_noexpand( g, graph_index, amp_lorentz_list_pre )
+
 
     #-------------------------------------------
     perm = sortperm( amp_color_list, by=gen_sorted_str )
@@ -1650,14 +1850,13 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
     amp_lorentz_list = amp_lorentz_list[perm]
     amp_lorentz_noexpand_list = amp_lorentz_noexpand_list[perm]
 
-    write_out_amplitude( n_loop, diagram_index, couplingfactor, model.parameter_dict, ext_mom_list, scale2_list, kin_relation, baseINC_script_str,
-                         amp_color_list, amp_lorentz_list, loop_den_list, loop_den_xpt_list, input["Amp_Min_Ep_Xpt"], input["Amp_Max_Ep_Xpt"], proc_str, the_lock )
+    write_out_amplitude( n_loop, graph_index, couplingfactor, model.parameter_dict, ext_mom_list, scale2_list, kin_relation, baseINC_script_str, amp_color_list, amp_lorentz_list, loop_den_list, loop_den_xpt_list, input["Amp_Min_Ep_Xpt"], input["Amp_Max_Ep_Xpt"], proc_str, the_lock )
 
 
-    write_out_visual_graph( g, model, couplingfactor, amp_color_list, amp_lorentz_noexpand_list, ext_mom_list, scale2_list, proc_str )
+    write_out_visual_graph( g, graph_index, model, couplingfactor, amp_color_list, amp_lorentz_noexpand_list, loop_den_list, loop_den_xpt_list, ext_mom_list, scale2_list, proc_str )
 
     if input["check_consistency"] 
-      check_consistency( n_loop, diagram_index, amp_lorentz_list, amp_lorentz_noexpand_list, ext_mom_list, baseINC_script_str )
+      check_consistency( n_loop, graph_index, amp_lorentz_list, amp_lorentz_noexpand_list, ext_mom_list, baseINC_script_str )
     end # if
 
   end # for g
@@ -1672,13 +1871,21 @@ function generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
   rm( "model_parameters.frm" )
 
 
-  diagram_index_list = map( g_->g_.property[:diagram_index], graph_list )
   file = open( "$(proc_str)_visuals/generate_diagram_pdf.jl", "w" )
   write( file, """
-  diagram_index_list = $(diagram_index_list)
-  for diagram_index in diagram_index_list
-    run( `lualatex visual_diagram\$(diagram_index)` )
-  end
+  root, dirs, files = (first∘collect∘walkdir)(".")
+
+  tex_list = filter( s->s[end-2:end] == "tex", files )
+  tex_head_list = map( s->s[1:end-4], tex_list )
+
+  pdf_list = filter( s->s[end-2:end] == "pdf", files )
+  pdf_head_list = map( s->s[1:end-4], pdf_list )
+
+  mission_head_list = setdiff( tex_head_list, pdf_head_list )
+
+  for one_mission in mission_head_list
+    run( `lualatex \$(one_mission)` )
+  end # for one_mission
   """ )
   close(file)
   @info "Users can generate PDF files for all diagrams." script="generate_diagram_pdf.jl"
