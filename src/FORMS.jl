@@ -40,24 +40,24 @@ function make_contractor_script()::String
   auto symbol spa, spb, spv spw;
   
   ***Lorentz indices
-  auto index mua, mub, muv, muw, rho, dummyMU, epMU;
+  auto index mua, mub, muv, muw, rho, dum, epMU;
   
   Set RHO: rho,rho0,...,rho200;
   Set EPMU: epMU1,...,epMU100;
   Set EPMUC: epMUC1,...,epMUC100;
-  Set DUMMYMU: dummyMU1,...,dummyMU100;
-  Set NonEPMU: mua,mua0,...,mua100,mub,mub0,...,mub100,muv, muv0,...,muv10000,muw, muw0,...,muw10000,dummyMU1,...,dummyMU100;
+  Set DUMMYMU: dum1,...,dum100;
+  Set NonEPMU: mua,mua0,...,mua100,mub,mub0,...,mub100,muv, muv0,...,muv10000,muw, muw0,...,muw10000,dum1,...,dum100;
   
   Set LOR: mua,mua0,...,mua100,mub,mub0,...,mub100,muv,muv0,...,muv10000,muw,muw0,...,muw10000,
-           rho,rho0,...,rho100,dummyMU,dummyMU0,...,dummyMU100,epMU1,...,epMU100;
+           rho,rho0,...,rho100,dum,dum0,...,dum100,epMU1,...,epMU100;
   
   Set LORC: muaC,muaC0,...,muaC100,mubC,mubC0,...,mubC100,muvC,muvC0,...,muvC10000,muwC,muwC0,...,muwC10000,
-            rhoC,rhoC0,...,rhoC100,dummyMUC,dummyMUC0,...,dummyMUC100,epMUC1,...,epMUC100;
+            rhoC,rhoC0,...,rhoC100,dumC,dumC0,...,dumC100,epMUC1,...,epMUC100;
   
   Set ALLLOR: mua,mua0,...,mua100,mub,mub0,...,mub100,muv,muv0,...,muv10000,muw,muw0,...,muw10000,
-              rho,rho0,...,rho100,dummyMU,dummyMU0,...,dummyMU100,epMU1,...,epMU100,
+              rho,rho0,...,rho100,dum,dum0,...,dum100,epMU1,...,epMU100,
               muaC,muaC0,...,muaC100,mubC,mubC0,...,mubC100,muvC,muvC0,...,muvC10000,muwC,muwC0,...,muwC10000,
-              rhoC,rhoC0,...,rhoC100,dummyMUC,dummyMUC0,...,dummyMUC100,epMUC1,...,epMUC100;
+              rhoC,rhoC0,...,rhoC100,dumC,dumC0,...,dumC100,epMUC1,...,epMUC100;
   
   
   ***For matching both indices and momenta
@@ -85,7 +85,7 @@ function make_contractor_script()::String
   CFunction SP(symmetric), LMT(symmetric), Levi(antisymmetric);
   CFunction SPC(symmetric);
   CFunction GAij, PLij, PRij, ONEij(symmetric), Trace, Trace5, Trace5sym;
-  CFunction GA, PL, PR;
+  CFunction GA, GA5, PL, PR;
   
   CFunction JJ(antisymmetric), FF(antisymmetric);
   
@@ -115,8 +115,8 @@ function make_contractor_script()::String
   * FeynCalc has definition GA[6]=(1+GA[5])/2, GA[7]=(1-GA[5])/2
   * FORM has a little different g_(6)=1+g_(5), g_(7)=1-g_(5)
   * According to textbooks (Peskin's QFT etc.) PL=GA(7), PR=GA(6)
-  * PR-->tagJ, (1+GA(5))/2, GA(6)
-  * PL-->tagF, (1-GA(5))/2, GA(7)
+  * PR-->tagJ, (1+GA5)/2, GA(6)
+  * PL-->tagF, (1-GA5)/2, GA(7)
   * Same as definition in FeynCalc
   *
   ***id PR(spa1?,spa2?) = GA(spa1,spa2,6);
@@ -203,6 +203,9 @@ function make_contractor_script()::String
   id FermionLoopPow(-1,int?) = (-1)^int;
   id GhostLoopPow(-1,int?) = (-1)^int;
   .sort
+
+  id FermionChain( ?vars1, GA(rho?ALLLOR), GA(rho?ALLLOR), ?vars2 ) = diim*FermionChain(?vars1,?vars2);
+  .sort
   
   
   #endprocedure
@@ -225,8 +228,8 @@ function make_contractor_script()::String
   * FeynCalc has definition GA[6]=(1+GA[5])/2, GA[7]=(1-GA[5])/2
   * FORM has a little different g_(6)=1+g_(5), g_(7)=1-g_(5)
   * According to textbooks (Peskin's QFT etc.) PL=GA(7), PR=GA(6)
-  * PR-->tagJ, (1+GA(5))/2, GA(6)
-  * PL-->tagF, (1-GA(5))/2, GA(7)
+  * PR-->tagJ, (1+GA5)/2, GA(6)
+  * PL-->tagF, (1-GA5)/2, GA(7)
   * Same as definition in FeynCalc
   *
   ***id PR(spa1?,spa2?) = GA(spa1,spa2,6);
@@ -445,45 +448,23 @@ function make_contractor_script()::String
     id FermionChain(?vars1,PL,PR,?vars2) = 0;
     id FermionChain(?vars1,PR,PL,?vars2) = 0;
   
-    id FermionChain(?vars1,GA(rho?ALLLOR),PL,?vars2) = FermionChain(?vars1,PR,GA(rho),?vars2);
-    id FermionChain(?vars1,GA(rho?ALLLOR),PR,?vars2) = FermionChain(?vars1,PL,GA(rho),?vars2);
-  
-    id FermionChain(?vars1,GA(mom?),PL,?vars2) = FermionChain(?vars1,PR,GA(mom),?vars2);
-    id FermionChain(?vars1,GA(mom?),PR,?vars2) = FermionChain(?vars1,PL,GA(mom),?vars2);
+    id FermionChain(?vars1,GA(rho?),PL,?vars2) = FermionChain(?vars1,PR,GA(rho),?vars2);
+    id FermionChain(?vars1,GA(rho?),PR,?vars2) = FermionChain(?vars1,PL,GA(rho),?vars2);
   endrepeat;
   .sort
   
   *
-  * rearrange the sequence in FermionChain
+  * handle the simple structure in FermionChain
   *
   repeat;
-  ***#include baseINC.frm
-    repeat;
-      id FermionChain( ?vars1, GA(mom?), GA(mom?), ?vars2 ) = FermionChain( ?vars1, ?vars2 )*SP(mom,mom);
-      id SP(mom?NULL,mom?NULL) = 0;
-      id FermionChain( ?vars1, GA(rho?ALLLOR), GA(rho?ALLLOR), ?vars2 ) = FermionChain(?vars1,?vars2)*diim;
-    endrepeat;
-    id FermionChain( ?vars1, GA(mom1?ALLMOM), GA(mom2?ALLMOM), ?vars2, GA(mom1?ALLMOM), ?vars3 )
-      = 2*SP(mom1,mom2)*FermionChain( ?vars1, ?vars2, GA(mom1), ?vars3 )
-       - FermionChain( ?vars1, GA(mom2), GA(mom1), ?vars2, GA(mom1), ?vars3 );
+    id FermionChain( ?vars1, GA(mom?), GA(mom?), ?vars2 ) = FermionChain( ?vars1, ?vars2 )*SP(mom,mom);
     id SP(mom?NULL,mom?NULL) = 0;
-    id FermionChain( ?vars1, GA(mom?ALLMOM), GA(rho?ALLLOR), ?vars2, GA(mom?ALLMOM), ?vars3 )
-      = 2*FV(mom,rho)*FermionChain( ?vars1, ?vars2, GA(mom), ?vars3 )
-       - FermionChain( ?vars1, GA(rho), GA(mom), ?vars2, GA(mom), ?vars3 );
-    id FV(mom?,rho?ALLLOR)*FermionChain(?vars1,GA(rho?ALLLOR),?vars2) = FermionChain(?vars1,GA(mom),?vars2);
+    id FermionChain( ?vars1, GA(rho?ALLLOR), GA(rho?ALLLOR), ?vars2 ) = FermionChain(?vars1,?vars2)*diim;
   endrepeat;
   .sort
   
-  ***repeat;
-  ***#include baseINC.frm
-  ***endrepeat;
-  repeat id FermionChain( ?vars1, GA(mom?), GA(mom?), ?vars2 ) = FermionChain( ?vars1, ?vars2 )*SP(mom,mom);
-  .sort
-  
-  repeat;
-  #include baseINC.frm
   ***pull momentum of right-side spinor to the relevant spinor
-    repeat;
+  repeat;
     id FermionChain( ?vars1, GA(mom?), GA(rho?ALLLOR), ?vars2, Spinor?IRSPSET(int?,mom?,ref?,mass?) )
       = FermionChain( ?vars1, ?vars2, Spinor(int,mom,ref,mass) )*2*FV(mom,rho)
        -FermionChain( ?vars1, GA(rho), GA(mom), ?vars2, Spinor(int,mom,ref,mass) );
@@ -502,10 +483,11 @@ function make_contractor_script()::String
   
     id FermionChain( ?vars, GA(mom?), U(int?,mom?,ref?,mass?) ) = mass*FermionChain( ?vars, U(int,mom,ref,mass) );
     id FermionChain( ?vars, GA(mom?), V(int?,mom?,ref?,mass?) ) = -mass*FermionChain( ?vars, V(int,mom,ref,mass) );
-    endrepeat;
+  endrepeat;
+  .sort
   
   ***pull momentum of left-side spinor to the relevant spinor
-    repeat;
+  repeat;
     id FermionChain( Spinor?ILSPSET(int?,mom?,ref?,mass?), ?vars1, GA(rho?ALLLOR), GA(mom?), ?vars2 )
       = FermionChain( Spinor(int,mom,ref,mass), ?vars1, ?vars2 )*2*FV(mom,rho)
        -FermionChain( Spinor(int,mom,ref,mass), ?vars1, GA(mom), GA(rho), ?vars2 );
@@ -528,32 +510,56 @@ function make_contractor_script()::String
       = FermionChain( Spinor(int,mom1,ref,mass), ?vars1, ?vars2 )*2*SP(mom1,mom2)
        -FermionChain( Spinor(int,mom1,ref,mass), ?vars1, GA(mom1), GA(mom2), ?vars2 );
   
-    id FermionChain( UB(int?,mom?,ref?,mass?), GA(mom?), ?vars ) = mass*FermionChain( UB(int,mom,ref,mass), ?vars );
-    id FermionChain( VB(int?,mom?,ref?,mass?), GA(mom?), ?vars ) = -mass*FermionChain( VB(int,mom,ref,mass), ?vars );
-    endrepeat;
+    id FermionChain( UB(int?,mom?,ref?,mass?), GA(mom?), ?vars ) 
+      = mass*FermionChain( UB(int,mom,ref,mass), ?vars );
+    id FermionChain( VB(int?,mom?,ref?,mass?), GA(mom?), ?vars ) 
+      = -mass*FermionChain( VB(int,mom,ref,mass), ?vars );
+  endrepeat;
+  .sort
   
-  ***move PL and PR to left-side of FermionChain, right-side of spinor
-  **repeat;
-  **id FermionChain( ?vars1, GA(var?), PR, ?vars2 ) = FermionChain( ?vars1, PL, GA(var), ?vars2 );
-  **id FermionChain( ?vars1, GA(var?), PL, ?vars2 ) = FermionChain( ?vars1, PR, GA(var), ?vars2 );
-  **endrepeat;
   
   ***move momentums to right-side of lorentz indices
-    repeat;
+  repeat;
     id FermionChain( ?vars1, GA(mom?ALLMOM), GA(mom?ALLMOM), ?vars2 ) = FermionChain(?vars1,?vars2)*SP(mom,mom);
     id SP(mom?NULL,mom?NULL) = 0;
   
     id FermionChain( ?vars1, GA(rho?ALLLOR), GA(rho?ALLLOR), ?vars2 ) = FermionChain(?vars1,?vars2)*diim;
   
     id FermionChain( ?vars1, GA(mom?), GA(rho?ALLLOR), ?vars2 )
-      = 2*FV(mom,rho)*FermionChain(?vars1,?vars2)-FermionChain( ?vars1, GA(rho), GA(mom), ?vars2 );
-    id FV(mom?,rho?ALLLOR)*FermionChain(?vars1,GA(rho?ALLLOR),?vars2) = FermionChain(?vars1,GA(mom),?vars2);
-    endrepeat;
-  
+      = 2*FV(mom,rho)*FermionChain(?vars1,?vars2)
+       - FermionChain( ?vars1, GA(rho), GA(mom), ?vars2 );
+    id FV(mom?,rho?ALLLOR)*FermionChain(?vars1,GA(rho?ALLLOR),?vars2) 
+      = FermionChain(?vars1,GA(mom),?vars2);
   endrepeat;
   .sort
-  
-  
+
+
+  ***
+  *** Contract dummy indices in single fermion chain.
+  ***
+  repeat;
+    id FermionChain( ?vars1, GA(rho?ALLLOR), GA(rho?ALLLOR), ?vars2 )
+      = diim*FermionChain(?vars1,?vars2);
+
+    id FermionChain( ?vars1, GA(rho2?ALLLOR), GA(rho1?), GA(rho2?ALLLOR), ?vars2 )
+      = (2-diim)*FermionChain( ?vars1, GA(rho1), ?vars2 );
+
+    id FermionChain( ?vars1, GA(rho?ALLLOR), GA(rho1?ALLLOR), GA(rho2?ALLLOR), GA(rho?ALLLOR), ?vars2 )
+      = 4*LMT(rho1,rho2)*FermionChain( ?vars1, ?vars2 )
+       + (diim-4)*FermionChain( ?vars1, GA(rho1), GA(rho2), ?vars2 );
+
+    id LMT(rho1?,rho2?)*FermionChain( ?vars1, GA(rho2?), ?vars2 ) = FermionChain( ?vars1, GA(rho1), ?vars2 );
+
+    id FermionChain( ?vars1, GA(rho?ALLLOR), GA(rho1?), GA(rho2?), GA(rho3?), GA(rho?ALLLOR), ?vars2 )
+      = -2*FermionChain( ?vars1, GA(rho3), GA(rho2), GA(rho1), ?vars2 )
+       + (4-diim)*FermionChain( ?vars1, GA(rho1), GA(rho2), GA(rho3), ?vars2 );
+
+    id FermionChain( ?vars1, GA(rho?ALLLOR), GA(rho1?), GA(rho2?), GA(rho3?), GA(rho4?), GA(rho?ALLLOR), ?vars2 )
+      = 2*FermionChain( ?vars1, GA(rho2), GA(rho3), GA(rho4), GA(rho1), ?vars2 )
+       + 2*FermionChain( ?vars1, GA(rho1), GA(rho4), GA(rho3), GA(rho2), ?vars2 )
+       + (diim-4)*FermionChain( ?vars1, GA(rho1), GA(rho2), GA(rho3), GA(rho4), ?vars2 );
+  endrepeat;
+  .sort
   
   *
   * Substitute dummy indices (except epMU) using system Nm_?, and look for largest number of dummy index Nm_? by iterating over each term
@@ -609,12 +615,12 @@ function make_contractor_script()::String
   endrepeat;
   .sort
   *
-  * Replace system dummy indices Nm_? by our dummy indices dummyMU in case to read back to GiNaC.
+  * Replace system dummy indices Nm_? by our dummy indices dum in case to read back to GiNaC.
   * We assume this should give the canonical form of FermionChain, 
   *   since it seems dummy indices Nm_? can make canonical form of an expression automatically.
   *
   #do MUIDX = 1, 20, 1
-    Multiply replace_(N`MUIDX'_?,dummyMU`MUIDX');
+    Multiply replace_(N`MUIDX'_?,dum`MUIDX');
   #enddo
   .sort
   
@@ -740,8 +746,8 @@ function make_contractor_script()::String
   * FeynCalc has definition GA[6]=(1+GA[5])/2, GA[7]=(1-GA[5])/2
   * FORM has a little different g_(6)=1+g_(5), g_(7)=1-g_(5)
   * According to textbooks (Peskin's QFT etc.) PL=GA(7), PR=GA(6)
-  * PR-->tagJ, (1+GA(5))/2, GA(6)
-  * PL-->tagF, (1-GA(5))/2, GA(7)
+  * PR-->tagJ, (1+GA5)/2, GA(6)
+  * PL-->tagF, (1-GA5)/2, GA(7)
   * Same as definition in FeynCalc
   *
   ***id PR(spa1?,spa2?) = GA(spa1,spa2,6);
@@ -907,8 +913,8 @@ function make_contractor_script()::String
   * FeynCalc has definition GA[6]=(1+GA[5])/2, GA[7]=(1-GA[5])/2
   * FORM has a little different g_(6)=1+g_(5), g_(7)=1-g_(5)
   * According to textbooks (Peskin's QFT etc.) PL=GA(7), PR=GA(6)
-  * PR-->tagJ, (1+GA(5))/2, GA(6)
-  * PL-->tagF, (1-GA(5))/2, GA(7)
+  * PR-->tagJ, (1+GA5)/2, GA(6)
+  * PL-->tagF, (1-GA5)/2, GA(7)
   * Same as definition in FeynCalc
   *
   ***id PR(spa1?,spa2?) = GA(spa1,spa2,6);
@@ -1242,7 +1248,8 @@ function make_amp_contraction_script(
 )::String
 ##############################################################################
 
-  symbol_str_list = filter( s->(s[1:2]=="gc"||s[1:1]=="m")&&s[1:2]!="mu", map(string,free_symbols(expr)) )
+  symbol_list = free_symbols(expr)
+  symbol_str_list = filter( s->(s[1:2]=="gc"||s[1:1]=="m")&&s[1:2]!="mu", string.(symbol_list) )
 
   result_str = """
   #-
@@ -1280,38 +1287,40 @@ function make_amp_contraction_script(
   
   id FV(mom?,rho?)*VecEpsilon?{VecEp,VecEpC}(int?,rho?,mom?,ref?,mass?) = 0;
   .sort
+
+  ***repeat;
+  ***  id FV(mom?,rho?)*FermionChain(?vars1, GA(rho?), ?vars2 ) = FermionChain(?vars1, GA(mom), ?vars2 );
+  ***  id LMT(rho1?,rho2?)*FV(mom?,rho1?) = FV(mom,rho2);
+  ***  id FV(mom1?,rho?)*FV(mom2?,rho?) = SP(mom1,mom2);
+  ***endrepeat;
+  ***.sort
   
   while( match(FermionChain(?vars1,GA(rho?NonEPMU\$LORENTZ),?vars2)) );
     sum \$LORENTZ;
   endwhile;
   .sort
   *
-  * Replace system dummy indices Nm_? by our dummy indices dummyMU in case to read back to GiNaC.
+  * Replace system dummy indices Nm_? by our dummy indices dum in case to read back to GiNaC.
   * We assume this should give the canonical form of FermionChain, 
   *   since it seems dummy indices Nm_? can make canonical form of an expression automatically.
   *
 
-  bracket FermionChain, FV, SP, LMT, $(join(symbol_str_list,", ")), im;
-  .sort
-  collect Coeff;
+  
+  repeat;
+  if( match( SP(mom1?{q1,q2,q3,q4}\$MOM1,mom2?\$MOM2) ) );
+    id once SP(\$MOM1,\$MOM2) = FV(\$MOM1,rho101)*FV(\$MOM2,rho102)*LMT(rho101,rho102);
+    sum rho101, rho102;
+  endif;
+  endrepeat; 
   .sort
   
-  ***repeat;
-  ***if( match( SP(mom1?{q1,q2,q3,q4}\$MOM1,mom2?\$MOM2) ) );
-  ***  id once SP(\$MOM1,\$MOM2) = FV(\$MOM1,rho1)*FV(\$MOM2,rho2)*LMT(rho1,rho2);
-  ***  sum rho1;
-  ***  sum rho2;
-  ***endif;
-  ***endrepeat; 
-  ***.sort
-  
-  ***repeat;
-  ***  id once FermionChain(?vars1, GA(mom?), ?vars2 ) = FV(mom,rho100)*FermionChain(?vars1, GA(rho100), ?vars2 );
-  ***  sum rho100;
-  ***endrepeat;
+  repeat;
+    id once FermionChain(?vars1, GA(mom?), ?vars2 ) = FV(mom,rho100)*FermionChain(?vars1, GA(rho100), ?vars2 );
+    sum rho100;
+  endrepeat;
   
   #do MUIDX = 1, 20, 1
-    Multiply replace_(N`MUIDX'_?,dummyMU`MUIDX');
+    Multiply replace_(N`MUIDX'_?,dum`MUIDX');
   #enddo
   .sort
   
@@ -1319,6 +1328,10 @@ function make_amp_contraction_script(
   id SP(rho1?,rho2?) = SP(rho1,rho2);
   .sort
 
+  bracket FermionChain, FV, SP, LMT, VecEp, VecEpC, $(join(symbol_str_list,", ")), im;
+  .sort
+  collect Coeff;
+  .sort
 
   
   #write <$(file_name).out> "%E", expression
@@ -1394,7 +1407,7 @@ function make_amp_contraction_noexpand_script( expr::Basic, file_name::String ):
   endwhile;
   .sort
   *
-  * Replace system dummy indices Nm_? by our dummy indices dummyMU in case to read back to GiNaC.
+  * Replace system dummy indices Nm_? by our dummy indices dum in case to read back to GiNaC.
   * We assume this should give the canonical form of FermionChain, 
   *   since it seems dummy indices Nm_? can make canonical form of an expression automatically.
   *
@@ -1410,7 +1423,7 @@ function make_amp_contraction_noexpand_script( expr::Basic, file_name::String ):
   
   
   #do MUIDX = 1, 20, 1
-    Multiply replace_(N`MUIDX'_?,dummyMU`MUIDX');
+    Multiply replace_(N`MUIDX'_?,dum`MUIDX');
   #enddo
   .sort
   

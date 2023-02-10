@@ -415,7 +415,7 @@ function generate_kin_relation_v2(
     push!( kin_relation, make_SP(mom[1],mom[2]) => half*( mass2[3] - mass2[1] - mass2[2] ) )
   elseif n_inc == 1 && n_out == 2
     push!( kin_relation, make_SP(mom[1],mom[2]) => half*( mass2[1] + mass2[2] - mass2[3] ) )
-  elseif n_inc == 2 && n_out == 2
+  elseif n_inc == 2 && n_out >= 2
     push!( kin_relation, make_SP(mom[1],mom[2]) => half*( shat - mass2[1] - mass2[2] ) )
   end # if
   #------------

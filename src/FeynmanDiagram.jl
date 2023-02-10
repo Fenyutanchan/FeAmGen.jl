@@ -1279,11 +1279,15 @@ function check_consistency(
     Local expression = $(diff);
     .sort
 
-    ***repeat;
-    ***  id FermionChain( ?vars1, GA(mom?), ?vars2 ) = FermionChain( ?vars1, GA(rho), ?vars2 )*FV(mom,rho);
-    ***  sum rho;
-    ***endrepeat;
-    ***.sort
+
+    repeat;
+      id FermionChain( ?vars1, GA(mom?), ?vars2 ) = FermionChain( ?vars1, GA(rho), ?vars2 )*FV(mom,rho);
+      sum rho;
+    endrepeat;
+    .sort
+
+    id Coeff(expr?) = expr;
+    .sort
 
     argument;
       id q1 = $(q1_val);
@@ -1336,7 +1340,6 @@ function check_consistency(
     endrepeat;
     .sort
     
-    
     #call SimpleOrdering();
     .sort
 
@@ -1359,7 +1362,10 @@ function check_consistency(
 
     close( file )
 
+    cost_time = @elapsed begin
     run( pipeline( `tform -w$(Threads.nthreads()) $(file_name).frm`, "$(file_name).log" ) )
+    end # cost_time
+    println( "<Lorentz #$(lorentz_index) repeat #$(repeat): $(cost_time) sec>" )
 
     file = open( "$(file_name).out", "r" )
     result_str = read( file, String )
@@ -1514,13 +1520,19 @@ function write_out_amplitude(
     "    $(one_color); \n" )
   end # for ii
 
+  amp_lorentz_str_list = Vector{String}()
   write( amp_file, 
     "Lorentz Factors: \n" )
   for ii in 1:length(amp_lorentz_list)
     one_val = amp_lorentz_list[ii]
+    amp_str = (string∘expand)(one_val/couplingfactor)
+    amp_str = replace( amp_str, "Coeff" => "" )
+    amp_str = replace( amp_str, r"\s"=>"" )
+    push!( amp_lorentz_str_list, amp_str )
+
     write( amp_file, 
     "  amp_lorentz #$(ii): \n"* 
-    "    $( expand(one_val/couplingfactor) ); \n" )
+    "    $(amp_str); \n" )
   end # for ii
 
   write( amp_file, 
@@ -1550,7 +1562,7 @@ function write_out_amplitude(
     write( file, "baseINC_script_str", baseINC_script_str )
     write( file, "model_parameter_dict", convert_to_String_dict(parameter_dict) ) 
     write( file, "amp_color_list",  string.(amp_color_list) )
-    write( file, "amp_lorentz_list",  string.(amp_lorentz_list) )
+    write( file, "amp_lorentz_list",  amp_lorentz_str_list )
   end # file
 
   return nothing
@@ -1666,15 +1678,18 @@ function is_null_graph(
   n_loop = one_graph.property[:n_loop]
 
   qi_list = [ Basic("q$(index)") for index in 1:n_loop ]
+  qi_vanish_map = Dict{Basic,Basic}( qi_list .=> zero(Basic) )
 
   loop_mom_list = Vector{Basic}()
   loop_mass_list = Vector{Basic}()
+  loop_ext_mom_list = Vector{Basic}()
   for one_edge in one_graph.edge_list
     if one_edge.property[:style] != "Loop" 
       continue
     end # if
     push!( loop_mom_list, one_edge.property[:momentum] )
     push!( loop_mass_list, one_edge.property[:particle].mass )
+    push!( loop_ext_mom_list, subs( one_edge.property[:momentum], qi_vanish_map... ) )
   end # for one_edge
 
   for n_sub in 1:n_loop
@@ -1685,6 +1700,9 @@ function is_null_graph(
       sub_qi_mom_pos_list = findall( mom->has_qi(mom,sub_qi_list), loop_mom_list )
       # check if these above propagators has mass, i.e. scale
       if any( !iszero, loop_mass_list[sub_qi_mom_pos_list] )
+        continue
+      end # if
+      if any( !iszero, loop_ext_mom_list[sub_qi_mom_pos_list] )
         continue
       end # if
       # check if these above propagators has other qi from remnant_qi_list
@@ -1859,7 +1877,7 @@ function generate_amplitude(
       check_consistency( n_loop, graph_index, amp_lorentz_list, amp_lorentz_noexpand_list, ext_mom_list, baseINC_script_str )
     end # if
 
-  end # for g
+  end # for graph_index
   now()
 
 

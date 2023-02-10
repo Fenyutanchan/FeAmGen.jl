@@ -168,6 +168,7 @@ function generate_integral(
 
   file = open( "$(file_name).out", "r" )
   result_str = read( file, String ) 
+  result_str = replace( result_str, "Coeff" => "" )
   close( file )
 
   # remove intermediate files
