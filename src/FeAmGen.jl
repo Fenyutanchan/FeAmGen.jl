@@ -30,10 +30,8 @@ using JLD2
 using Pipe
 
 export digest_seed_proc, generate_amp, generate_integral, generate_multi_yaml, generate_shiftUP_yaml
-export generate_SPcombo, box_message
 
 include("Graph.jl")
-include("Message.jl")
 include("Universe.jl")
 include("SimpleDigest.jl")
 include("Digest.jl")
