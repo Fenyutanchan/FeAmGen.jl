@@ -1562,6 +1562,74 @@ function write_out_amplitude(
 
 end # function write_out_amplitude
 
+
+
+
+#######################################
+function write_out_tikz_feynman_sty(
+    dir::String
+)::Nothing
+#######################################
+
+  file = open( "$dir/tikz-feynman.sty", "w" )
+  write( file, """
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  %
+  % TikZ-Feynman
+  % Feynman Diagrams with TikZ
+  % Copyright (C) 2015  Joshua Ellis
+  %
+  %
+  % This work may be distributed and/or modified under the conditions of the LaTeX
+  % Project Public License, either version 1.3 of this license or (at your option)
+  % any later version.
+  %
+  % This work has the LPPL maintenance status `maintained'.
+  %
+  % The Current Maintainer of this work is Joshua Ellis.
+  %
+  % This program is distributed in the hope that it will be useful, but WITHOUT
+  % ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+  % FOR A PARTICULAR PURPOSE.  See the LaTeX Project Public License for more
+  % details.
+  %
+  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  
+  \\def\\tikzfeynman@date{2016/02/05}
+  \\def\\tikzfeynman@version@major{1}
+  \\def\\tikzfeynman@version@minor{1}
+  \\def\\tikzfeynman@version@patch{0}
+  \\edef\\tikzfeynman@version{\\tikzfeynman@version@major.\\tikzfeynman@version@minor.\\tikzfeynman@version@patch}
+  
+  \\ProvidesPackage{tikz-feynman}[\\tikzfeynman@date v\\tikzfeynman@version Feynman diagrams with TikZ]
+  
+  \\RequirePackage{tikz}[2013/12/13] % v3.0.0
+  \\RequirePackage{ifluatex}
+  \\RequirePackage{pgfopts}
+  
+  \\usetikzlibrary{feynman}
+  
+  \\endinput
+  
+  % Local Variables:
+  % TeX-master: "tikz-feynman"
+  % End:
+  """ )
+  close( file )
+
+  return nothing
+
+end # function write_out_tikz_feynman_sty
+
+
+
+
+
+
+
+
+
+
 #########################################################################
 """
     write_out_visual_graph( 
@@ -1803,11 +1871,7 @@ function generate_amplitude(
   close(file)
 
   bk_mkdir( "$(proc_str)_visuals" )
-  if isfile( "$(root_dir())/tikz-feynman.sty" )
-    cp( "$(root_dir())/tikz-feynman.sty", "$(proc_str)_visuals/tikz-feynman.sty" )
-  else
-    error( "Can not find tikz_feynman.sty in $(root_dir())" )
-  end # if
+  write_out_tikz_feynman_sty( "$(proc_str)_visuals" )
 
   bk_mkdir( "$(proc_str)_amplitudes" )
 

@@ -165,7 +165,7 @@ end # function generate_color_lorentz_couplings
 
 Read-in the model detail from python model file.
 In this seed program, we only need particle list.
-The directory of model files are supposed in `(dirname∘dirname∘pathof∘Base.moduleroot)(FeAmGen)*"/Models"`.
+The directory of model files are supposed in ".".
 """
 function readin_model( input::Dict{Any,Any} )::Model
 #############################################################
@@ -174,8 +174,8 @@ function readin_model( input::Dict{Any,Any} )::Model
 
   # append the path that python can find the model files
   sys = pyimport( "sys" )
-  @assert isfile( (dirname∘dirname∘pathof∘Base.moduleroot)(FeAmGen)*"/Models/"*model_name*"/object_library.py" )
-  push!( sys."path", (dirname∘dirname∘pathof∘Base.moduleroot)(FeAmGen)*"/Models" )
+  @assert isfile( "./$(model_name)/object_library.py" )
+  push!( sys."path", "." )
 
   # For example sm.object_library include the basic structure of this model
   py_model = pyimport( model_name*".object_library" )

@@ -5,7 +5,7 @@
 
 Read-in the card for seed process, and write-out the cards for the relevant specific processes.
 This function is one of the front-end functions in FeAmGen.jl.
-The directory of model files are supposed in `(dirname∘dirname∘pathof∘Base.moduleroot)(FeAmGen)*"/Models"`.
+The directory of model files are supposed in ".".
 """
 function digest_seed_proc( seed_file::String )::Nothing
 ##########################################################################
