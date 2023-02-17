@@ -126,6 +126,7 @@ function generate_Feynman_diagram( model::Model, input::Dict{Any,Any} )
   @assert isfile( "qgraf_out.dat" )
 
   rm( "qgraf.dat" )
+  rm( "qgraf.log" )
   rm( "model.qgraf" )
   rm( "miracle.sty" )
 
@@ -170,11 +171,11 @@ function get_incoming_couplings_lorentz_list( part::Particle, mark::Int64, momen
 ###########################################################################################################
 
   if part.spin == :fermion && part.kf > 0 
-    return [ Basic(" SpU( $mark, spb$mark, $momentum, r$mark, $(part.mass) ) ") ]
+    return [ Basic(" SpU( $mark, spb$mark, $momentum, $(part.mass) ) ") ]
   elseif part.spin == :fermion && part.kf < 0
-    return [ Basic(" SpVB( $mark, spb$mark, $momentum, r$mark, $(part.mass) ) ") ]
+    return [ Basic(" SpVB( $mark, spb$mark, $momentum, $(part.mass) ) ") ]
   elseif part.spin == :vector
-    return [ Basic(" VecEp( $mark, mub$mark, $momentum, r$mark, $(part.mass) ) ") ]
+    return [ Basic(" VecEp( $mark, mub$mark, $momentum, $(part.mass) ) ") ]
   elseif part.spin == :scalar
     return [ Basic("1") ]
   else
@@ -194,11 +195,11 @@ function get_outgoing_couplings_lorentz_list( part::Particle, mark::Int64, momen
 ###########################################################################################################
 
   if part.spin == :fermion && part.kf > 0
-    return [ Basic(" SpUB( $mark, spa$mark, $momentum, r$mark, $(part.mass) ) ") ]
+    return [ Basic(" SpUB( $mark, spa$mark, $momentum, $(part.mass) ) ") ]
   elseif part.spin == :fermion && part.kf < 0
-    return [ Basic(" SpV( $mark, spa$mark, $momentum, r$mark, $(part.mass) ) ") ]
+    return [ Basic(" SpV( $mark, spa$mark, $momentum, $(part.mass) ) ") ]
   elseif part.spin == :vector
-    return [ Basic(" VecEpC( $mark, mua$mark, $momentum, r$mark, $(part.mass) ) ") ]
+    return [ Basic(" VecEpC( $mark, mua$mark, $momentum, $(part.mass) ) ") ]
   elseif part.spin == :scalar
     return [ Basic("1") ]
   else
@@ -791,7 +792,6 @@ function convert_qgraf_TO_Graph(
         :style => "External",
         :propagator_index => one_inc["field_index"],
         :momentum => momentum,
-        :ref2_MOM => Basic("r$mark"),
         :null_MOM => Basic("k$mark"),
         :birth_LORENTZ => Basic("mua$mark"), 
         :birth_COLOR => Basic("cla$mark"), 
@@ -823,7 +823,6 @@ function convert_qgraf_TO_Graph(
         :style => "External",
         :propagator_index => one_out["field_index"],
         :momentum => momentum,
-        :ref2_MOM => Basic("r$mark"),
         :null_MOM => Basic("k$mark"),
         :birth_LORENTZ => Basic("mua$mark"), 
         :birth_COLOR => Basic("cla$mark"), 
@@ -870,7 +869,6 @@ function convert_qgraf_TO_Graph(
       :style => style_str,
       :propagator_index => one_rem["propagator_index"], 
       :momentum => momentum,
-      :ref2_MOM => Basic("0"),
       :null_MOM => Basic("0"),
       :birth_LORENTZ => Basic("mua$mark"), 
       :birth_COLOR => Basic("cla$mark"), 
@@ -1057,7 +1055,7 @@ function factor_out_loop_den(
 
   @funs Den
 
-  loop_edge_list = filter( e_ -> e_.property[:style] == "Loop", g.edge_list )
+  loop_edge_list = filter( x -> x.property[:style] == "Loop", g.edge_list )
 
   den_prod = Basic(1)
   width_den_prod = Basic(1)
@@ -1333,8 +1331,8 @@ function check_consistency(
       id LMT(rho1?,rho2?)*FermionChain(?vars1,GA(rho2?),?vars2) = FermionChain(?vars1,GA(rho1),?vars2);
       id FV(mom1?,rho?)*FV(mom2?,rho?) = SP(mom1,mom2);
       id SP(mom?NULL,mom?NULL) = 0;
-      id FermionChain(?vars,GA(mom?NULL),Spinor?{U,V}(int?,mom?NULL,ref?,0)) = 0;
-      id FermionChain(Spinor?{UB,VB}(int?,mom?NULL,ref?,0),GA?{PL,PR},GA(mom?NULL),?vars) = 0;
+      id FermionChain(?vars,GA(mom?NULL),Spinor?{U,V}(int?,mom?NULL,0)) = 0;
+      id FermionChain(Spinor?{UB,VB}(int?,mom?NULL,0),GA?{PL,PR},GA(mom?NULL),?vars) = 0;
       id FermionChain(?vars1,GA(mom?NULL),GA(mom?NULL),?vars2) = 0;
       id FermionChain(?vars1,GA(rho?ALLLOR),GA(rho?ALLLOR),?vars2) = diim*FermionChain(?vars1,?vars2);
     endrepeat;
@@ -1456,15 +1454,13 @@ end # function simplify_color_factors
         ext_mom_list::Vector{Basic}, 
         scale2_list::Vector{Basic}, 
         kin_relation::Dict{Basic,Basic}, 
-        baseINC_script_str::String, 
         amp_color_list::Vector{Basic}, 
-        amp_lorentz_list::Vector{Basic}, 
+        amp_lorentz_noexpand_list::Vector{Basic}, 
         loop_den_list::Vector{Basic}, 
         loop_den_xpt_list::Vector{Int64}, 
         min_ep_xpt::Int64, 
         max_ep_xpt::Int64, 
-        proc_str::String, 
-        the_lock::ReentrantLock )::Nothing
+        proc_str::String )::Nothing
 
 Write out the amplitude information into the file that can be read easily.
 """
@@ -1476,15 +1472,13 @@ function write_out_amplitude(
     ext_mom_list::Vector{Basic}, 
     scale2_list::Vector{Basic}, 
     kin_relation::Dict{Basic,Basic}, 
-    baseINC_script_str::String, 
     amp_color_list::Vector{Basic}, 
-    amp_lorentz_list::Vector{Basic}, 
+    amp_lorentz_noexpand_list::Vector{Basic}, 
     loop_den_list::Vector{Basic}, 
     loop_den_xpt_list::Vector{Int64},
     min_ep_xpt::Int64, 
     max_ep_xpt::Int64, 
-    proc_str::String, 
-    the_lock::ReentrantLock 
+    proc_str::String
 )::Nothing
 ###########################################################################################################
 
@@ -1523,8 +1517,8 @@ function write_out_amplitude(
   amp_lorentz_str_list = Vector{String}()
   write( amp_file, 
     "Lorentz Factors: \n" )
-  for ii in 1:length(amp_lorentz_list)
-    one_val = amp_lorentz_list[ii]
+  for ii in 1:length(amp_lorentz_noexpand_list)
+    one_val = amp_lorentz_noexpand_list[ii]
     amp_str = (string∘expand)(one_val/couplingfactor)
     amp_str = replace( amp_str, "Coeff" => "" )
     amp_str = replace( amp_str, r"\s"=>"" )
@@ -1559,7 +1553,6 @@ function write_out_amplitude(
     write( file, "loop_den_list",  string.(loop_den_list) )
     write( file, "loop_den_xpt_list", loop_den_xpt_list )
     write( file, "kin_relation", to_String_dict(kin_relation) )
-    write( file, "baseINC_script_str", baseINC_script_str )
     write( file, "model_parameter_dict", to_String_dict(parameter_dict) ) 
     write( file, "amp_color_list",  string.(amp_color_list) )
     write( file, "amp_lorentz_list",  amp_lorentz_str_list )
@@ -1643,10 +1636,10 @@ function write_out_visual_graph(
   n_color = length(color_list)
   for color_index ∈ 1:n_color
   write( expression_file, """
-  (* color factor \\#$(color_index): *)
+  (* color factor #$(color_index): *)
   $(color_list[color_index])
   
-  (* color factor coefficient \\#$(color_index): *)
+  (* color factor coefficient #$(color_index): *)
   
   $(lorentz_list[color_index])
   """ )
@@ -1769,6 +1762,7 @@ function generate_amplitude(
   couplingfactor = Basic(input["couplingfactor"]) 
 
   qgraf_out = YAML.load_file( "qgraf_out.dat" )
+  rm( "qgraf_out.dat" )
 
   qgraf_list = qgraf_out["FeynmanDiagrams"]
 
@@ -1779,24 +1773,16 @@ function generate_amplitude(
                convert( Array{Graph,1}, _ ) |>
                filter( !isnothing, _ ) |>
                sort( _, by= g->g.property[:diagram_index] )
-###------------------------------------------------  
-##null_graph_list = filter( is_null_graph, graph_list )
-##@show map( g->g.property[:diagram_index], null_graph_list ) 
-###------------------------------------------------  
-##not_null_graph_list = filter( !is_null_graph, graph_list )
-##@show map( g->g.property[:diagram_index], not_null_graph_list ) 
   #------------------------------------------------  
   graph_list = filter( !is_null_graph, graph_list )
   #------------------------------------------------  
 
 
   #------------------------------------------------  
-  # Generate Gauge choice
-  gauge_choice = generate_gauge_choice( graph_list )
   # Generate kinematics relation
   kin_relation = generate_kin_relation( graph_list )
   file = open( "kin_relation.frm", "w" )
-  write( file, (join∘map)( ele_->"id $(ele_[1]) = $(ele_[2]);\n", collect(kin_relation) ) )
+  write( file, (join∘map)( x->"id $(x[1]) = $(x[2]);\n", collect(kin_relation) ) )
   close(file)
 
   ext_mom_list  = generate_ext_mom_list( graph_list )
@@ -1816,73 +1802,109 @@ function generate_amplitude(
   write( file, make_color_script() )
   close(file)
 
-  # baseINC only needs information from the external fields.
-  file = open( "baseINC.frm", "w" )
-  baseINC_script_str = make_baseINC_script( first(graph_list), gauge_choice )
-  write( file, baseINC_script_str )
-  close(file)
-
-  if isdir( "$(proc_str)_visuals" )
-    mv( "$(proc_str)_visuals", "$(proc_str)_visuals_$(now())" )
-  end # if
-  mkdir( "$(proc_str)_visuals" )
-  root_dir = (dirname∘dirname∘pathof∘Base.moduleroot)(FeAmGen)
-  if isfile( "$(root_dir)/tikz-feynman.sty" )
-    cp( "$(root_dir)/tikz-feynman.sty", "$(proc_str)_visuals/tikz-feynman.sty" )
+  bk_mkdir( "$(proc_str)_visuals" )
+  if isfile( "$(root_dir())/tikz-feynman.sty" )
+    cp( "$(root_dir())/tikz-feynman.sty", "$(proc_str)_visuals/tikz-feynman.sty" )
   else
-    error( "Can not find tikz_feynman.sty in $(root_dir)" )
+    error( "Can not find tikz_feynman.sty in $(root_dir())" )
   end # if
 
-  if isdir( "$(proc_str)_amplitudes" )
-    mv( "$(proc_str)_amplitudes", "$(proc_str)_amplitudes_$(now())" )
-  end # if
-  mkdir( "$(proc_str)_amplitudes" )
+  bk_mkdir( "$(proc_str)_amplitudes" )
 
-  the_lock = ReentrantLock()
+  @vars cf, ca
 
-  now()
-  #Threads.@threads for g in graph_list
+  #-----------------------------------
+  null_graph_index_list = Vector{Int64}()
+  trace5_graph_index_list = Vector{Int64}()
   for graph_index in 1:length(graph_list)
     g = graph_list[graph_index]
-    #diagram_index = g.property[:diagram_index]
     box_message( "Working on diagram #$(graph_index) ($(length(graph_list)))", color=:light_green )
 
     scale2_list = generate_scale2_list( g, kin_relation )
 
-    amp_color_list, amp_lorentz_list = assemble_amplitude( g )
+    color_list, lorentz_list = assemble_amplitude( g )
 
-    amp_color_list = simplify_color_factors( g, graph_index, amp_color_list )
-    nonzero_pos_list = findall( !iszero, amp_color_list )
-    amp_color_list = amp_color_list[nonzero_pos_list]
+    color_list = simplify_color_factors( g, graph_index, color_list )
+    color_list = map( x->subs(x,cf=>4//3,ca=>3), color_list ) #----
+    nonzero_pos_list = findall( !iszero, color_list )
+    color_list = color_list[nonzero_pos_list]
 
-    amp_lorentz_list_pre, loop_den_list, loop_den_xpt_list = factor_out_loop_den( g, amp_lorentz_list )
-    amp_lorentz_list_pre = amp_lorentz_list_pre[nonzero_pos_list]
+    lorentz_list_pre, loop_den_list, loop_den_xpt_list = factor_out_loop_den( g, lorentz_list )
+    lorentz_list_pre = lorentz_list_pre[nonzero_pos_list]
 
-    amp_lorentz_list = contract_Dirac_indices( g, graph_index, amp_lorentz_list_pre )
-    amp_lorentz_noexpand_list = contract_Dirac_indices_noexpand( g, graph_index, amp_lorentz_list_pre )
+    lorentz_list = contract_Dirac_indices_noexpand( g, graph_index, lorentz_list_pre )
 
+
+    #--------------------
+    union_lorentz_list = union( lorentz_list )
+    union_color_list = zeros( Basic, length(union_lorentz_list) ) 
+    for lorentz_index in 1:length(union_lorentz_list)
+      union_lorentz = union_lorentz_list[lorentz_index]
+      pos_list = findall( ==(union_lorentz), lorentz_list )
+      union_color_list[lorentz_index] = (expand∘sum)( color_list[pos_list] )
+    end # for lorentz_index
+
+    #--------------------
+    for lorentz_index in 1:length(union_lorentz_list)
+      union_lorentz = union_lorentz_list[lorentz_index]
+      coeff_list, remnant_list = (split_coeff∘get_add_vector_expand)(union_lorentz)
+      
+      min_str, min_pos = findmin( gen_sorted_str.(remnant_list) )
+      leading_coeff = coeff_list[min_pos]
+
+      union_lorentz_list[lorentz_index] = expand( union_lorentz//leading_coeff )
+      union_color_list[lorentz_index] = expand( union_color_list[lorentz_index]*leading_coeff )
+    end # for lorentz_index
+
+    #--------------------
+    union2_lorentz_list = union( union_lorentz_list )
+    union2_color_list = zeros( Basic, length(union2_lorentz_list) ) 
+    for lorentz_index in 1:length(union2_lorentz_list)
+      union2_lorentz = union2_lorentz_list[lorentz_index]
+      pos_list = findall( ==(union2_lorentz), union_lorentz_list )
+      union2_color_list[lorentz_index] = (expand∘sum)( union_color_list[pos_list] )
+    end # for lorentz_index
+
+    #--------------------
+    # non-zero color factors and re-alias
+    nonzero_pos_list = findall( !iszero, union2_color_list )
+    lorentz_list = union2_lorentz_list[nonzero_pos_list]
+    color_list = union2_color_list[nonzero_pos_list]
 
     #-------------------------------------------
-    perm = sortperm( amp_color_list, by=gen_sorted_str )
-    amp_color_list = amp_color_list[perm]
-    amp_lorentz_list = amp_lorentz_list[perm]
-    amp_lorentz_noexpand_list = amp_lorentz_noexpand_list[perm]
+    # re-ordering
+    perm = sortperm( color_list, by=gen_sorted_str )
+    color_list = color_list[perm]
+    lorentz_list = lorentz_list[perm]
 
-    write_out_amplitude( n_loop, graph_index, couplingfactor, model.parameter_dict, ext_mom_list, scale2_list, kin_relation, baseINC_script_str, amp_color_list, amp_lorentz_list, loop_den_list, loop_den_xpt_list, input["Amp_Min_Ep_Xpt"], input["Amp_Max_Ep_Xpt"], proc_str, the_lock )
-
-
-    write_out_visual_graph( g, graph_index, model, couplingfactor, amp_color_list, amp_lorentz_noexpand_list, loop_den_list, loop_den_xpt_list, ext_mom_list, scale2_list, proc_str )
-
-    if input["check_consistency"] 
-      check_consistency( n_loop, graph_index, amp_lorentz_list, amp_lorentz_noexpand_list, ext_mom_list, baseINC_script_str )
+    if isempty(lorentz_list) && isempty(color_list)
+      push!( null_graph_index_list, graph_index )
+      continue
     end # if
 
-  end # for graph_index
-  now()
+    trace5_lorentz_list = filter( has_Trace5, lorentz_list )
+    if length(trace5_lorentz_list) == length(lorentz_list)
+      push!( trace5_graph_index_list, graph_index )
+      #println( "trace5_diagram_index: ", graph_index )
+      #println( lorentz_list )
+    end # if
 
+    write_out_amplitude( n_loop, graph_index, couplingfactor, model.parameter_dict, ext_mom_list, scale2_list, kin_relation, color_list, lorentz_list, loop_den_list, loop_den_xpt_list, input["Amp_Min_Ep_Xpt"], input["Amp_Max_Ep_Xpt"], proc_str )
+
+    write_out_visual_graph( g, graph_index, model, couplingfactor, color_list, lorentz_list, loop_den_list, loop_den_xpt_list, ext_mom_list, scale2_list, proc_str )
+
+  ##if input["check_consistency"] 
+  ##  check_consistency( n_loop, graph_index, amp_lorentz_list, amp_lorentz_noexpand_list, ext_mom_list, baseINC_script_str )
+  ##end # if
+
+  end # for graph_index
+
+  box_message( "Found number of null diagrams: $(length(null_graph_index_list))", color=:yellow )
+
+  println( "Indices of diagrams with trace5: $(trace5_graph_index_list)" )
 
   # remove intermediate files
-  rm( "baseINC.frm" )
+  #rm( "baseINC.frm" )
   rm( "contractor.frm" )
   rm( "color.frm" )
   rm( "kin_relation.frm" )

@@ -1,24 +1,33 @@
 
+
+######################################################
+const root_dir()::String = (dirname∘dirname∘pathof∘Base.moduleroot)(FeAmGen)
+######################################################
+
+
+
+######################################################
 """
     const Dict color_dict
 
 Dict( 1=>`:singlet`, 3=>`:triplet`, -3=>`:triplet`, 8=>`:octet` )
 """
 const color_dict = Dict( 1=>:singlet, 3=>:triplet, -3=>:triplet, 8=>:octet )
+######################################################
 """
     const Dict spin_dict
 
 Dict( 1=>`:scalar`, -1=>`:ghost`, 2=>`:fermion`, 3=>`:vector` )
 """
 const spin_dict = Dict( 1=>:scalar, -1=>:ghost, 2=>:fermion, 3=>:vector )
-
-
+######################################################
 """
     charge_convert( model_charge::Float64 )::Rational{Int64} 
 
 Convert the float number of charge in the model file into a rational number, especially the quark charge.
 """
 charge_convert( model_charge::Float64 )::Rational{Int64} = round(Int64,model_charge*3)//3
+######################################################
 
 
 #########################
@@ -356,6 +365,7 @@ function logging_model( model::Model )::Nothing
   return nothing
 
 end # function logging_model
+
 
 
 

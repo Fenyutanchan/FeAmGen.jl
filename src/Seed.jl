@@ -38,23 +38,25 @@ function digest_seed_proc( seed_file::String )::Nothing
 
   #----------------------------------------------------------------------------------------------
   n_inc = length(input["incoming"])
-  proc_list = map( s_ -> filter_charge( s_, n_inc, particle_dict ), proc_list )
+  proc_list = map( x -> filter_charge( x, n_inc, particle_dict ), proc_list )
 
   if input["AllowLeptonNumberViolation"] == false
-    proc_list = map( s_ -> filter_lepton_generations( s_, n_inc, particle_dict ), proc_list )
+    proc_list = map( x -> filter_lepton_generations( x, n_inc, particle_dict ), proc_list )
   end # if
 
   if input["AllowQuarkGenerationViolation"] == false
-    proc_list = map( s_ -> filter_quark_generations( s_, n_inc, particle_dict ), proc_list )
+    proc_list = map( x -> filter_quark_generations( x, n_inc, particle_dict ), proc_list )
   end # if
 
-  proc_list = map( s_ -> sort_proc_str( s_, n_inc ), proc_list )
+  proc_list = map( x -> sort_proc_str( x, n_inc ), proc_list )
 
   proc_set = delete!( Set(proc_list), nothing )
   @info "Filtered subprocesses" 
   for proc_str in proc_set 
     part_str_list = split( proc_str, "," )
-    pretty_str = join( part_str_list[1:n_inc], "," )*" => "*join( part_str_list[n_inc+1:end], "," )
+    inc_str = join( part_str_list[1:n_inc], "," )
+    out_str = join( part_str_list[n_inc+1:end], "," )
+    pretty_str = "$(inc_str) => $(out_str)"
     @info "  "*pretty_str
   end # for proc_str
   #----------------------------------------------------------------------------------------------
