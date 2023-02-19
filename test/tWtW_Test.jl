@@ -1,4 +1,4 @@
-using SymEngine, FeAmGen, Test, YAML, JLD2, Dates, Pipe, Downloads, SHA 
+using Dates, Downloads, FeAmGen, SHA
 
 start = now()
 @info "tWtW_Test starts @ $(start)"

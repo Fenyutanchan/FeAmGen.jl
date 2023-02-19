@@ -1,4 +1,4 @@
-using SymEngine, SymEngineExt, FeAmGen, Test, YAML, JLD2, Dates
+using Dates, FeAmGen, SymEngine, SymEngineExt
 
 @info "AmpRed_Test starts @ $(now())"
 
