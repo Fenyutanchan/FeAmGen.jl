@@ -1,4 +1,4 @@
-using SymEngine, FeAmGen, Test, YAML, JLD2, Dates, Downloads, SHA  
+using Dates, Downloads, FeAmGen, SHA
 
 @info "ggttbar_Test starts @ $(now())"
 
