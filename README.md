@@ -11,7 +11,7 @@
 
 ```julia
 import Pkg
-Pkg.add("https://github.com/zhaoli-IHEP/SymEngineExt.jl.git")
+Pkg.add(url="https://github.com/zhaoli-IHEP/SymEngineExt.jl.git")
 ```
 
 or in the Julia REPL via
@@ -24,13 +24,13 @@ Then install `FeAmGen.jl` via
 
 ```julia
 import Pkg
-Pkg.add("https://github.com/zhaoli-IHEP/FeAmGen.jl.git")
+Pkg.add(url="https://github.com/zhaoli-IHEP/FeAmGen.jl.git")
 ```
 
 or in the Julia REPL via
 
 ```julia-repl
-] add https://github.com/zhaoli-IHEP/FeAmGen.jl.git
+]add https://github.com/zhaoli-IHEP/FeAmGen.jl.git
 ```
 
 ## Usage

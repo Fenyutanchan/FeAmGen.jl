@@ -1,7 +1,7 @@
 name = "FeAmGen"
 uuid = "92bc0bee-949a-4e30-bda4-7bc0a90d92b9"
 authors = ["zhaoli-IHEP <zhaoli@ihep.ac.cn>"]
-version = "0.1.0"
+version = "1.0.0"
 
 [deps]
 Combinatorics = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
