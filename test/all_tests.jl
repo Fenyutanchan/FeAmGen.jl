@@ -1,3 +1,4 @@
+include("bootstrap_env.jl")
 
 include("basicTest.jl")
 
