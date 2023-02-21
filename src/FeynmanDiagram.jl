@@ -1454,6 +1454,7 @@ end # function simplify_color_factors
         ext_mom_list::Vector{Basic}, 
         scale2_list::Vector{Basic}, 
         kin_relation::Dict{Basic,Basic}, 
+        baseINC_script_str::String, 
         amp_color_list::Vector{Basic}, 
         amp_lorentz_noexpand_list::Vector{Basic}, 
         loop_den_list::Vector{Basic}, 
@@ -1472,6 +1473,7 @@ function write_out_amplitude(
     ext_mom_list::Vector{Basic}, 
     scale2_list::Vector{Basic}, 
     kin_relation::Dict{Basic,Basic}, 
+    baseINC_script_str::String, 
     amp_color_list::Vector{Basic}, 
     amp_lorentz_noexpand_list::Vector{Basic}, 
     loop_den_list::Vector{Basic}, 
@@ -1553,6 +1555,7 @@ function write_out_amplitude(
     write( file, "loop_den_list",  string.(loop_den_list) )
     write( file, "loop_den_xpt_list", loop_den_xpt_list )
     write( file, "kin_relation", to_String_dict(kin_relation) )
+    write( file, "baseINC_script_str", baseINC_script_str )
     write( file, "model_parameter_dict", to_String_dict(parameter_dict) ) 
     write( file, "amp_color_list",  string.(amp_color_list) )
     write( file, "amp_lorentz_list",  amp_lorentz_str_list )
@@ -1814,7 +1817,10 @@ end # function has_qi
 
 ##########################################################################
 """
-    generate_amplitude( model::Model, input::Dict{Any,Any} )::Nothing
+    generate_amplitude( 
+        model::Model, 
+        input::Dict{Any,Any} 
+    )::Nothing
 
 Generate amplitudes after `model` has been prepared.
 """
@@ -1876,6 +1882,10 @@ function generate_amplitude(
   bk_mkdir( "$(proc_str)_amplitudes" )
 
   @vars cf, ca
+
+  # baseINC only needs information from the external fields.
+  baseINC_script_str = make_baseINC_script( first(graph_list) )
+
 
   #-----------------------------------
   null_graph_index_list = Vector{Int64}()
@@ -1953,13 +1963,9 @@ function generate_amplitude(
       #println( lorentz_list )
     end # if
 
-    write_out_amplitude( n_loop, graph_index, couplingfactor, model.parameter_dict, ext_mom_list, scale2_list, kin_relation, color_list, lorentz_list, loop_den_list, loop_den_xpt_list, input["Amp_Min_Ep_Xpt"], input["Amp_Max_Ep_Xpt"], proc_str )
+    write_out_amplitude( n_loop, graph_index, couplingfactor, model.parameter_dict, ext_mom_list, scale2_list, kin_relation, baseINC_script_str, color_list, lorentz_list, loop_den_list, loop_den_xpt_list, input["Amp_Min_Ep_Xpt"], input["Amp_Max_Ep_Xpt"], proc_str )
 
     write_out_visual_graph( g, graph_index, model, couplingfactor, color_list, lorentz_list, loop_den_list, loop_den_xpt_list, ext_mom_list, scale2_list, proc_str )
-
-  ##if input["check_consistency"] 
-  ##  check_consistency( n_loop, graph_index, amp_lorentz_list, amp_lorentz_noexpand_list, ext_mom_list, baseINC_script_str )
-  ##end # if
 
   end # for graph_index
 
@@ -1968,7 +1974,6 @@ function generate_amplitude(
   println( "Indices of diagrams with trace5: $(trace5_graph_index_list)" )
 
   # remove intermediate files
-  #rm( "baseINC.frm" )
   rm( "contractor.frm" )
   rm( "color.frm" )
   rm( "kin_relation.frm" )
