@@ -162,7 +162,11 @@ function generate_integral(
   write( file, make_color_script() )
   close(file)
 
-  run( pipeline( `form $(file_name).frm`, "$(file_name).log" ) )
+  # baseINC only needs information from the external fields.
+  touch( "baseINC.frm" )
+
+  run( pipeline( `$(form()) $(file_name).frm`, "$(file_name).log" ) )
+  #run( pipeline( `form $(file_name).frm`, "$(file_name).log" ) )
   #@info "[ Done FORM script execution ]" script="$(file_name).frm"
 
   file = open( "$(file_name).out", "r" )
