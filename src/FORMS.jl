@@ -1073,14 +1073,14 @@ end # function make_contractor_script
 
 
 
-############################################################################################
+##################################################################
 """
-    make_baseINC_script( graph::Graph, gauge_choice::Dict{Basic,Basic} )::String
+    make_baseINC_script( graph::Graph )::String
 
 Prepare the baseINC script for containing kinematic relations.
 """
-function make_baseINC_script( graph::Graph, gauge_choice::Dict{Basic,Basic} )::String
-############################################################################################
+function make_baseINC_script( graph::Graph )::String
+###################################################################
 
   result_str = string()
 

@@ -84,7 +84,9 @@ function generate_integral(
   ieta_scheme = file_dict["ieta_scheme"]
 
   #-----------------------
-  ver_mass_list = (free_symbols∘vcat)( (collect∘values)(kin_relation), map(d_->get_args(d_)[2],loop_den_list) ) 
+  ver_mass_list = (free_symbols∘vcat)( 
+                      (collect∘values)(kin_relation), 
+                      map(x->get_args(x)[2],loop_den_list) ) 
 
 
 
@@ -163,7 +165,7 @@ function generate_integral(
   # baseINC only needs information from the external fields.
   touch( "baseINC.frm" )
 
-  run( pipeline( `$(form()) $(file_name).frm`, "$(file_name).log" ) )
+  # run( pipeline( `$(form()) $(file_name).frm`, "$(file_name).log" ) )
   # run( pipeline( `form $(file_name).frm`, "$(file_name).log" ) )
   #@info "[ Done FORM script execution ]" script="$(file_name).frm"
 
@@ -173,7 +175,6 @@ function generate_integral(
   close( file )
 
   # remove intermediate files
-  rm( "baseINC.frm" )
   rm( "contractor.frm" )
   rm( "color.frm" )
   rm( "kin_relation.frm" )
