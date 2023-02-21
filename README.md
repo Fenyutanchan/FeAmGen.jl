@@ -3,7 +3,9 @@
 ## Requirement
 
 1. `QGRAF`: [main page](http://cfif.ist.utl.pt/~paulo/qgraf.html).
+    Please install it manually.
 2. `FORM`: [main page](https://www.nikhef.nl/~form/) and [GitHub](https://github.com/vermaseren/form).
+    It can be installed automatically via `JuliaBinaryWrappers/FORM_jll.jl`.
 
 ## Installation
 
