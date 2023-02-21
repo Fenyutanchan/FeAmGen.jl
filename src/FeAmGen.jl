@@ -29,6 +29,8 @@ using Dates
 using JLD2
 using Pipe
 
+using FORM_jll
+
 export digest_seed_proc, generate_amp, generate_integral
 export generate_multi_yaml, generate_shiftUP_yaml
 

@@ -1131,7 +1131,8 @@ function contract_Dirac_indices(
     close(file)
 
     println( "  [ form $(file_name).frm ]" )
-    run( pipeline( `tform -w$(Threads.nthreads()) $(file_name).frm`, "$(file_name).log" ) )
+    run( pipeline( `$(tform()) -w$(Threads.nthreads()) $(file_name).frm`, "$(file_name).log" ) )
+    # run( pipeline( `tform -w$(Threads.nthreads()) $(file_name).frm`, "$(file_name).log" ) )
 
     file = open( "$(file_name).out", "r" )
     result_str = read( file, String )
@@ -1189,7 +1190,8 @@ function contract_Dirac_indices_noexpand(
     close(file)
 
     println( "  [ form $(file_name).frm ]" )
-    run( pipeline( `tform -w$(Threads.nthreads()) $(file_name).frm`, "$(file_name).log" ) )
+    run( pipeline( `$(tform()) -w$(Threads.nthreads()) $(file_name).frm`, "$(file_name).log" ) )
+    # run( pipeline( `tform -w$(Threads.nthreads()) $(file_name).frm`, "$(file_name).log" ) )
 
     file = open( "$(file_name).out", "r" )
     result_str = read( file, String )
@@ -1361,7 +1363,8 @@ function check_consistency(
     close( file )
 
     cost_time = @elapsed begin
-    run( pipeline( `tform -w$(Threads.nthreads()) $(file_name).frm`, "$(file_name).log" ) )
+      run( pipeline( `$(tform()) -w$(Threads.nthreads()) $(file_name).frm`, "$(file_name).log" ) )
+      # run( pipeline( `tform -w$(Threads.nthreads()) $(file_name).frm`, "$(file_name).log" ) )
     end # cost_time
     println( "<Lorentz #$(lorentz_index) repeat #$(repeat): $(cost_time) sec>" )
 
@@ -1425,7 +1428,8 @@ function simplify_color_factors(
     close(file)
 
     println( "  [ form $(file_name).frm ]" )
-    run( pipeline( `form $(file_name).frm`, "$(file_name).log" ) )
+    run( pipeline( `$(form()) $(file_name).frm`, "$(file_name).log" ) )
+    # run( pipeline( `form $(file_name).frm`, "$(file_name).log" ) )
 
     file = open( "$(file_name).out", "r" )
     result_str = read( file, String )
