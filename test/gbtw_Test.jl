@@ -60,7 +60,7 @@ check_consistency: true
 #-------------------------------
 # Fetch the Model files.
 if isdir("sm_CKMdiag_Haa") && 
-  calc_sha256( filter( x->x[end-2:end]==".py", readdir("sm_CKMdiag_Haa",join=true) ) ) == 
+  calc_sha256( filter( file_name->(last∘splitext)(file_name)==".py", readdir("sm_CKMdiag_Haa",join=true) ) ) == 
       "cfadd77f9c1383d50fbedada430174db68871f0a365a93fd6fa7ddfde6869c47"
   println( "sm_CKMdiag_Haa has been found." )
 else
