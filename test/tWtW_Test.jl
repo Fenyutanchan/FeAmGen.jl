@@ -1,4 +1,4 @@
-using Dates, Downloads, FeAmGen, SHA
+using Dates, Downloads, FeAmGen, SymEngineExt
 
 start = now()
 @info "tWtW_Test starts @ $(start)"
@@ -60,8 +60,8 @@ check_consistency: false
 #-------------------------------
 # Fetch the Model files.
 if isdir("sm_tbW") && 
-  (bytes2hex∘sha256)("sm_tbW") == 
-      "fb20f86211878fa31a41cb0f18e9aa02db76cef6b61c27ebc8896ad40b943020"
+  calc_sha256( filter( x->x[end-2:end]==".py", readdir("sm_tbW",join=true) ) ) == 
+      "8c9bcfc024c4178fb57f162297b12e57c91fc94c685e8651d629cf7fdd7b77ab"
   println( "sm_tbW has been found." )
 else
   if isdir("sm_tbW") 
@@ -70,8 +70,8 @@ else
 
   url = "https://raw.githubusercontent.com/zhaoli-IHEP/FeAmGen_artifacts/main/Models/sm_tbW.tar.bz2"
   Downloads.download( url, "./sm_tbW.tar.bz2" )
-  @assert (bytes2hex∘sha256)("sm_tbW.tar.bz2") == 
-      "fe06b669291b1a9f7255e576bea1705ec24a6d238430c0d73a46b5909bab41d2"
+  @assert calc_sha256("sm_tbW.tar.bz2") == 
+      "535fd13cc414c9970b120505516a54593296b2a812dd5a58878a59a019465088"
   run( `tar xjvf sm_tbW.tar.bz2` )
   println( "sm_tbW.tar.bz2 has been downloaded and decompressed." )
 end # if

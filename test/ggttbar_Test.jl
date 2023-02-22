@@ -1,4 +1,4 @@
-using Dates, Downloads, FeAmGen, SHA
+using Dates, Downloads, FeAmGen, SymEngineExt
 
 @info "ggttbar_Test starts @ $(now())"
 
@@ -60,8 +60,8 @@ check_consistency: true
 #-------------------------------
 # Fetch the Model files.
 if isdir("sm") && 
-  (bytes2hex∘sha256)("sm") == 
-      "5af308bec132bd499660594a6c127c57f910a25c18968eb4f9b976f48df8cb49"
+  calc_sha256( filter( x->x[end-2:end]==".py", readdir("sm",join=true) ) ) ==
+      "aa3be7f128f1bbc2bcc766b4cc79c8029522b17c50b3c4bab656620937a85d2e"
   println( "sm has been found." )
 else
   if isdir("sm") 
@@ -70,8 +70,8 @@ else
 
   url = "https://raw.githubusercontent.com/zhaoli-IHEP/FeAmGen_artifacts/main/Models/sm.tar.bz2"
   Downloads.download( url, "./sm.tar.bz2" )
-  @assert (bytes2hex∘sha256)("sm.tar.bz2") == 
-      "4ee796b534e9fd595ac4e12c52ae7847bc938f2c91d3a7daa4ff4c27de3d1204"
+  @assert calc_sha256("sm.tar.bz2") == 
+      "a50515acbb903f7a43c30d441964e4bab52b70420d3f19b5d62f0cbaa1acc669"
   run( `tar xjvf sm.tar.bz2` )
   println( "sm.tar.bz2 has been downloaded and decompressed." )
 end # if
