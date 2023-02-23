@@ -62,7 +62,7 @@ symmetry:
 #-------------------------------
 # Fetch the Model files.
 if isdir("sm_tbW") && 
-  calc_sha256( filter( x->x[end-2:end]==".py", readdir("sm_tbW",join=true) ) ) == 
+  calc_sha256( filter( endswith(".py"), readdir("sm_tbW",join=true) ) ) == 
       "8c9bcfc024c4178fb57f162297b12e57c91fc94c685e8651d629cf7fdd7b77ab"
   println( "sm_tbW has been found." )
 else
