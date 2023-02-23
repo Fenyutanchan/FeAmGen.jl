@@ -1868,21 +1868,13 @@ function generate_amplitude(
   #------------------------------------------------  
   # Calculate amplitude for each graph
 
+  fetch_FORM_scripts()
+
   file = open( "model_parameters.frm", "w" )
   write( file, "symbol $(join( map( string, (collect∘keys)(model.parameter_dict) ), "," ));\n" )
   close(file)
 
-  file = open( "contractor.frm", "w" )
-  write( file, make_contractor_script() )
-  close(file)
-
-  file = open( "color.frm", "w" )
-  write( file, make_color_script() )
-  close(file)
-
   bk_mkdir( "$(proc_str)_visuals" )
-  write_out_tikz_feynman_sty( "$(proc_str)_visuals" )
-
   bk_mkdir( "$(proc_str)_amplitudes" )
 
   @vars cf, ca
@@ -1983,24 +1975,8 @@ function generate_amplitude(
   rm( "kin_relation.frm" )
   rm( "model_parameters.frm" )
 
-
-  file = open( "$(proc_str)_visuals/generate_diagram_pdf.jl", "w" )
-  write( file, """
-  root, dirs, files = (first∘collect∘walkdir)(".")
-
-  tex_list = filter( s->s[end-2:end] == "tex", files )
-  tex_head_list = map( s->s[1:end-4], tex_list )
-
-  pdf_list = filter( s->s[end-2:end] == "pdf", files )
-  pdf_head_list = map( s->s[1:end-4], pdf_list )
-
-  mission_head_list = setdiff( tex_head_list, pdf_head_list )
-
-  for one_mission in mission_head_list
-    run( `lualatex \$(one_mission)` )
-  end # for one_mission
-  """ )
-  close(file)
+  #---------------------
+  fetch_visual_scripts( proc_str )
   @info "Users can generate PDF files for all diagrams." script="generate_diagram_pdf.jl"
 
   return nothing
@@ -2008,6 +1984,41 @@ function generate_amplitude(
 end # function generate_amplitude
 
 
+############################################
+function fetch_visual_scripts(
+    proc_str::String
+)::Nothing
+############################################
+
+  #-------------------------------
+  # Fetch the tikz-feynman.sty.
+  sha_code = "716991102a8e9a7b0beb3e7b4a564882b444d18f89c4a4694387394c7594a3e8"
+  if isfile("$(proc_str)_visuals/tikz-feynman.sty") &&
+    calc_sha256("$(proc_str)_visuals/tikz-feynman.sty") == sha_code
+    println( "tikz-feynman.sty has been found." )
+  else
+    url = "https://raw.githubusercontent.com/zhaoli-IHEP/FeAmGen_artifacts/main/tikz-feynman.sty"
+    Downloads.download( url, "$(proc_str)_visuals/tikz-feynman.sty" )
+    @assert calc_sha256("$(proc_str)_visuals/tikz-feynman.sty") == sha_code
+    println( "tikz-feynman.sty has been downloaded." )
+  end # if
+
+  #-------------------------------
+  # Fetch the generate_diagram_pdf.jl.
+  sha_code = "c0124e5539755d1f161efa53d7b5e0b87973ab4920bc43f75d593aa246dfb4bc"
+  if isfile("$(proc_str)_visuals/generate_diagram_pdf.jl") &&
+    calc_sha256("$(proc_str)_visuals/generate_diagram_pdf.jl") == sha_code
+    println( "generate_diagram_pdf.jl has been found." )
+  else
+    url = "https://raw.githubusercontent.com/zhaoli-IHEP/FeAmGen_artifacts/main/generate_diagram_pdf.jl"
+    Downloads.download( url, "$(proc_str)_visuals/generate_diagram_pdf.jl" )
+    @assert calc_sha256("$(proc_str)_visuals/generate_diagram_pdf.jl") == sha_code
+    println( "generate_diagram_pdf.jl has been downloaded." )
+  end # if
+
+  return nothing
+
+end # function fetch_visual_scripts
 
 
 

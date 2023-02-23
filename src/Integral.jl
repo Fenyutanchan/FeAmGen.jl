@@ -154,13 +154,7 @@ function generate_integral(
   write( file, "symbol $(join( map( string, ver_mass_list ), "," ));\n" )
   close(file)
 
-  file = open( "contractor.frm", "w" )
-  write( file, make_contractor_script() )
-  close(file)
-
-  file = open( "color.frm", "w" )
-  write( file, make_color_script() )
-  close(file)
+  fetch_FORM_scripts()
 
   run( pipeline( `$(form()) $(file_name).frm`, "$(file_name).log" ) )
   # run( pipeline( `form $(file_name).frm`, "$(file_name).log" ) )
