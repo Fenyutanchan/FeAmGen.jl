@@ -1,4 +1,4 @@
-using Dates, Downloads, FeAmGen, SymEngineExt
+using Dates, Downloads, FeAmGen, AmpTools 
 
 @info "eeHZ_Test starts @ $(now())"
 
@@ -52,8 +52,8 @@ Amp_Max_Ep_Xpt: 0
 incoming: [ "eminus", "eplus" ]          # incoming particles
 outgoing: [ "H", "Z" ]               # outgoing particles 
 
-# whether to check the consistency between two versions of amplitudes
-check_consistency: false
+# Symmetry configuration
+symmetry: [] 
 
 """
 

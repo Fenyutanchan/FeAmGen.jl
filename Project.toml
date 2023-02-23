@@ -1,9 +1,10 @@
 name = "FeAmGen"
-uuid = "92bc0bee-949a-4e30-bda4-7bc0a90d92b9"
+uuid = "09acbd30-6a93-4470-b10f-afabe20e3192"
 authors = ["zhaoli-IHEP <zhaoli@ihep.ac.cn>"]
 version = "1.0.0"
 
 [deps]
+AmpTools = "052ca545-3a01-4253-8448-a7bfac913c46"
 Combinatorics = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
@@ -13,6 +14,5 @@ OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 Pipe = "b98c9c47-44ae-5843-9183-064241ee97a0"
 PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
 SymEngine = "123dc426-2d89-5057-bbad-38513e3affd8"
-SymEngineExt = "eb43aea2-30a6-470d-b25b-3f3789752db4"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"

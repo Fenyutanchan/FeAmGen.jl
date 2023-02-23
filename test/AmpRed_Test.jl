@@ -1,4 +1,4 @@
-using Dates, FeAmGen, SymEngine, SymEngineExt
+using Dates, FeAmGen, SymEngine, AmpTools 
 
 @info "AmpRed_Test starts @ $(now())"
 

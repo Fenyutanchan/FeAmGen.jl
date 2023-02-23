@@ -1,4 +1,4 @@
-using Dates, Downloads, FeAmGen, SymEngineExt
+using Dates, Downloads, FeAmGen, AmpTools 
 
 start = now()
 @info "gbtw_Test starts @ $(start)"
@@ -52,8 +52,8 @@ Amp_Max_Ep_Xpt: 0
 incoming: [ "b", "g" ]          # incoming particles
 outgoing: [ "Wminus", "t" ]               # outgoing particles 
 
-# whether to check the consistency between two versions of amplitudes
-check_consistency: true
+# Symmetry configuration
+symmetry: []
 
 """
 

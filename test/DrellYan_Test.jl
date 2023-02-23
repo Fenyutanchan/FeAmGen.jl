@@ -1,4 +1,4 @@
-using Dates, Downloads, FeAmGen, SymEngineExt
+using Dates, Downloads, FeAmGen, AmpTools 
 
 @info "DrellYan_Test starts @ $(now())"
 
@@ -51,8 +51,8 @@ Amp_Max_Ep_Xpt: 0
 incoming: [ "dbar", "u" ]          # incoming particles
 outgoing: [ "Wplus" ]               # outgoing particles 
 
-# whether to check the consistency between two versions of amplitudes
-check_consistency: true
+# Symmetry configuration
+symmetry: []
 
 """
 

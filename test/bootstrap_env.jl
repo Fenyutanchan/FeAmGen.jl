@@ -10,7 +10,7 @@ needed_packages_registered  =   String[
     "SymEngine"
 ]
 needed_packages_without_registered  =   String[
-    "SymEngineExt",
+    "AmpTools",
     "FeAmGen"
 ]
 

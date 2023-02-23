@@ -1,4 +1,4 @@
-using Dates, FeAmGen, SymEngine, SymEngineExt, Test
+using Dates, FeAmGen, SymEngine, AmpTools, Test
 
 @info "basicTest starts @ $(now())"
 

@@ -24,7 +24,7 @@ using Test
 
 # for symbolic calculation
 using SymEngine
-using SymEngineExt
+using AmpTools
 
 # for Feynman diagram
 using Dates

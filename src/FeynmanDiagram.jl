@@ -1166,7 +1166,8 @@ end # function contract_Dirac_indices
         lorentz_expr_list::Vector{Basic} 
     )::Vector{Basic}
 
-Contract the Dirac indices in the `lorentz_expr_list` by using FORM scripts, but do not expand the amplitudes.
+Contract the Dirac indices in the `lorentz_expr_list` by using FORM scripts, 
+  but do not expand the amplitudes.
 """
 function contract_Dirac_indices_noexpand( 
     g::Graph, 
@@ -1175,7 +1176,7 @@ function contract_Dirac_indices_noexpand(
 )::Vector{Basic}
 ##################################################################################
 
-  printstyled( "\n[ Contract the Dirac indices (no expansion) for diagram #$(graph_index) ]\n", color=:green )
+  printstyled( "\n[ Contract the Dirac indices for diagram #$(graph_index) ]\n", color=:green )
 
   new_lorentz_expr_list = Vector{Basic}( undef, length(lorentz_expr_list) )
 
@@ -1482,6 +1483,7 @@ function write_out_amplitude(
     amp_lorentz_noexpand_list::Vector{Basic}, 
     loop_den_list::Vector{Basic}, 
     loop_den_xpt_list::Vector{Int64},
+    symmetry_map::Dict{Basic,Basic}, 
     min_ep_xpt::Int64, 
     max_ep_xpt::Int64, 
     proc_str::String
@@ -1507,6 +1509,13 @@ function write_out_amplitude(
   write( amp_file, 
     "Kinematics Relations: \n" )
   for one_pair in kin_relation
+    write( amp_file, 
+    "  $(one_pair)\n" )
+  end # for one_pair
+
+  write( amp_file, 
+    "Symmetry Configuration: \n" )
+  for one_pair in collect(symmetry_map)
     write( amp_file, 
     "  $(one_pair)\n" )
   end # for one_pair
@@ -1560,6 +1569,7 @@ function write_out_amplitude(
     write( file, "loop_den_xpt_list", loop_den_xpt_list )
     write( file, "kin_relation", to_String_dict(kin_relation) )
     write( file, "baseINC_script_str", baseINC_script_str )
+    write( file, "symmetry_map", to_String_dict(symmetry_map) ) 
     write( file, "model_parameter_dict", to_String_dict(parameter_dict) ) 
     write( file, "amp_color_list",  string.(amp_color_list) )
     write( file, "amp_lorentz_list",  amp_lorentz_str_list )
@@ -1570,63 +1580,6 @@ function write_out_amplitude(
 end # function write_out_amplitude
 
 
-
-
-#######################################
-function write_out_tikz_feynman_sty(
-    dir::String
-)::Nothing
-#######################################
-
-  file = open( "$dir/tikz-feynman.sty", "w" )
-  write( file, """
-  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  %
-  % TikZ-Feynman
-  % Feynman Diagrams with TikZ
-  % Copyright (C) 2015  Joshua Ellis
-  %
-  %
-  % This work may be distributed and/or modified under the conditions of the LaTeX
-  % Project Public License, either version 1.3 of this license or (at your option)
-  % any later version.
-  %
-  % This work has the LPPL maintenance status `maintained'.
-  %
-  % The Current Maintainer of this work is Joshua Ellis.
-  %
-  % This program is distributed in the hope that it will be useful, but WITHOUT
-  % ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-  % FOR A PARTICULAR PURPOSE.  See the LaTeX Project Public License for more
-  % details.
-  %
-  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  
-  \\def\\tikzfeynman@date{2016/02/05}
-  \\def\\tikzfeynman@version@major{1}
-  \\def\\tikzfeynman@version@minor{1}
-  \\def\\tikzfeynman@version@patch{0}
-  \\edef\\tikzfeynman@version{\\tikzfeynman@version@major.\\tikzfeynman@version@minor.\\tikzfeynman@version@patch}
-  
-  \\ProvidesPackage{tikz-feynman}[\\tikzfeynman@date v\\tikzfeynman@version Feynman diagrams with TikZ]
-  
-  \\RequirePackage{tikz}[2013/12/13] % v3.0.0
-  \\RequirePackage{ifluatex}
-  \\RequirePackage{pgfopts}
-  
-  \\usetikzlibrary{feynman}
-  
-  \\endinput
-  
-  % Local Variables:
-  % TeX-master: "tikz-feynman"
-  % End:
-  """ )
-  close( file )
-
-  return nothing
-
-end # function write_out_tikz_feynman_sty
 
 
 
@@ -1650,6 +1603,7 @@ end # function write_out_tikz_feynman_sty
         loop_den_xpt_list::Vector{Int64}, 
         ext_mom_list::Vector{Basic}, 
         scale2_list::Vector{Basic}, 
+        symmetry_map::Dict{Basic,Basic}, 
         proc_str::String 
     )::Nothing
 
@@ -1666,6 +1620,7 @@ function write_out_visual_graph(
     loop_den_xpt_list::Vector{Int64}, 
     ext_mom_list::Vector{Basic}, 
     scale2_list::Vector{Basic}, 
+    symmetry_map::Dict{Basic,Basic}, 
     proc_str::String 
 )::Nothing
 #########################################################################
@@ -1706,6 +1661,8 @@ function write_out_visual_graph(
   write( expression_file, """
   (* coupling factor: *) 
   $(couplingfactor)
+  (* Symmetry Configuration: *) 
+  $(symmetry_map)
   """ )
 
   n_color = length(color_list)
@@ -1834,9 +1791,9 @@ function generate_amplitude(
 )::Nothing
 ##########################################################################
 
-  proc_str = join( [ input["incoming"]; "TO"; input["outgoing"]; "$(input["n_loop"])Loop" ], "_" )
-
   n_loop = input["n_loop"]
+  proc_str = join( [ input["incoming"]; "TO"; input["outgoing"]; "$(n_loop)Loop" ], "_" )
+
   couplingfactor = Basic(input["couplingfactor"]) 
 
   qgraf_out = YAML.load_file( "qgraf_out.dat" )
@@ -1882,6 +1839,9 @@ function generate_amplitude(
   # baseINC only needs information from the external fields.
   baseINC_script_str = make_baseINC_script( first(graph_list) )
 
+  symmetry_map = to_Basic_dict( convert( Vector{Vector{String}}, input["symmetry"] ) )
+  @show symmetry_map
+
 
   #-----------------------------------
   null_graph_index_list = Vector{Int64}()
@@ -1899,8 +1859,17 @@ function generate_amplitude(
     nonzero_pos_list = findall( !iszero, color_list )
     color_list = color_list[nonzero_pos_list]
 
+    if isempty(color_list)
+      push!( null_graph_index_list, graph_index )
+      continue
+    end # if
+
     lorentz_list_pre, loop_den_list, loop_den_xpt_list = factor_out_loop_den( g, lorentz_list )
     lorentz_list_pre = lorentz_list_pre[nonzero_pos_list]
+
+    if !isempty(symmetry_map) 
+      lorentz_list_pre = map( x->subs(x,symmetry_map...), lorentz_list_pre )
+    end # if
 
     lorentz_list = contract_Dirac_indices_noexpand( g, graph_index, lorentz_list_pre )
 
@@ -1955,13 +1924,11 @@ function generate_amplitude(
     trace5_lorentz_list = filter( has_Trace5, lorentz_list )
     if length(trace5_lorentz_list) == length(lorentz_list)
       push!( trace5_graph_index_list, graph_index )
-      #println( "trace5_diagram_index: ", graph_index )
-      #println( lorentz_list )
     end # if
 
-    write_out_amplitude( n_loop, graph_index, couplingfactor, model.parameter_dict, ext_mom_list, scale2_list, kin_relation, baseINC_script_str, color_list, lorentz_list, loop_den_list, loop_den_xpt_list, input["Amp_Min_Ep_Xpt"], input["Amp_Max_Ep_Xpt"], proc_str )
+    write_out_amplitude( n_loop, graph_index, couplingfactor, model.parameter_dict, ext_mom_list, scale2_list, kin_relation, baseINC_script_str, color_list, lorentz_list, loop_den_list, loop_den_xpt_list, symmetry_map, input["Amp_Min_Ep_Xpt"], input["Amp_Max_Ep_Xpt"], proc_str )
 
-    write_out_visual_graph( g, graph_index, model, couplingfactor, color_list, lorentz_list, loop_den_list, loop_den_xpt_list, ext_mom_list, scale2_list, proc_str )
+    write_out_visual_graph( g, graph_index, model, couplingfactor, color_list, lorentz_list, loop_den_list, loop_den_xpt_list, ext_mom_list, scale2_list, symmetry_map, proc_str )
 
   end # for graph_index
 

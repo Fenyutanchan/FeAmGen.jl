@@ -1,4 +1,4 @@
-using Dates, Downloads, FeAmGen, SymEngineExt
+using Dates, Downloads, FeAmGen, AmpTools 
 
 start = now()
 @info "tWtW_Test starts @ $(start)"
@@ -52,8 +52,10 @@ Amp_Max_Ep_Xpt: 0
 incoming: [ "Wplus", "t" ]          # incoming particles
 outgoing: [ "Wplus", "t" ]          # outgoing particles 
 
-# whether to check the consistency between two versions of amplitudes
-check_consistency: false
+# Symmetry configuration
+symmetry: 
+  - [ K3, K1 ]
+  - [ K4, K2 ]
 
 """
 

@@ -1,4 +1,4 @@
-using Dates, Downloads, FeAmGen, SymEngineExt
+using Dates, Downloads, FeAmGen, AmpTools 
 
 @info "ggttbar_Test starts @ $(now())"
 
@@ -52,8 +52,8 @@ Amp_Max_Ep_Xpt: 0
 incoming: [ "g", "g" ]          # incoming particles
 outgoing: [ "t", "tbar" ]               # outgoing particles 
 
-# whether to check the consistency between two versions of amplitudes
-check_consistency: true
+# Symmetry configuration
+symmetry: []
 
 """
 

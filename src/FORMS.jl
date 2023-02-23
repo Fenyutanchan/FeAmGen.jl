@@ -313,11 +313,17 @@ end # function make_amp_contraction_script
 
 ##############################################################################
 """
-    make_amp_contraction_noexpand_script( expr::Basic, file_name::String )::String
+    make_amp_contraction_noexpand_script( 
+        expr::Basic, 
+        file_name::String 
+    )::String
 
 Prepare the FORM script for the amplitude contraction, but do not do the expansion for the amplitude.
 """
-function make_amp_contraction_noexpand_script( expr::Basic, file_name::String )::String
+function make_amp_contraction_noexpand_script( 
+    expr::Basic, 
+    file_name::String 
+)::String
 ##############################################################################
 
   result_str = """
@@ -338,7 +344,7 @@ function make_amp_contraction_noexpand_script( expr::Basic, file_name::String ):
   .sort
   id GAij(spa1?,spa2?,mom?,mass?) = GAij(spa1,spa2,mom+mass*unity);
   .sort
-  
+
   #call SimplificationNoExpand();
   
   #call contractDiracIndicesNoExpand();

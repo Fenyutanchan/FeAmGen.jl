@@ -461,9 +461,9 @@ function write_card( proc_str::String, n_inc::Int64, input::Dict{Any,Any} )::Not
   # Used for simplifying amplitude expression, i.e. "result amplitude" = "true amplitude"/couplingfactor
   couplingfactor: \"1\"
 
-  # whether to check the consistency between two versions of amplitudes
-  check_consistency: $(input["check_consistency"])
-  
+  # Symmetry Configuration
+  symmetry: $(isempty(input["symmetry"]) ? "[]" : input["symmetry"])
+
   """ )
   close(file)
 
