@@ -1841,7 +1841,6 @@ function generate_amplitude(
 
   symmetry_map = to_Basic_dict( convert( Vector{Vector{String}}, input["symmetry"] ) )
   @show symmetry_map
-error("DEBUG")
 
 
   #-----------------------------------
