@@ -242,13 +242,15 @@ The directory of model files are supposed in ".".
 function simple_readin_model( model_name::String )::Dict{String,Particle}
 ############################################################################################
 
+  art_dir = Artifacts.artifact"FeAmGen"
+
   # append the path that python can find the model files
   sys = pyimport( "sys" )
-  @assert isfile( "./$(model_name)/object_library.py" )
-  push!( sys."path", "." )
+  @assert isfile( "$(art_dir)/Models/$(model_name)/object_library.py" )
+  push!( sys."path", "$(art_dir)/Models" )
 
   # For example sm.object_library include the basic structure of this model
-  model = pyimport( model_name*".object_library" )
+  model = pyimport( "$(model_name).object_library" )
 
   particle_dict = Dict{String,Particle}()
   for py_part in model.all_particles

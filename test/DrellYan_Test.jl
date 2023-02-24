@@ -56,25 +56,6 @@ symmetry: []
 
 """
 
-#-------------------------------
-# Fetch the Model files.
-if isdir("sm_CKMdiag_Haa") && 
-  calc_sha256( filter( endswith(".py"), readdir("sm_CKMdiag_Haa",join=true) ) ) == 
-      "cfadd77f9c1383d50fbedada430174db68871f0a365a93fd6fa7ddfde6869c47"
-  println( "sm_CKMdiag_Haa has been found." )
-else
-  if isdir("sm_CKMdiag_Haa") 
-    rm("sm_CKMdiag_Haa") 
-  end # if
-
-  url = "https://raw.githubusercontent.com/zhaoli-IHEP/FeAmGen_artifacts/main/Models/sm_CKMdiag_Haa.tar.bz2"
-  Downloads.download( url, "./sm_CKMdiag_Haa.tar.bz2" )
-  @assert calc_sha256("sm_CKMdiag_Haa.tar.bz2") == 
-      "a004f1e79ce4cfefb165f2560a8f10670ce9d420245e10ba4e37719ce51b7d3c"
-  run( `tar xjvf sm_CKMdiag_Haa.tar.bz2` )
-  println( "sm_CKMdiag_Haa.tar.bz2 has been downloaded and decompressed." )
-end # if
-
 #-------------------------------------------
 # Start running
 for nloop in [0,1,2]

@@ -16,6 +16,8 @@ using YAML
 
 using OrderedCollections
 
+using Pkg
+
 # for read model python file
 using PyCall
 
