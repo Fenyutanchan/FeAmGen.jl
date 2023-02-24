@@ -171,7 +171,7 @@ function readin_model( input::Dict{Any,Any} )::Model
 #############################################################
 
   model_name = input["model_name"]
-  art_dir = Artifacts.artifact"FeAmGen"
+  art_dir = Pkg.Artifacts.artifact"FeAmGen"
 
   # append the path that python can find the model files
   sys = pyimport( "sys" )

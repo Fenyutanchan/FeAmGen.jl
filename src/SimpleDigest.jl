@@ -242,7 +242,7 @@ The directory of model files are supposed in ".".
 function simple_readin_model( model_name::String )::Dict{String,Particle}
 ############################################################################################
 
-  art_dir = Artifacts.artifact"FeAmGen"
+  art_dir = Pkg.Artifacts.artifact"FeAmGen"
 
   # append the path that python can find the model files
   sys = pyimport( "sys" )
