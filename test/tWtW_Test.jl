@@ -54,8 +54,8 @@ outgoing: [ "Wplus", "t" ]          # outgoing particles
 
 # Symmetry configuration
 symmetry: 
-  - [ K3, K1 ]
-  - [ K4, K2 ]
+  - [ K3, K1 ] # K3=>K1
+  - [ K4, K2 ] # K4=>K2
 
 """
 
