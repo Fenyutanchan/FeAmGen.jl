@@ -377,14 +377,20 @@ end # function make_amp_contraction_noexpand_script
 
 
 
-############################################################################################
+#############################################################
 """
-    make_simplify_color_factor_script( color_factor::Basic, file_name::String )::String
+    make_color_script( 
+        color_factor::Basic, 
+        file_name::String 
+    )::String
 
 Specifically calculate the color factor `color_factor`.
 """
-function make_simplify_color_factor_script( color_factor::Basic, file_name::String )::String
-############################################################################################
+function make_color_script( 
+    color_factor::Basic, 
+    file_name::String 
+)::String
+#############################################################
 
   result_str = """
   #-
@@ -407,16 +413,12 @@ function make_simplify_color_factor_script( color_factor::Basic, file_name::Stri
   #close <$(file_name).out>
   .sort
   
-  ***#system tr -d "[:space:]" < $(file_name).out > $(file_name).out.trim
-  ***#system mv $(file_name).out.trim $(file_name).out
-  ***.sort
-  
   .end
   """
 
   return result_str
 
-end # function make_simplify_color_factor_script
+end # function make_color_script
 
 
 

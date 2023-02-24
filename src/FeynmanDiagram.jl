@@ -1421,8 +1421,8 @@ function simplify_color_factors(
   cost_time = @elapsed begin
   for index in 1:length(color_factor_list)
     one_color_factor = color_factor_list[index]
-    file_name = "simplify_color_factor$(index)_diagram$(graph_index)"
-    form_script_str = make_simplify_color_factor_script( one_color_factor, file_name )
+    file_name = "simplify_color$(index)_diagram$(graph_index)"
+    form_script_str = make_color_script( one_color_factor, file_name )
 
     file = open( "$(file_name).frm", "w" )
     write( file, form_script_str )
@@ -1430,7 +1430,6 @@ function simplify_color_factors(
 
     println( "  [ form $(file_name).frm ]" )
     run( pipeline( `$(form()) $(file_name).frm`, "$(file_name).log" ) )
-    # run( pipeline( `form $(file_name).frm`, "$(file_name).log" ) )
 
     file = open( "$(file_name).out", "r" )
     result_str = read( file, String )
@@ -1835,8 +1834,6 @@ function generate_amplitude(
   bk_mkdir( "$(proc_str)_visuals" )
   bk_mkdir( "$(proc_str)_amplitudes" )
 
-  @vars cf, ca
-
   # baseINC only needs information from the external fields.
   baseINC_script_str = make_baseINC_script( first(graph_list) )
 
@@ -1856,7 +1853,6 @@ function generate_amplitude(
     color_list, lorentz_list = assemble_amplitude( g )
 
     color_list = simplify_color_factors( g, graph_index, color_list )
-    color_list = map( x->subs(x,cf=>4//3,ca=>3), color_list ) #----
     nonzero_pos_list = findall( !iszero, color_list )
     color_list = color_list[nonzero_pos_list]
 
