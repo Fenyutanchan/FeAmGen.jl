@@ -1,4 +1,4 @@
-using Dates, Downloads, FeAmGen, AmpTools 
+using Dates, FeAmGen, AmpTools 
 
 @info "ggttbar_Test starts @ $(now())"
 
@@ -57,24 +57,6 @@ symmetry: []
 
 """
 
-#-------------------------------
-# Fetch the Model files.
-if isdir("sm") && 
-  calc_sha256( filter( endswith(".py"), readdir("sm",join=true) ) ) ==
-      "aa3be7f128f1bbc2bcc766b4cc79c8029522b17c50b3c4bab656620937a85d2e"
-  println( "sm has been found." )
-else
-  if isdir("sm") 
-    rm("sm") 
-  end # if
-
-  url = "https://raw.githubusercontent.com/zhaoli-IHEP/FeAmGen_artifacts/main/Models/sm.tar.bz2"
-  Downloads.download( url, "./sm.tar.bz2" )
-  @assert calc_sha256("sm.tar.bz2") == 
-      "a50515acbb903f7a43c30d441964e4bab52b70420d3f19b5d62f0cbaa1acc669"
-  run( `tar xjvf sm.tar.bz2` )
-  println( "sm.tar.bz2 has been downloaded and decompressed." )
-end # if
 
 #-------------------------------------------
 # Start running

@@ -9,8 +9,6 @@ module FeAmGen
 
 using Combinatorics
 
-using Downloads
-
 # for reading input YAML file "SeedProcess.yaml"
 using YAML
 

@@ -154,7 +154,9 @@ function generate_integral(
   write( file, "symbol $(join( map( string, ver_mass_list ), "," ));\n" )
   close(file)
 
-  fetch_FORM_scripts()
+  art_dir = Pkg.Artifacts.artifact"FeAmGen"
+  cp( "$(art_dir)/scripts/contractor.frm", "contractor.frm" )
+  cp( "$(art_dir)/scripts/color.frm", "color.frm" )
 
   run( pipeline( `$(form()) $(file_name).frm`, "$(file_name).log" ) )
   # run( pipeline( `form $(file_name).frm`, "$(file_name).log" ) )

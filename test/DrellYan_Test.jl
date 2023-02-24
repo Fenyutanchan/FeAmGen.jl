@@ -1,4 +1,4 @@
-using Dates, Downloads, FeAmGen, AmpTools 
+using Dates, FeAmGen, AmpTools 
 
 @info "DrellYan_Test starts @ $(now())"
 

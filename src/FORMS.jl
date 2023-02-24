@@ -1,44 +1,4 @@
 
-###########################################
-function fetch_FORM_scripts()::Nothing
-###########################################
-
-  #-------------------------------
-  # Fetch the contractor.frm.
-  sha_code = "4aec00d9c5e72e7cdfef9e7f04f4cb778a9bc1a73cff2d3b4998da6c2610510a"
-  if isfile("contractor.frm") &&
-    calc_sha256("contractor.frm") == sha_code
-    println( "contractor.frm has been found." )
-  else
-    url = "https://raw.githubusercontent.com/zhaoli-IHEP/FeAmGen_artifacts/main/contractor.frm"
-    Downloads.download( url, "./contractor.frm" )
-    @assert calc_sha256("contractor.frm") == sha_code
-    println( "contractor.frm has been downloaded." )
-  end # if
-
-  #-------------------------------
-  # Fetch the color.frm.
-  sha_code = "89b59de36758eb45e4dc08a3534aef4b42afff1491b9c46b4f999b74194f44be"
-  if isfile("color.frm") &&
-    calc_sha256("color.frm") == sha_code
-    println( "color.frm has been found." )
-  else
-    url = "https://raw.githubusercontent.com/zhaoli-IHEP/FeAmGen_artifacts/main/color.frm"
-    Downloads.download( url, "./color.frm" )
-    @assert calc_sha256("color.frm") == sha_code
-    println( "color.frm has been downloaded." )
-  end # if
-
-  return nothing
-
-end # function fetch_FORM_script
-
-
-
-
-
-
-
 
 
 
