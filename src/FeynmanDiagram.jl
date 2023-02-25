@@ -1057,8 +1057,8 @@ function factor_out_loop_den(
 
   loop_edge_list = filter( x -> x.property[:style] == "Loop", g.edge_list )
 
-  den_prod = Basic(1)
-  width_den_prod = Basic(1)
+  den_prod = one(Basic)
+  width_den_prod = one(Basic)
   for one_edge in loop_edge_list
     mom = one_edge.property[:momentum]
     mass = one_edge.property[:particle].mass
@@ -1068,11 +1068,11 @@ function factor_out_loop_den(
     width_den_prod *= Den( mom, mass, width ) 
   end # for one_edge
 
-  new_lorentz_list = map( x_ -> expand(x_/width_den_prod), lorentz_list )
+  new_lorentz_list = map( x -> expand(x/width_den_prod), lorentz_list )
 
-  @assert SymEngine.get_symengine_class(den_prod) == :Mul || den_prod == 1 || get_name(den_prod) == "Den"
+  @assert is_Mul(den_prod) || den_prod == 1 || get_name(den_prod) == "Den"
   factor_list = get_args(den_prod)
-  if SymEngine.get_symengine_class(den_prod) == :FunctionSymbol && get_name(den_prod) == "Den" 
+  if is_FunctionSymbol(den_prod) && get_name(den_prod) == "Den" 
     factor_list = Basic[ den_prod ]
   end # if
   n_factor = length(factor_list)
@@ -1080,11 +1080,11 @@ function factor_out_loop_den(
   loop_den_xpt_list = Vector{Int64}( undef, n_factor )
   for index in 1:n_factor
     one_factor = factor_list[index]
-    if SymEngine.get_symengine_class(one_factor) == :FunctionSymbol && get_name(one_factor) == "Den"
+    if is_FunctionSymbol(one_factor) && get_name(one_factor) == "Den"
       loop_den_list[index] = one_factor
       loop_den_xpt_list[index] = 1
-    elseif SymEngine.get_symengine_class(one_factor) == :Pow && get_name(get_args(one_factor)[1]) == "Den"
-      loop_den_list[index] = get_args(one_factor)[1]
+    elseif is_class(:Pow,one_factor) && (get_name∘first∘get_args)(one_factor) == "Den"
+      loop_den_list[index] = (first∘get_args)(one_factor)
       loop_den_xpt_list[index] = convert( Int64, get_args(one_factor)[2] )
     else
       error( "Not expected: "*string(one_factor) )
@@ -1132,7 +1132,6 @@ function contract_Dirac_indices(
 
     println( "  [ form $(file_name).frm ]" )
     run( pipeline( `$(tform()) -w$(Threads.nthreads()) $(file_name).frm`, "$(file_name).log" ) )
-    # run( pipeline( `tform -w$(Threads.nthreads()) $(file_name).frm`, "$(file_name).log" ) )
 
     file = open( "$(file_name).out", "r" )
     result_str = read( file, String )
@@ -1192,7 +1191,6 @@ function contract_Dirac_indices_noexpand(
 
     println( "  [ form $(file_name).frm ]" )
     run( pipeline( `$(tform()) -w$(Threads.nthreads()) $(file_name).frm`, "$(file_name).log" ) )
-    # run( pipeline( `tform -w$(Threads.nthreads()) $(file_name).frm`, "$(file_name).log" ) )
 
     file = open( "$(file_name).out", "r" )
     result_str = read( file, String )
