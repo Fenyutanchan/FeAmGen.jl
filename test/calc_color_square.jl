@@ -1,3 +1,4 @@
+
 using AmpTools
 using FORM_jll
 using JLD2
@@ -19,6 +20,8 @@ function calc_color_square(
 
   format nospaces;
   format maple;
+
+  symbols nc;
 
   #include color.frm
 
@@ -43,6 +46,12 @@ function calc_color_square(
 
   #call calc2_CF();
   .sort 
+
+  id ca = nc;
+  id cf = (nc^2-1)/(2*nc);
+  id ca^(-1) = nc^(-1);
+  id ca^(-2) = nc^(-2);
+  .sort
 
   #write <calc.out> "%E", colorSquare
   #close <calc.out>
@@ -83,16 +92,32 @@ function main()::Nothing
   root, dirs, files = (first∘collect∘walkdir)(amp_dir)
   jld_list = filter( s->endswith(s,".jld2"), files )
 
+  @vars ca cf nc
+
   conj_color = Basic("DeltaFun(cla4, clb2)")
+  unique_color_list = Vector{Basic}()
   for file_name in jld_list
     file = jldopen( "$(amp_dir)/$(file_name)", "r" ) 
     color_list = (to_Basic∘read)( file, "amp_color_list" )
     close( file )
 
     color_square_list = map( x->calc_color_square(x,conj_color), color_list )
-    println( "[ $(file_name) ]" )
-    map( println, color_square_list )
+    color_square_list = map( x->subs(x,Basic("im")=>im), color_square_list )
+    #println( "[ $(file_name) ]" )
+    for one_square in color_square_list
+      nc4_coeff = coeff(one_square,nc,Basic(4))
+      if !iszero(nc4_coeff) 
+        println( "[ $(file_name) ]" )
+        println( "  $(one_square)" )
+      end # if
+      term_list = get_add_vector_expand(one_square)
+      filtered_term_list = filter( x->SymEngine.get_symengine_class(x)∉[:Integer,:Rational,:Complex],
+                                   (unique∘map)( drop_coeff, term_list ) )
+      union!( unique_color_list, filtered_term_list )
+    end # for one_square
   end # for file_name
+
+  @show unique_color_list
 
   rm( "color.frm" )
 
