@@ -48,6 +48,27 @@ function main()::Nothing
 
   @show up_index_list length(up_index_list)
 
+  bk_mkdir( "Wplus_t_TO_Wplus_t_3Loop_amplitudes_nf" )
+  for index in up_index_list
+    cp( "Wplus_t_TO_Wplus_t_3Loop_amplitudes/amplitude_diagram$(index).out", 
+        "Wplus_t_TO_Wplus_t_3Loop_amplitudes_nf/amplitude_diagram$(index).out" ) 
+    cp( "Wplus_t_TO_Wplus_t_3Loop_amplitudes/amplitude_diagram$(index).jld2",  
+        "Wplus_t_TO_Wplus_t_3Loop_amplitudes_nf/amplitude_diagram$(index).jld2" ) 
+  end # for index
+
+  bk_mkdir( "Wplus_t_TO_Wplus_t_3Loop_visuals_nf" )
+  cp( "Wplus_t_TO_Wplus_t_3Loop_visuals/generate_diagram_pdf.jl", 
+      "Wplus_t_TO_Wplus_t_3Loop_visuals_nf/generate_diagram_pdf.jl" )
+  cp( "Wplus_t_TO_Wplus_t_3Loop_visuals/tikz-feynman.sty", 
+      "Wplus_t_TO_Wplus_t_3Loop_visuals_nf/tikz-feynman.sty" )
+  for index in up_index_list
+    cp( "Wplus_t_TO_Wplus_t_3Loop_visuals/visual_diagram$(index).tex", 
+        "Wplus_t_TO_Wplus_t_3Loop_visuals_nf/visual_diagram$(index).tex" ) 
+    cp( "Wplus_t_TO_Wplus_t_3Loop_visuals/expression_diagram$(index).out", 
+        "Wplus_t_TO_Wplus_t_3Loop_visuals_nf/expression_diagram$(index).out" ) 
+  end # for index
+
+
   return nothing
 
 end # function main

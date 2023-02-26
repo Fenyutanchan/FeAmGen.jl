@@ -1841,7 +1841,6 @@ function generate_amplitude(
 
   #-----------------------------------
   null_graph_index_list = Vector{Int64}()
-  trace5_graph_index_list = Vector{Int64}()
   for graph_index in 1:length(graph_list)
     g = graph_list[graph_index]
     box_message( "Working on diagram #$(graph_index) ($(length(graph_list)))", color=:light_green )
@@ -1916,11 +1915,6 @@ function generate_amplitude(
       continue
     end # if
 
-    trace5_lorentz_list = filter( has_Trace5, lorentz_list )
-    if length(trace5_lorentz_list) == length(lorentz_list)
-      push!( trace5_graph_index_list, graph_index )
-    end # if
-
     write_out_amplitude( n_loop, graph_index, couplingfactor, model.parameter_dict, ext_mom_list, scale2_list, kin_relation, baseINC_script_str, color_list, lorentz_list, loop_den_list, loop_den_xpt_list, symmetry_map, input["Amp_Min_Ep_Xpt"], input["Amp_Max_Ep_Xpt"], proc_str )
 
     write_out_visual_graph( g, graph_index, model, couplingfactor, color_list, lorentz_list, loop_den_list, loop_den_xpt_list, ext_mom_list, scale2_list, symmetry_map, proc_str )
@@ -1928,8 +1922,6 @@ function generate_amplitude(
   end # for graph_index
 
   box_message( "Found number of null diagrams: $(length(null_graph_index_list))", color=:yellow )
-
-  println( "Indices of diagrams with trace5: $(trace5_graph_index_list)" )
 
   # remove intermediate files
   rm( "contractor.frm" )
