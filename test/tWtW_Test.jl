@@ -67,9 +67,11 @@ for nloop in [3]
     write( infile, seed_proc_yaml_str(nloop=nloop) )
   end # close
 
-  digest_seed_proc( "seed_tWtW_proc_$(nloop)Loop.yaml" )
+  card_list = digest_seed_proc( "seed_tWtW_proc_$(nloop)Loop.yaml" )
 
-  generate_amp( "Wplus_t_TO_Wplus_t_$(nloop)Loop/Wplus_t_TO_Wplus_t.yaml" )
+  for one_card in card_list
+    generate_amp( one_card )
+  end # for one_card
 
 end # for nloop
 

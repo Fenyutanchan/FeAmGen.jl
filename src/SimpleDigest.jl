@@ -411,11 +411,11 @@ end # function get_list_quoted_str
 
 ####################################################################################
 """
-    write_card( proc_str::String, n_inc::Int64, input::Dict{Any,Any} )::Nothing
+    write_card( proc_str::String, n_inc::Int64, input::Dict{Any,Any} )::String
 
 Generate the YAML input card for the specific process.
 """
-function write_card( proc_str::String, n_inc::Int64, input::Dict{Any,Any} )::Nothing
+function write_card( proc_str::String, n_inc::Int64, input::Dict{Any,Any} )::String
 ####################################################################################
 
   part_str_list = split( proc_str, "," )
@@ -469,7 +469,7 @@ function write_card( proc_str::String, n_inc::Int64, input::Dict{Any,Any} )::Not
   """ )
   close(file)
 
-  return nothing
+  return proc_name
 
 end # function write_card
 

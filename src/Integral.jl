@@ -155,8 +155,8 @@ function generate_integral(
   close(file)
 
   art_dir = Pkg.Artifacts.artifact"FeAmGen"
-  cp( "$(art_dir)/scripts/contractor.frm", "contractor.frm" )
-  cp( "$(art_dir)/scripts/color.frm", "color.frm" )
+  cp( "$(art_dir)/scripts/contractor.frm", "contractor.frm", force=true )
+  cp( "$(art_dir)/scripts/color.frm", "color.frm", force=true )
 
   run( pipeline( `$(form()) $(file_name).frm`, "$(file_name).log" ) )
   # run( pipeline( `form $(file_name).frm`, "$(file_name).log" ) )

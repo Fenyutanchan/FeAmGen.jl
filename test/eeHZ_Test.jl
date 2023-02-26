@@ -65,9 +65,12 @@ for nloop in [0,1]
     write( infile, generic_eeHZ_seed_proc_yaml_str(nloop=nloop) )
   end # close
 
-  digest_seed_proc( "seed_eeHZ_proc_$(nloop)Loop.yaml" )
+  card_list = digest_seed_proc( "seed_eeHZ_proc_$(nloop)Loop.yaml" )
 
-  generate_amp( "eminus_eplus_TO_H_Z_$(nloop)Loop/eminus_eplus_TO_H_Z.yaml" )
+  for one_card in card_list
+    box_message( "[ Generate amplitudes for $(one_card) ]" )
+    generate_amp( one_card )
+  end # for one_card
 
 end # for nloop
 

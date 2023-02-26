@@ -64,9 +64,12 @@ for nloop in [0,1,2]
     write( infile, generic_dy_seed_proc_yaml_str(nloop=nloop) )
   end # close
 
-  digest_seed_proc( "seed_dy_proc_$(nloop)Loop.yaml" )
+  card_list = digest_seed_proc( "seed_dy_proc_$(nloop)Loop.yaml" )
 
-  generate_amp( "dbar_u_TO_Wplus_$(nloop)Loop/dbar_u_TO_Wplus.yaml" )
+  for one_card in card_list
+    box_message( "[ Generate amplitudes for $(one_card) ]" )
+    generate_amp( one_card )
+  end # for one_card
 
 end # for nloop
 

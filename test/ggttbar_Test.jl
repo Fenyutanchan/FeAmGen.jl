@@ -49,7 +49,7 @@ Amp_Min_Ep_Xpt: $(-2*nloop)
 Amp_Max_Ep_Xpt: 0
 
 # incoming and outgoing information
-incoming: [ "g", "g" ]          # incoming particles
+incoming: [ "parton", "parton" ]          # incoming particles
 outgoing: [ "t", "tbar" ]               # outgoing particles 
 
 # Symmetry configuration
@@ -66,10 +66,11 @@ for nloop in [0,1]
     write( infile, generic_ggttbar_seed_proc_yaml_str(nloop=nloop) )
   end # close
 
-  digest_seed_proc( "seed_ggttbar_proc_$(nloop)Loop.yaml" )
-  rm( "seed_ggttbar_proc_$(nloop)Loop.yaml" )
-
-  generate_amp( "g_g_TO_t_tbar_$(nloop)Loop/g_g_TO_t_tbar.yaml" )
+  card_list = digest_seed_proc( "seed_ggttbar_proc_$(nloop)Loop.yaml" )
+  @assert "parton_parton_TO_t_tbar_$(nloop)Loop/g_g_TO_t_tbar.yaml" in card_list
+  
+  # we only test the gluon fusion subprocess
+  generate_amp( "parton_parton_TO_t_tbar_$(nloop)Loop/g_g_TO_t_tbar.yaml" )
 
 end # for nloop
 

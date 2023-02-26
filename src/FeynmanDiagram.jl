@@ -1070,7 +1070,7 @@ function factor_out_loop_den(
 
   new_lorentz_list = map( x -> expand(x/width_den_prod), lorentz_list )
 
-  @assert is_Mul(den_prod) || den_prod == 1 || get_name(den_prod) == "Den"
+  @assert is_class(:Mul,den_prod) || den_prod == 1 || get_name(den_prod) == "Den"
   factor_list = get_args(den_prod)
   if is_FunctionSymbol(den_prod) && get_name(den_prod) == "Den" 
     factor_list = Basic[ den_prod ]
@@ -1822,8 +1822,8 @@ function generate_amplitude(
   #------------------------------------------------  
   # Calculate amplitude for each graph
   art_dir = Pkg.Artifacts.artifact"FeAmGen"
-  cp( "$(art_dir)/scripts/contractor.frm", "contractor.frm" )
-  cp( "$(art_dir)/scripts/color.frm", "color.frm" )
+  cp( "$(art_dir)/scripts/contractor.frm", "contractor.frm", force=true )
+  cp( "$(art_dir)/scripts/color.frm", "color.frm", force=true )
 
   file = open( "model_parameters.frm", "w" )
   write( file, "symbol $(join( map( string, (collect∘keys)(model.parameter_dict) ), "," ));\n" )

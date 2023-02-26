@@ -16,6 +16,7 @@ rm seed_dy_proc_?Loop.yaml
 rm -rf dbar_u_TO_Wplus_?Loop*
 
 rm seed_ggttbar_proc_?Loop.yaml
+rm -rf parton_parton_TO_t_tbar_?Loop*
 rm -rf g_g_TO_t_tbar_?Loop*
 
 rm seed_eeHZ_proc_?Loop.yaml

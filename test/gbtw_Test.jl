@@ -65,9 +65,12 @@ for nloop in [0,1,2]
     write( infile, generic_gbtw_seed_proc_yaml_str(nloop=nloop) )
   end 
 
-  digest_seed_proc( "seed_gbtw_proc_$(nloop)Loop.yaml" )
+  card_list = digest_seed_proc( "seed_gbtw_proc_$(nloop)Loop.yaml" )
 
-  generate_amp( "b_g_TO_Wminus_t_$(nloop)Loop/b_g_TO_Wminus_t.yaml" )
+  for one_card in card_list
+    box_message( "[ Generate amplitudes for $(one_card) ]" )
+    generate_amp( one_card )
+  end # for one_card
 
 end # for nloop
 

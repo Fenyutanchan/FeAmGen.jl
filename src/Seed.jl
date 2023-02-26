@@ -1,13 +1,13 @@
 
 ##########################################################################
 """
-    digest_seed_proc( seed_file::String, model_dir::String )::Nothing
+    digest_seed_proc( seed_file::String )::Vector{String}
 
 Read-in the card for seed process, and write-out the cards for the relevant specific processes.
 This function is one of the front-end functions in FeAmGen.jl.
 The directory of model files are supposed in ".".
 """
-function digest_seed_proc( seed_file::String )::Nothing
+function digest_seed_proc( seed_file::String )::Vector{String}
 ##########################################################################
 
 
@@ -63,22 +63,23 @@ function digest_seed_proc( seed_file::String )::Nothing
 
 
   #----------------------------------------------------------------------------------------------
-  if isdir( parton_proc_str ) == true
-    rm( parton_proc_str, recursive=true )
-  end # if
-  mkdir( parton_proc_str )
+  bk_mkdir( parton_proc_str )
   cd( parton_proc_str ) 
 
   @info "[ Generate subprocesses cards in $(parton_proc_str) ]"
+  proc_list = Vector{String}()
   for proc_str in proc_set 
-    write_card( proc_str, n_inc, input )
-  end # for proc_str
+    proc_name = write_card( proc_str, n_inc, input )
+    push!( proc_list, proc_name )
+  end # for proc_name
   @info "Done" 
 
   cd( ".." )
   #----------------------------------------------------------------------------------------------
 
-  return nothing
+  card_list = map( x->"$(parton_proc_str)/$x.yaml", proc_list )
+
+  return card_list
 
 end # function digest_seed_proc
 
