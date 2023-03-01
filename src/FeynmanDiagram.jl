@@ -922,30 +922,30 @@ end # function convert_qgraf_TO_Graph
 
 
 
-###########################################
-"""
-    tensor_product( 
-        ex_list1::Union{Vector{Basic},Vector{Int64}}, 
-        ex_list2::Union{Vector{Basic},Vector{Int64}}
-    )::Vector{Basic}
+# ###########################################
+# """
+#     tensor_product( 
+#         ex_list1::Union{Vector{Basic},Vector{Int64}}, 
+#         ex_list2::Union{Vector{Basic},Vector{Int64}}
+#     )::Vector{Basic}
 
-tensor_product( x, y ): 
-x and y are two string lists/arrays.
-This function calculate the tensor production of two arrays.
-"""
-function tensor_product( 
-    ex_list1::Union{Vector{Basic},Vector{Int64}}, 
-    ex_list2::Union{Vector{Basic},Vector{Int64}}
-)::Vector{Basic}
-###########################################
+# tensor_product( x, y ): 
+# x and y are two string lists/arrays.
+# This function calculate the tensor production of two arrays.
+# """
+# function tensor_product( 
+#     ex_list1::Union{Vector{Basic},Vector{Int64}}, 
+#     ex_list2::Union{Vector{Basic},Vector{Int64}}
+# )::Vector{Basic}
+# ###########################################
 
-  res = Vector{Basic}()
-  for ex1 in ex_list1, ex2 in ex_list2
-    push!(res,ex1*ex2)
-  end
-  return res
+#   res = Vector{Basic}()
+#   for ex1 in ex_list1, ex2 in ex_list2
+#     push!(res,ex1*ex2)
+#   end
+#   return res
 
-end # function tensor_product
+# end # function tensor_product
 
 
 
@@ -962,13 +962,17 @@ function assemble_amplitude( g::Graph )::Tuple{Vector{Basic},Vector{Basic}}
   amp_color_list = Basic[1]
   amp_couplings_lorentz_list = Basic[1]
   for vert in g.node_list
-    amp_color_list = tensor_product( amp_color_list, vert.property[:color_list] )
-    amp_couplings_lorentz_list = tensor_product( amp_couplings_lorentz_list, vert.property[:couplings_lorentz_list] )
+    # amp_color_list = tensor_product( amp_color_list, vert.property[:color_list] )
+    # amp_couplings_lorentz_list = tensor_product( amp_couplings_lorentz_list, vert.property[:couplings_lorentz_list] )
+    amp_color_list = vec( [ reduce(*, amp_color) for amp_color ∈ Base.product(amp_color_list, vert.property[:color_list]) ] )
+    amp_couplings_lorentz_list = vec( [ reduce(*, amp_couplings_lorentz) for amp_couplings_lorentz ∈ Base.product(amp_couplings_lorentz_list, vert.property[:couplings_lorentz_list]) ] )
   end # for vert
 
   for edge in g.edge_list
-    amp_color_list = tensor_product( amp_color_list, edge.property[:color_list] )
-    amp_couplings_lorentz_list = tensor_product( amp_couplings_lorentz_list, edge.property[:couplings_lorentz_list] )
+    # amp_color_list = tensor_product( amp_color_list, edge.property[:color_list] )
+    # amp_couplings_lorentz_list = tensor_product( amp_couplings_lorentz_list, edge.property[:couplings_lorentz_list] )
+    amp_color_list = vec( [ reduce(*, amp_color) for amp_color ∈ Base.product(amp_color_list, edge.property[:color_list]) ] )
+    amp_couplings_lorentz_list = vec( [ reduce(*, amp_couplings_lorentz) for amp_couplings_lorentz ∈ Base.product(amp_couplings_lorentz_list, edge.property[:couplings_lorentz_list]) ] )
   end # for edge
 
   return amp_color_list, amp_couplings_lorentz_list;
