@@ -6,7 +6,7 @@ start = now()
 #----------------------------------------------------------------------------
 # single-top gb->tW 0-loop, 1-loop, 2-loop tests
 #----------------------------------------------------------------------------
-generic_gbtw_seed_proc_yaml_str( ; nloop::Int64 = 2::Int64 ) = """
+generic_gbtw_seed_proc_yaml_str( den_list_str::String; nloop::Int64 = 2::Int64 ) = """
 # input file for calculation details
 # model related information
 
@@ -55,20 +55,35 @@ outgoing: [ "Wminus", "t" ]               # outgoing particles
 # Symmetry configuration
 symmetry: []
 
+user_den_list: $(den_list_str)
+   
+
 """
 
 #-------------------------------------------
 # Start running
 for nloop in [0,1,2]
 
+  if nloop == 0
+    den_list_str = "[]"
+  elseif nloop == 1
+    den_list_str = "[ \"Den(q1,0,0)\", \"Den(q1+k1,0,0)\" ]"
+  elseif nloop == 2
+    #den_list_str = "[ \"Den(q1,0,0)\", \"Den(q2,0,0)\" ]"
+    den_list_str = "[]"
+  else
+    error("Exception")
+  end # if
+  
+
   open( "seed_gbtw_proc_$(nloop)Loop.yaml", "w" ) do infile
-    write( infile, generic_gbtw_seed_proc_yaml_str(nloop=nloop) )
+    write( infile, generic_gbtw_seed_proc_yaml_str(den_list_str, nloop=nloop) )
   end 
 
   card_list = digest_seed_proc( "seed_gbtw_proc_$(nloop)Loop.yaml" )
 
   for one_card in card_list
-    box_message( "[ Generate amplitudes for $(one_card) ]" )
+    box_message( "Generate amplitudes for $(one_card)" )
     generate_amp( one_card )
   end # for one_card
 

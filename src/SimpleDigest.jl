@@ -466,6 +466,8 @@ function write_card( proc_str::String, n_inc::Int64, input::Dict{Any,Any} )::Str
   # Symmetry Configuration
   symmetry: $(isempty(input["symmetry"]) ? "[]" : input["symmetry"])
 
+  user_den_list: $(isempty(input["user_den_list"]) ? "[]" : input["user_den_list"])
+
   """ )
   close(file)
 

@@ -559,3 +559,120 @@ end # function generate_ext_mom_list
 
 
 
+
+############################################
+function complete_den_family( 
+    n_inc::Int64, 
+    n_loop::Int64, 
+    ext_mom_list::Vector{Basic},  
+    kin_relation::Dict{Basic,Basic}, 
+    loop_den_list::Vector{Basic}, 
+    user_loop_den_list::Vector{Basic} 
+)::Vector{Basic}
+############################################
+
+  indep_mom_list = copy( ext_mom_list )
+  pop!(indep_mom_list)
+
+  # momentum conservation
+  Kn_expr = expand( 2*sum(ext_mom_list[1:n_inc])-sum(ext_mom_list)+ext_mom_list[end] )
+  mom_conserv = ext_mom_list[end] => Kn_expr
+
+  sp_index = 1::Int64
+  sp_var_list = Vector{Basic}()
+  sp_dict = Dict{Basic,Basic}()
+  
+  for qi_index in 1:n_loop, qj_index in qi_index:n_loop
+    qi = Basic("q$(qi_index)")
+    qj = Basic("q$(qj_index)")
+    sp_var = Basic("sp$(sp_index)")
+    push!( sp_var_list, sp_var )
+    push!( sp_dict, make_SP(qi,qj) => sp_var )
+    sp_index += 1
+  end # for qi_index, qj_index
+
+  #qi_list = [ Basic("q$ii") for ii in 1:n_loop ]
+  for one_mom in indep_mom_list, qi_index in 1:n_loop
+    qi = Basic("q$(qi_index)")
+    sp_var = Basic( "sp$(sp_index)" )
+    push!( sp_var_list, sp_var )
+    push!( sp_dict, make_SP(one_mom,qi) => sp_var )
+    sp_index += 1
+  end # for one_mom
+  
+
+  n_sp = length(sp_var_list)
+
+  original_n_den = length(loop_den_list)+length(user_loop_den_list)
+  complete_loop_den_list = vcat( loop_den_list, user_loop_den_list )
+  coeff_mat = zeros( Rational, 0, n_sp )
+  loop_mom_list = Vector{Basic}() # e.g.[q1,q2,q1+q2] and cases for 3-loop
+  vanishing_dict = Dict( ext_mom_list .=> zero(Basic) )
+  for den_index in 1:length(complete_loop_den_list)
+    one_den = complete_loop_den_list[den_index]
+
+    one_mom = (expand∘subs)( (first∘get_args)(one_den), mom_conserv )
+    mom2 = subs( make_SP(one_mom,one_mom), sp_dict )
+
+    push!( loop_mom_list, subs(one_mom,vanishing_dict) )
+  
+    new_row_mat = zeros( Rational, 1, n_sp )
+    for sp_index in 1:n_sp
+      sp_coeff = SymEngine.coeff( mom2, sp_var_list[sp_index] ) 
+      new_row_mat[1,sp_index] = Rational( parse( Int64, string(sp_coeff) ) )
+    end # for sp_index
+
+    new_coeff_mat = vcat( coeff_mat, new_row_mat ) 
+    if rank(new_coeff_mat) > rank(coeff_mat) 
+      coeff_mat = new_coeff_mat
+    end # if
+  
+  end # for den_index
+  unique!( x->expand(x^2), loop_mom_list )
+  
+  rank_coeff_mat = rank(coeff_mat)
+  @assert size(coeff_mat,1) == rank_coeff_mat 
+
+  #---------------------------------
+  if rank_coeff_mat < n_sp   
+    @funs Den
+ 
+    for ext_mom in vcat(zero(Basic),ext_mom_list), qi in loop_mom_list, sign in [-1,+1]
+      loop_mom = (expand∘subs)( qi+sign*ext_mom, mom_conserv )
+      mom2 = subs( make_SP(loop_mom), sp_dict )
+    
+      new_row_mat = zeros( Rational, 1, n_sp )
+      for sp_index in 1:n_sp
+        new_row_mat[1,sp_index] = SymEngine.coeff( mom2, sp_var_list[sp_index] ) 
+      end # for sp_index
+
+      new_coeff_mat = vcat( coeff_mat, new_row_mat ) 
+      if rank(new_coeff_mat) > rank(coeff_mat) 
+        coeff_mat = new_coeff_mat
+
+        mass2 = subs( make_SP(ext_mom), kin_relation )
+        @assert iszero(mass2) || is_class(:Pow,mass2)
+        mass = iszero(mass2) ? zero(Basic) : (first∘get_args)(mass2)
+        push!( complete_loop_den_list, Den(loop_mom,mass,0) )
+
+        rank_coeff_mat = rank(coeff_mat)
+        if rank_coeff_mat == n_sp
+          break;
+        end # if
+      end # if
+    
+    end # for ext_mom
+map( println, loop_den_list )
+println( "========================" )
+map( println, complete_loop_den_list )
+@show length(loop_den_list) length(complete_loop_den_list) n_sp coeff_mat rank(coeff_mat)
+    @assert n_sp == rank(coeff_mat) 
+
+  end # if
+  #--------------------------------------------
+
+  return complete_loop_den_list
+
+end # function complete_den_family
+
+

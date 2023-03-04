@@ -907,7 +907,7 @@ function convert_qgraf_TO_Graph(
         if vert.property[:QCDct_order] == 0 
           new_couplings_lorentz_list[r_] += subs(inter.couplings_matrix[r_,c_],CTorder,0)*new_lorentz_col_list[c_]
         else 
-          new_couplings_lorentz_list[r_] += coeff( expand(inter.couplings_matrix[r_,c_]), CTorder^(vert.property[:QCDct_order]) )*new_lorentz_col_list[c_]
+          new_couplings_lorentz_list[r_] += SymEngine.coeff( expand(inter.couplings_matrix[r_,c_]), CTorder^(vert.property[:QCDct_order]) )*new_lorentz_col_list[c_]
         end # if
       end # for c_
     end # for r_
@@ -1556,6 +1556,8 @@ function write_out_amplitude(
     rm( "$(proc_str)_amplitudes/amplitude_diagram$(graph_index).jld2" )
   end # if
 
+
+
   jldopen( "$(proc_str)_amplitudes/amplitude_diagram$(graph_index).jld2", "w" ) do file 
     write( file, "Generator", "FeAmGen.jl" )
     write( file, "n_inc", n_inc )
@@ -1749,7 +1751,7 @@ function has_qi(
 )::Bool
 ####################
 
-  return !(iszero∘coeff)(mom,qi) 
+  return !(iszero∘SymEngine.coeff)(mom,qi) 
 
 end # function has_qi
 
@@ -1770,6 +1772,66 @@ function has_qi(
   return false
 
 end # function has_qi
+
+
+
+##################################
+# Sometimes different lorentz amplitudes have same color factor,
+#   or different color factors have same lorentz amplitude.
+#
+function union_color_lorentz(
+    lorentz_list::Vector{Basic},
+    color_list::Vector{Basic} 
+)::Tuple{Vector{Basic},Vector{Basic}}
+##################################
+
+  #--------------------
+  union_lorentz_list = union( lorentz_list )
+  union_color_list = zeros( Basic, length(union_lorentz_list) ) 
+  for lorentz_index in 1:length(union_lorentz_list)
+    union_lorentz = union_lorentz_list[lorentz_index]
+    pos_list = findall( ==(union_lorentz), lorentz_list )
+    union_color_list[lorentz_index] = (expand∘sum)( color_list[pos_list] )
+  end # for lorentz_index
+
+  #--------------------
+  for lorentz_index in 1:length(union_lorentz_list)
+    union_lorentz = union_lorentz_list[lorentz_index]
+    coeff_list, remnant_list = (split_coeff∘get_add_vector_expand)(union_lorentz)
+    
+    min_str, min_pos = findmin( gen_sorted_str.(remnant_list) )
+    leading_coeff = coeff_list[min_pos]
+
+    union_lorentz_list[lorentz_index] = expand( union_lorentz//leading_coeff )
+    union_color_list[lorentz_index] = expand( union_color_list[lorentz_index]*leading_coeff )
+  end # for lorentz_index
+
+  #--------------------
+  union2_lorentz_list = union( union_lorentz_list )
+  union2_color_list = zeros( Basic, length(union2_lorentz_list) ) 
+  for lorentz_index in 1:length(union2_lorentz_list)
+    union2_lorentz = union2_lorentz_list[lorentz_index]
+    pos_list = findall( ==(union2_lorentz), union_lorentz_list )
+    union2_color_list[lorentz_index] = (expand∘sum)( union_color_list[pos_list] )
+  end # for lorentz_index
+
+  #--------------------
+  # non-zero color factors and re-alias
+  nonzero_pos_list = findall( !iszero, union2_color_list )
+  lorentz_list = union2_lorentz_list[nonzero_pos_list]
+  color_list = union2_color_list[nonzero_pos_list]
+
+  return lorentz_list, color_list
+
+end # function union_color_lorentz
+
+
+
+
+
+
+
+
 
 
 
@@ -1854,7 +1916,11 @@ function generate_amplitude(
     color_list, lorentz_list = assemble_amplitude( g )
 
     color_list = simplify_color_factors( g, graph_index, color_list )
-    nonzero_pos_list = findall( !iszero, color_list )
+
+    # Sometimes evaluation to Nc can also lead to zero.
+    @vars ca cf nc
+    color_map = Dict([ ca=>nc, cf=>(nc^2-1)/nc ])
+    nonzero_pos_list = findall( !iszero, map(x->subs(x,color_map),color_list) )
     color_list = color_list[nonzero_pos_list]
 
     if isempty(color_list)
@@ -1871,42 +1937,44 @@ function generate_amplitude(
 
     lorentz_list = contract_Dirac_indices_noexpand( g, graph_index, lorentz_list_pre )
 
+    # union the same color factors or same lorentz amplitudes.
+    lorentz_list, color_list = union_color_lorentz( lorentz_list, color_list )
 
-    #--------------------
-    union_lorentz_list = union( lorentz_list )
-    union_color_list = zeros( Basic, length(union_lorentz_list) ) 
-    for lorentz_index in 1:length(union_lorentz_list)
-      union_lorentz = union_lorentz_list[lorentz_index]
-      pos_list = findall( ==(union_lorentz), lorentz_list )
-      union_color_list[lorentz_index] = (expand∘sum)( color_list[pos_list] )
-    end # for lorentz_index
+  ###--------------------
+  ##union_lorentz_list = union( lorentz_list )
+  ##union_color_list = zeros( Basic, length(union_lorentz_list) ) 
+  ##for lorentz_index in 1:length(union_lorentz_list)
+  ##  union_lorentz = union_lorentz_list[lorentz_index]
+  ##  pos_list = findall( ==(union_lorentz), lorentz_list )
+  ##  union_color_list[lorentz_index] = (expand∘sum)( color_list[pos_list] )
+  ##end # for lorentz_index
 
-    #--------------------
-    for lorentz_index in 1:length(union_lorentz_list)
-      union_lorentz = union_lorentz_list[lorentz_index]
-      coeff_list, remnant_list = (split_coeff∘get_add_vector_expand)(union_lorentz)
-      
-      min_str, min_pos = findmin( gen_sorted_str.(remnant_list) )
-      leading_coeff = coeff_list[min_pos]
+  ###--------------------
+  ##for lorentz_index in 1:length(union_lorentz_list)
+  ##  union_lorentz = union_lorentz_list[lorentz_index]
+  ##  coeff_list, remnant_list = (split_coeff∘get_add_vector_expand)(union_lorentz)
+  ##  
+  ##  min_str, min_pos = findmin( gen_sorted_str.(remnant_list) )
+  ##  leading_coeff = coeff_list[min_pos]
 
-      union_lorentz_list[lorentz_index] = expand( union_lorentz//leading_coeff )
-      union_color_list[lorentz_index] = expand( union_color_list[lorentz_index]*leading_coeff )
-    end # for lorentz_index
+  ##  union_lorentz_list[lorentz_index] = expand( union_lorentz//leading_coeff )
+  ##  union_color_list[lorentz_index] = expand( union_color_list[lorentz_index]*leading_coeff )
+  ##end # for lorentz_index
 
-    #--------------------
-    union2_lorentz_list = union( union_lorentz_list )
-    union2_color_list = zeros( Basic, length(union2_lorentz_list) ) 
-    for lorentz_index in 1:length(union2_lorentz_list)
-      union2_lorentz = union2_lorentz_list[lorentz_index]
-      pos_list = findall( ==(union2_lorentz), union_lorentz_list )
-      union2_color_list[lorentz_index] = (expand∘sum)( union_color_list[pos_list] )
-    end # for lorentz_index
+  ###--------------------
+  ##union2_lorentz_list = union( union_lorentz_list )
+  ##union2_color_list = zeros( Basic, length(union2_lorentz_list) ) 
+  ##for lorentz_index in 1:length(union2_lorentz_list)
+  ##  union2_lorentz = union2_lorentz_list[lorentz_index]
+  ##  pos_list = findall( ==(union2_lorentz), union_lorentz_list )
+  ##  union2_color_list[lorentz_index] = (expand∘sum)( union_color_list[pos_list] )
+  ##end # for lorentz_index
 
-    #--------------------
-    # non-zero color factors and re-alias
-    nonzero_pos_list = findall( !iszero, union2_color_list )
-    lorentz_list = union2_lorentz_list[nonzero_pos_list]
-    color_list = union2_color_list[nonzero_pos_list]
+  ###--------------------
+  ### non-zero color factors and re-alias
+  ##nonzero_pos_list = findall( !iszero, union2_color_list )
+  ##lorentz_list = union2_lorentz_list[nonzero_pos_list]
+  ##color_list = union2_color_list[nonzero_pos_list]
 
     #-------------------------------------------
     # re-ordering
@@ -1919,9 +1987,42 @@ function generate_amplitude(
       continue
     end # if
 
-    write_out_amplitude( n_inc, n_loop, graph_index, couplingfactor, model.parameter_dict, ext_mom_list, scale2_list, kin_relation, baseINC_script_str, color_list, lorentz_list, loop_den_list, loop_den_xpt_list, symmetry_map, input["Amp_Min_Ep_Xpt"], input["Amp_Max_Ep_Xpt"], proc_str )
+    #-----------------------------------------------------------------
+    # Make sure the vacuum bubble integrals will be in standard form.
+    loop_den_list, lorentz_list = canonicalize_amp( n_loop, loop_den_list, lorentz_list )
+    #-----------------------------------------------------------------
 
-    write_out_visual_graph( g, graph_index, model, couplingfactor, color_list, lorentz_list, loop_den_list, loop_den_xpt_list, ext_mom_list, scale2_list, symmetry_map, proc_str )
+    
+  ##if iszero(n_loop) 
+  ##  complete_loop_den_list = loop_den_list
+  ##  complete_loop_den_xpt_list = loop_den_xpt_list
+  ##else
+  ##  if isempty(input["user_den_list"])
+  ##    user_loop_den_list = Vector{Basic}()
+  ##  else
+  ##    user_loop_den_list = to_Basic( input["user_den_list"] )
+  ##  end # if
+  ##  complete_loop_den_list = complete_den_family( 
+  ##      n_inc, n_loop, ext_mom_list, kin_relation, 
+  ##      loop_den_list, user_loop_den_list )
+  #
+  ##  n_additional_den = length(complete_loop_den_list)-length(loop_den_list)
+  ##  complete_loop_den_xpt_list = vcat( loop_den_xpt_list, zeros(Int64,n_additional_den) )
+  #
+  ##  box_message( "By append $(n_additional_den) denominators, family is completed." )
+  ##  map( println, complete_loop_den_list )
+  ##end # if
+
+    min_ep_xpt = input["Amp_Min_Ep_Xpt"]
+    max_ep_xpt = input["Amp_Max_Ep_Xpt"]
+    write_out_amplitude( n_inc, n_loop, graph_index, couplingfactor, model.parameter_dict, 
+        ext_mom_list, scale2_list, kin_relation, baseINC_script_str, 
+        color_list, lorentz_list, loop_den_list, loop_den_xpt_list, 
+        symmetry_map, min_ep_xpt, max_ep_xpt, proc_str )
+
+    write_out_visual_graph( g, graph_index, model, couplingfactor, 
+        color_list, lorentz_list, loop_den_list, loop_den_xpt_list, 
+        ext_mom_list, scale2_list, symmetry_map, proc_str )
 
   end # for graph_index
 

@@ -72,7 +72,7 @@ function calculate_CTcoeff( link_part_list::Vector{Particle}, has_yt::Bool, QCD_
     end # if
   end # for link_part 
 
-  CTcoeff = series( CTcoeff, symbols("CTorder"), 0, 2 )
+  CTcoeff = series( CTcoeff, SymEngine.symbols("CTorder"), 0, 2 )
 
   return CTcoeff
 

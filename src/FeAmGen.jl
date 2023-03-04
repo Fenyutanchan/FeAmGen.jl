@@ -7,46 +7,36 @@ FeAmGen represents `Fe`ynman diagram and `Am`plitude `Gen`erator.
 """
 module FeAmGen
 
-using Combinatorics
-
-# for reading input YAML file "SeedProcess.yaml"
-using YAML
-
-using OrderedCollections
-
-using Pkg
-
-# for read model python file
-using PyCall
-
-# for using @test and @testset
-using Test
-
-# for symbolic calculation
-using SymEngine
+using AbstractAlgebra
 using AmpTools
-
-# for Feynman diagram
+using Combinatorics
 using Dates
-using JLD2
-using Pipe
-
 using FORM_jll
+using JLD2
+using OrderedCollections
+using Pipe
+using Pkg
+using PyCall
+using SymEngine
+using Test
+using YAML
 
 export digest_seed_proc, generate_amp, generate_integral
 export generate_multi_yaml, generate_shiftUP_yaml
 
-include("Graph.jl")
 include("Universe.jl")
-include("SimpleDigest.jl")
+include("Graph.jl")
+include("Canon.jl")
 include("Digest.jl")
-include("Kin.jl")
-include("FORMS.jl")
-include("Visual.jl")
 include("FeynmanDiagram.jl")
-include("Seed.jl")
+include("FORMS.jl")
 include("GenAmp.jl")
 include("Integral.jl")
+include("Kin.jl")
+include("Seed.jl")
+include("SimpleDigest.jl")
+include("Visual.jl")
+
 
 ###################
 function __init__()
