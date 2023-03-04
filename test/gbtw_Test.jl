@@ -62,7 +62,7 @@ user_den_list: $(den_list_str)
 
 #-------------------------------------------
 # Start running
-for nloop in [0,1,2]
+for nloop in [2]
 
   if nloop == 0
     den_list_str = "[]"

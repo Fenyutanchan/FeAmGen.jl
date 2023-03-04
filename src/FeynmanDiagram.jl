@@ -1064,7 +1064,7 @@ function factor_out_loop_den(
     mass = one_edge.property[:particle].mass
     width = one_edge.property[:particle].width
     # For now we only consider the width of loop propagator is zero.
-    den_prod *= Den( mom, mass, 0 ) 
+    den_prod *= Den( normalize_loop_mom_single(mom), mass, 0 ) 
     width_den_prod *= Den( mom, mass, width ) 
   end # for one_edge
 
@@ -1087,7 +1087,7 @@ function factor_out_loop_den(
       loop_den_list[index] = (first∘get_args)(one_factor)
       loop_den_xpt_list[index] = convert( Int64, get_args(one_factor)[2] )
     else
-      error( "Not expected: "*string(one_factor) )
+      error( "Not expected: $(one_factor)" )
     end # if
   end # for index
 
@@ -1991,6 +1991,13 @@ function generate_amplitude(
     # Make sure the vacuum bubble integrals will be in standard form.
     loop_den_list, lorentz_list = canonicalize_amp( n_loop, loop_den_list, lorentz_list )
     #-----------------------------------------------------------------
+
+if graph_index == 93 
+@show length(loop_den_list) != (length∘unique!)(loop_den_list)
+@show loop_den_list loop_den_xpt_list
+error("DEBUG")
+end # if
+
 
     
   ##if iszero(n_loop) 

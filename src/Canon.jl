@@ -1,4 +1,26 @@
 
+###################################
+# This function is used for the case before canonicalization, 
+#   so we only check the coefficient sign of the leading qi.
+function normalize_loop_mom_single( 
+    loop_mom::Basic
+)::Basic
+###################################
+
+  qi_list = free_symbols(loop_mom)
+  filter!(sym -> (first∘string)(sym) == 'q', qi_list)
+  sort!(qi_list, by=q->parse(Int, string(q)[2:end]))
+  leading_qi = first(qi_list)
+
+  loop_mom = expand(loop_mom)
+  if SymEngine.coeff(loop_mom,leading_qi) < 0
+    return expand(-loop_mom)
+  end # if
+
+  return loop_mom
+
+end # function normalize_loop_mom
+
 
 ###################################
 function normalize_loop_mom( 
