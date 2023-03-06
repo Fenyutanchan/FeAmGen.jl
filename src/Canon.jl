@@ -67,7 +67,7 @@ function gen_loop_mom_canon_map(
 
   tmp_mom_list = mom_list - subs.(mom_list, Ref(Dict(q_ => 0 for q_ ∈ q_list)))
   filter!(!iszero, tmp_mom_list)
-  unique!(mom -> SymEngine.expand(-mom), tmp_mom_list)
+  unique!(mom -> abs(mom), tmp_mom_list)
   sort!( tmp_mom_list, by=mom->(findfirst(!iszero, SymEngine.coeff.(mom,q_list)), (length∘free_symbols)(mom)) )
 
   if (isempty∘setdiff)(q_list,tmp_mom_list)
