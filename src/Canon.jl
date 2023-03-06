@@ -84,7 +84,13 @@ function gen_loop_mom_canon_map(
   end # if
 
   for selected_mom_indices in combinations(eachindex(tmp_mom_list), length(q_list))
+    counter = 0
+    counter_target = 2^(length(q_list)-1)
     for sign_list in Base.product([(1, -1) for _ in q_list]...)
+      counter += 1
+      if counter > counter_target
+        break
+      end
 
       coeff_matrix = reduce(
           vcat,
