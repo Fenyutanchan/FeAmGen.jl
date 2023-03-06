@@ -1049,7 +1049,8 @@ Factorize out the loop propagator denominators,
 """
 function factor_out_loop_den( 
     g::Graph, 
-    lorentz_list::Vector{Basic} 
+    lorentz_list::Vector{Basic}, 
+    mom_conserv::Pair{Basic,Basic} 
 )::Tuple{Vector{Basic},Vector{Basic},Vector{Int64}}
 #########################################################################
 
@@ -1064,7 +1065,8 @@ function factor_out_loop_den(
     mass = one_edge.property[:particle].mass
     width = one_edge.property[:particle].width
     # For now we only consider the width of loop propagator is zero.
-    den_prod *= Den( normalize_loop_mom_single(mom), mass, 0 ) 
+    new_mom = (normalize_loop_mom_single∘subs)(mom,mom_conserv)
+    den_prod *= Den( new_mom, mass, 0 ) 
     width_den_prod *= Den( mom, mass, width ) 
   end # for one_edge
 
@@ -1853,6 +1855,7 @@ function generate_amplitude(
 )::Nothing
 ##########################################################################
 
+  n_inc = length(input["incoming"])
   n_loop = input["n_loop"]
   proc_str = join( [ input["incoming"]; "TO"; input["outgoing"]; "$(n_loop)Loop" ], "_" )
 
@@ -1883,6 +1886,9 @@ function generate_amplitude(
   close(file)
 
   ext_mom_list  = generate_ext_mom_list( graph_list )
+  # momentum conservation
+  Kn_expr = expand( 2*sum(ext_mom_list[1:n_inc])-sum(ext_mom_list)+ext_mom_list[end] )
+  mom_conserv = ext_mom_list[end] => Kn_expr
 
   #------------------------------------------------  
   # Calculate amplitude for each graph
@@ -1928,7 +1934,9 @@ function generate_amplitude(
       continue
     end # if
 
-    lorentz_list_pre, loop_den_list, loop_den_xpt_list = factor_out_loop_den( g, lorentz_list )
+    lorentz_list_pre, loop_den_list, loop_den_xpt_list = 
+        factor_out_loop_den( g, lorentz_list, mom_conserv )
+
     lorentz_list_pre = lorentz_list_pre[nonzero_pos_list]
 
     if !isempty(symmetry_map) 
@@ -1992,14 +2000,6 @@ function generate_amplitude(
     loop_den_list, lorentz_list = canonicalize_amp( n_loop, loop_den_list, lorentz_list )
     #-----------------------------------------------------------------
 
-if graph_index == 93 
-@show length(loop_den_list) != (length∘unique!)(loop_den_list)
-@show loop_den_list loop_den_xpt_list
-error("DEBUG")
-end # if
-
-
-    
   ##if iszero(n_loop) 
   ##  complete_loop_den_list = loop_den_list
   ##  complete_loop_den_xpt_list = loop_den_xpt_list
