@@ -964,15 +964,15 @@ function assemble_amplitude( g::Graph )::Tuple{Vector{Basic},Vector{Basic}}
   for vert in g.node_list
     # amp_color_list = tensor_product( amp_color_list, vert.property[:color_list] )
     # amp_couplings_lorentz_list = tensor_product( amp_couplings_lorentz_list, vert.property[:couplings_lorentz_list] )
-    amp_color_list = vec( [ reduce(*, amp_color) for amp_color ∈ Base.product(amp_color_list, vert.property[:color_list]) ] )
-    amp_couplings_lorentz_list = vec( [ reduce(*, amp_couplings_lorentz) for amp_couplings_lorentz ∈ Base.product(amp_couplings_lorentz_list, vert.property[:couplings_lorentz_list]) ] )
+    amp_color_list = vectorized_tensor_product_Basic( amp_color_list, vert.property[:color_list] )
+    amp_couplings_lorentz_list = vectorized_tensor_product_Basic( amp_couplings_lorentz_list, vert.property[:couplings_lorentz_list] )
   end # for vert
 
   for edge in g.edge_list
     # amp_color_list = tensor_product( amp_color_list, edge.property[:color_list] )
     # amp_couplings_lorentz_list = tensor_product( amp_couplings_lorentz_list, edge.property[:couplings_lorentz_list] )
-    amp_color_list = vec( [ reduce(*, amp_color) for amp_color ∈ Base.product(amp_color_list, edge.property[:color_list]) ] )
-    amp_couplings_lorentz_list = vec( [ reduce(*, amp_couplings_lorentz) for amp_couplings_lorentz ∈ Base.product(amp_couplings_lorentz_list, edge.property[:couplings_lorentz_list]) ] )
+    amp_color_list = vectorized_tensor_product_Basic( amp_color_list, edge.property[:color_list] )
+    amp_couplings_lorentz_list = vectorized_tensor_product_Basic( amp_couplings_lorentz_list, edge.property[:couplings_lorentz_list] )
   end # for edge
 
   return amp_color_list, amp_couplings_lorentz_list;

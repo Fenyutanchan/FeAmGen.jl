@@ -349,7 +349,7 @@ function expand_parton(
 
   # generate the tensor product
   # product_list = tensor_product( incout_parton_str_list... )
-  product_list = vec( [join(incout_parton, ",") for incout_parton ∈ Base.product(incout_parton_str_list...)] )
+  product_list = vectorized_tensor_product_String( incout_parton_str_list... )
 
   return product_list
 end # function expand_parton
