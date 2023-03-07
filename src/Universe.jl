@@ -369,3 +369,36 @@ end # function logging_model
 
 
 
+
+
+
+###########################################
+"""
+    vectorized_tensor_product(
+      iters...;
+      f::Function=identity
+    )::Vector{Basic}
+
+Return the vectorized tensor production of several iterable objects.
+You could specify what value produced by function `f` applied to the elements.
+"""
+function vectorized_tensor_product(iters...; f::Function=identity)
+###########################################
+  return vec( [ f(elem) for elem ∈ Iterators.product(iters...) ] )
+end
+
+###########################################
+"""
+    vectorized_tensor_product_Basic(iters...)
+Call `vectorized_tensor_product( iters...; f=pord )` for `Basic`.
+"""
+vectorized_tensor_product_Basic(iters...) = vectorized_tensor_product(iters...; f=prod)
+###########################################
+###########################################
+"""
+    vectorized_tensor_product_Basic(iters...)
+Call `vectorized_tensor_product( iters...; f=(elem -> join(elem, ',')) )` for `String`.
+"""
+vectorized_tensor_product_String(iters...) = vectorized_tensor_product(iters...; f=(elem -> join(elem, ',')))
+###########################################
+

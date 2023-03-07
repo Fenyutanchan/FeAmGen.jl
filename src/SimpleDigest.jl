@@ -269,49 +269,49 @@ end # function simple_readin_model
 
 
 
-###########################################
-"""
-    tensor_product( aa::Vector{String}, bb::Vector{String}, xx::Vector{String}... )::Vector{String} 
+# ###########################################
+# """
+#     tensor_product( aa::Vector{String}, bb::Vector{String}, xx::Vector{String}... )::Vector{String} 
 
-Generalize tensor_product to multiple string lists/arrays.
-"""
-function tensor_product( aa::Vector{String}, bb::Vector{String}, xx::Vector{String}... )::Vector{String} 
-###########################################
-  return tensor_product( tensor_product( aa, bb ), xx... )
-end # function tensor_product
+# Generalize tensor_product to multiple string lists/arrays.
+# """
+# function tensor_product( aa::Vector{String}, bb::Vector{String}, xx::Vector{String}... )::Vector{String} 
+# ###########################################
+#   return tensor_product( tensor_product( aa, bb ), xx... )
+# end # function tensor_product
 
 
 
-###########################################
-"""
-    tensor_product( str_list1::Vector{String}, str_list2::Vector{String} )::Vector{String}
+# ###########################################
+# """
+#     tensor_product( str_list1::Vector{String}, str_list2::Vector{String} )::Vector{String}
 
-Inside tensor_product( x, y ), x and y are two string lists/arrays.
-This function calculate the tensor production of two arrays.
+# Inside tensor_product( x, y ), x and y are two string lists/arrays.
+# This function calculate the tensor production of two arrays.
 
-# Examples
-```julia
-@testset "tensor_product" begin
-  target_in = Array{String}[ String["a","b","c"], String["d","e","f"] ]
-  target_out = String["a,d","a,e","a,f","b,d","b,e","b,f","c,d","c,e","c,f"]
-  @test FeAmGen.tensor_product( target_in... ) == target_out
-  target_in = Array{String}[ String["a","b"], String["c","d"], String["e","f"] ]
-  target_out = String["a,c,e","a,c,f","a,d,e","a,d,f","b,c,e","b,c,f","b,d,e","b,d,f"]
-  @test FeAmGen.tensor_product( target_in... ) == target_out
-end # @testset
-```
-"""
-function tensor_product( 
-    str_list1::Vector{String}, 
-    str_list2::Vector{String}
-)::Vector{String}
-###########################################
-  res = Vector{String}()
-  for str1 in str_list1, str2 in str_list2
-    push!(res,str1*","*str2)
-  end
-  return res
-end # function tensor_product
+# # Examples
+# ```julia
+# @testset "tensor_product" begin
+#   target_in = Array{String}[ String["a","b","c"], String["d","e","f"] ]
+#   target_out = String["a,d","a,e","a,f","b,d","b,e","b,f","c,d","c,e","c,f"]
+#   @test FeAmGen.tensor_product( target_in... ) == target_out
+#   target_in = Array{String}[ String["a","b"], String["c","d"], String["e","f"] ]
+#   target_out = String["a,c,e","a,c,f","a,d,e","a,d,f","b,c,e","b,c,f","b,d,e","b,d,f"]
+#   @test FeAmGen.tensor_product( target_in... ) == target_out
+# end # @testset
+# ```
+# """
+# function tensor_product( 
+#     str_list1::Vector{String}, 
+#     str_list2::Vector{String}
+# )::Vector{String}
+# ###########################################
+#   res = Vector{String}()
+#   for str1 in str_list1, str2 in str_list2
+#     push!(res,str1*","*str2)
+#   end
+#   return res
+# end # function tensor_product
 
 
 
@@ -348,7 +348,8 @@ function expand_parton(
   incout_parton_str_list = map( s_ -> s_ == "parton" ? parton_str_list : [s_], incout_str_list )
 
   # generate the tensor product
-  product_list = tensor_product( incout_parton_str_list... )
+  # product_list = tensor_product( incout_parton_str_list... )
+  product_list = vectorized_tensor_product_String( incout_parton_str_list... )
 
   return product_list
 end # function expand_parton
