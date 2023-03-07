@@ -2004,26 +2004,6 @@ function generate_amplitude(
     loop_den_list, lorentz_list = canonicalize_amp( n_loop, loop_den_list, lorentz_list )
     #-----------------------------------------------------------------
 
-  ##if iszero(n_loop) 
-  ##  complete_loop_den_list = loop_den_list
-  ##  complete_loop_den_xpt_list = loop_den_xpt_list
-  ##else
-  ##  if isempty(input["user_den_list"])
-  ##    user_loop_den_list = Vector{Basic}()
-  ##  else
-  ##    user_loop_den_list = to_Basic( input["user_den_list"] )
-  ##  end # if
-  ##  complete_loop_den_list = complete_den_family( 
-  ##      n_inc, n_loop, ext_mom_list, kin_relation, 
-  ##      loop_den_list, user_loop_den_list )
-  #
-  ##  n_additional_den = length(complete_loop_den_list)-length(loop_den_list)
-  ##  complete_loop_den_xpt_list = vcat( loop_den_xpt_list, zeros(Int64,n_additional_den) )
-  #
-  ##  box_message( "By append $(n_additional_den) denominators, family is completed." )
-  ##  map( println, complete_loop_den_list )
-  ##end # if
-
     min_ep_xpt = input["Amp_Min_Ep_Xpt"]
     max_ep_xpt = input["Amp_Max_Ep_Xpt"]
     write_out_amplitude( n_inc, n_loop, graph_index, couplingfactor, model.parameter_dict, 
