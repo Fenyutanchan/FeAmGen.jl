@@ -487,14 +487,18 @@ end # function update_dentop_list
 function finalize_complete_dentop(
     dentop::DenTop, 
     indep_mom_list::Vector{Basic}, 
+    den_coeff_mat_dict::Dict{Basic,Matrix{Rational}}, 
     sp_dict::Dict{Basic,Basic} 
 )::DenTop
 #############################
 
-  n_sp = length(sp_dict)
-  rank_coeff_mat = rank(dentop.coeff_mat) 
+  new_den_list = dentop.den_list
+  new_coeff_mat = dentop.coeff_mat
 
-  n_loop = (length∘unique∘filter)( x -> (first∘string)(x) == 'q', free_symbols(dentop.den_list) )
+  n_sp = length(sp_dict)
+  rank_coeff_mat = rank(new_coeff_mat) 
+
+  n_loop = (length∘unique∘filter)( x -> (first∘string)(x) == 'q', free_symbols(new_den_list) )
 
   @vars q1, q2, q3
   if n_loop == 1
@@ -514,22 +518,22 @@ function finalize_complete_dentop(
       trial_den = Den( loop_mom, 0, 0 )
 
       row_mat = get_coeff_mat( trial_den, sp_dict )
-      new_coeff_mat = vcat( dentop.coeff_mat, row_mat )
-      if rank(new_coeff_mat) > rank(dentop.coeff_mat)
-        dentop.coeff_mat = new_coeff_mat
-        push!( dentop.den_list, trial_den )
+      trial_coeff_mat = vcat( new_coeff_mat, row_mat )
+      if rank(trial_coeff_mat) > rank(new_coeff_mat)
+        new_coeff_mat = trial_coeff_mat
+        push!( new_den_list, trial_den )
 
-        if rank(dentop.coeff_mat) == n_sp
+        if rank(new_coeff_mat) == n_sp
           break;
         end # if
       end # if
   
     end # for ext_mom
 
-    @assert n_sp == rank(dentop.coeff_mat) == length(dentop.den_list)
+    @assert n_sp == rank(new_coeff_mat) == length(new_den_list)
   end # if
 
-  return dentop
+  return make_dentop( new_den_list, den_coeff_mat_dict, sp_dict )
 
 end # function finalize_complete_dentop
 
@@ -583,7 +587,8 @@ function main()::Nothing
   end # for one_file
 
   # make backup for pointer to file
-  file_dentop_collect = dentop_collect
+  file_dentop_collect = copy(dentop_collect)
+
 
   # uniqueness
   unique!( x->reduce(*,x.den_list), dentop_collect )
@@ -592,6 +597,7 @@ function main()::Nothing
   # parent or child
   dentop_collect = get_superior_dentop_collect( dentop_collect ) 
   @show length(dentop_collect)
+
 
   #------
   incomplete_dentop_list = dentop_collect
@@ -617,8 +623,11 @@ function main()::Nothing
 ##end # for one_dentop
 ###------------------
 
-  complete_dentop_list = map( x->finalize_complete_dentop(x,indep_mom_list,sp_dict), 
+
+
+  complete_dentop_list = map( x->finalize_complete_dentop(x,indep_mom_list,den_coeff_mat_dict,sp_dict), 
                               complete_dentop_list )
+
   n_dentop = length(complete_dentop_list)
   for index in 1:n_dentop
     complete_dentop = complete_dentop_list[index]
@@ -630,6 +639,7 @@ function main()::Nothing
     map( println, file_list[pos_list] )
     println( "--------------" )
     map( println, complete_dentop.den_list )
+    
 
   end # for index
 
