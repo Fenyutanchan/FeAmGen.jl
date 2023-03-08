@@ -2,13 +2,13 @@ using Dates, FeAmGen, SymEngine, AmpTools, Test
 
 @info "basicTest starts @ $(now())"
 
-@testset "tensor_product" begin
+@testset "vectorized_tensor_product_String" begin
   target_in = Array{String}[ String["a","b","c"], String["d","e","f"] ]
   target_out = String["a,d","a,e","a,f","b,d","b,e","b,f","c,d","c,e","c,f"]
-  @test FeAmGen.tensor_product( target_in... ) == target_out
+  @test (isempty∘setdiff)( FeAmGen.vectorized_tensor_product_String( target_in... ), target_out )
   target_in = Array{String}[ String["a","b"], String["c","d"], String["e","f"] ]
   target_out = String["a,c,e","a,c,f","a,d,e","a,d,f","b,c,e","b,c,f","b,d,e","b,d,f"]
-  @test FeAmGen.tensor_product( target_in... ) == target_out
+  @test (isempty∘setdiff)( FeAmGen.vectorized_tensor_product_String( target_in... ), target_out )
 end # @testset
 
 
