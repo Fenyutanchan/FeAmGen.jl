@@ -1106,6 +1106,8 @@ end # function factor_out_loop_den
 
 
 ##################################################################################
+# Changed by Quan-feng WU (wuquanfeng@ihep.ac.cn)
+# March 9, 2023
 """
     contract_Dirac_indices( 
         g::Graph, 
@@ -1160,6 +1162,8 @@ end # function contract_Dirac_indices
 
 
 ##################################################################################
+# Changed by Quan-feng WU (wuquanfeng@ihep.ac.cn)
+# March 9, 2023
 """
     contract_Dirac_indices_noexpand( 
         g::Graph, 
@@ -1405,6 +1409,8 @@ end # function check_consistency
 
 
 #########################################################
+# Changed by Quan-feng WU (wuquanfeng@ihep.ac.cn)
+# March 9, 2023
 """
     simplify_color_factors( 
         g::Graph, 

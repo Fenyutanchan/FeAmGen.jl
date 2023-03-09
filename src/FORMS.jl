@@ -152,8 +152,10 @@ end # function make_baseINC_script
 
 
 ##############################################################################
+# Changed by Quan-feng WU (wuquanfeng@ihep.ac.cn)
+# March 9, 2023
 """
-    make_amp_contraction_script( expr::Basic, file_name::String )::String
+    make_amp_contraction_script( expr::Basic )::String
 
 Prepare the FORM script for the amplitude contraction.
 """
@@ -268,10 +270,11 @@ end # function make_amp_contraction_script
 
 
 ##############################################################################
+# Changed by Quan-feng WU (wuquanfeng@ihep.ac.cn)
+# March 9, 2023
 """
     make_amp_contraction_noexpand_script( 
-        expr::Basic, 
-        file_name::String 
+        expr::Basic,
     )::String
 
 Prepare the FORM script for the amplitude contraction, but do not do the expansion for the amplitude.
@@ -368,10 +371,11 @@ end # function make_amp_contraction_noexpand_script
 
 
 #############################################################
+# Changed by Quan-feng WU (wuquanfeng@ihep.ac.cn)
+# March 9, 2023
 """
     make_color_script( 
-        color_factor::Basic, 
-        file_name::String 
+        color_factor::Basic,
     )::String
 
 Specifically calculate the color factor `color_factor`.
