@@ -145,25 +145,38 @@ function generate_integral(
   file = open( "$(file_name).frm", "w" )
   write( file, make_amp_contraction_script( numerator_expr, file_name ) )
   close( file )
+  form_script_str = make_amp_contraction_script( numerator_expr )
+
+  result_io = IOBuffer()
 
   file = open( "kin_relation.frm", "w" )
   write( file, (join∘map)( ele_->"id $(ele_[1]) = $(ele_[2]);\n", collect(kin_relation) ) )
   close(file)
+  kin_relations_str = join( map( ele_->"id $(ele_[1]) = $(ele_[2]);", collect(kin_relation) ), "\n" )
+  form_script_str = replace(form_script_str, "#include kin_relation.frm" => kin_relations_str)
 
   file = open( "model_parameters.frm", "w" )
   write( file, "symbol $(join( map( string, ver_mass_list ), "," ));\n" )
   close(file)
+  model_parameters_str = "symbol " * join( map(string, ver_mass_list), "," ) * ";"
+  form_script_str = replace(form_script_str, "#include model_parameters.frm" => model_parameters_str)
 
   art_dir = Pkg.Artifacts.artifact"FeAmGen"
   cp( "$(art_dir)/scripts/contractor.frm", "contractor.frm", force=true )
   cp( "$(art_dir)/scripts/color.frm", "color.frm", force=true )
 
   run( pipeline( `$(form()) $(file_name).frm`, "$(file_name).log" ) )
-  # run( pipeline( `form $(file_name).frm`, "$(file_name).log" ) )
+  try
+    run( pipeline( `$(form()) -q -`; stdin=IOBuffer(form_script_str), stdout=result_io ) )
+  catch
+    write( "$(file_name).frm", form_script_str )
+    rethrow()
+  end
   #@info "[ Done FORM script execution ]" script="$(file_name).frm"
 
   file = open( "$(file_name).out", "r" )
   result_str = read( file, String ) 
+  @assert (String∘take!)(result_io) == result_str
   result_str = replace( result_str, "Coeff" => "" )
   close( file )
 

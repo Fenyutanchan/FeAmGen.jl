@@ -264,6 +264,109 @@ function make_amp_contraction_script(
   return result_str
 
 end # function make_amp_contraction_script 
+function make_amp_contraction_script(
+    expr::Basic
+)::String
+##############################################################################
+
+  symbol_list = free_symbols(expr)
+  symbol_str_list = string.(symbol_list)
+  filter!( !startswith("mu"), symbol_str_list )
+  filter!( s -> startswith(s, "gc") || startswith(s, "m"), symbol_str_list )
+
+  result_str = """
+  #-
+
+  Off Statistics;
+  Off FinalStats;
+
+  #include model_parameters.frm
+  #include contractor.frm
+
+  symbol sqrteta;
+
+  CFunctions Coeff;
+
+  format nospaces;
+  format maple;
+
+  Local expression = $(expr);
+  .sort
+  id GAij(spa1?,spa2?,mom?,mass?) = GAij(spa1,spa2,mom) + ONEij(spa1,spa2)*mass;
+  .sort
+
+  #call Simplification();
+
+  #call contractDiracIndices();
+
+  ***#call SimpleOrdering();
+
+  #call Simplification();
+
+  #include kin_relation.frm
+  .sort
+
+
+
+  id FV(mom?,rho?)*VecEpsilon?{VecEp,VecEpC}(int?,rho?,mom?,mass?) = 0;
+  .sort
+
+  ***repeat;
+  ***  id FV(mom?,rho?)*FermionChain(?vars1, GA(rho?), ?vars2 ) = FermionChain(?vars1, GA(mom), ?vars2 );
+  ***  id LMT(rho1?,rho2?)*FV(mom?,rho1?) = FV(mom,rho2);
+  ***  id FV(mom1?,rho?)*FV(mom2?,rho?) = SP(mom1,mom2);
+  ***endrepeat;
+  ***.sort
+
+  while( match(FermionChain(?vars1,GA(rho?NonEPMU\$LORENTZ),?vars2)) );
+    sum \$LORENTZ;
+  endwhile;
+  .sort
+  *
+  * Replace system dummy indices Nm_? by our dummy indices dum in case to read back to GiNaC.
+  * We assume this should give the canonical form of FermionChain, 
+  *   since it seems dummy indices Nm_? can make canonical form of an expression automatically.
+  *
+
+
+  repeat;
+  if( match( SP(mom1?{q1,q2,q3,q4}\$MOM1,mom2?\$MOM2) ) );
+    id once SP(\$MOM1,\$MOM2) = FV(\$MOM1,rho101)*FV(\$MOM2,rho102)*LMT(rho101,rho102);
+    sum rho101, rho102;
+  endif;
+  endrepeat; 
+  .sort
+
+  repeat;
+    id once FermionChain(?vars1, GA(mom?), ?vars2 ) = FV(mom,rho100)*FermionChain(?vars1, GA(rho100), ?vars2 );
+    sum rho100;
+  endrepeat;
+
+  #do MUIDX = 1, 20, 1
+    Multiply replace_(N`MUIDX'_?,dum`MUIDX');
+  #enddo
+  .sort
+
+  id FV(rho1?,rho2?) = FV(rho1,rho2);
+  id SP(rho1?,rho2?) = SP(rho1,rho2);
+  .sort
+
+  bracket FermionChain, FV, SP, LMT, VecEp, VecEpC, $(join(symbol_str_list,", ")), im;
+  .sort
+  collect Coeff;
+  .sort
+
+
+  #write "%E", expression
+  .sort
+
+  .end
+
+  """
+
+  return result_str
+
+end # function make_amp_contraction_script
 
 
 
@@ -367,6 +470,87 @@ function make_amp_contraction_noexpand_script(
   return result_str
 
 end # function make_amp_contraction_noexpand_script 
+function make_amp_contraction_noexpand_script( 
+    expr::Basic
+)::String
+##############################################################################
+
+  result_str = """
+  #-
+
+  Off Statistics;
+  Off FinalStats;
+
+  #include model_parameters.frm
+  #include contractor.frm
+
+  symbol sqrteta;
+
+  format nospaces;
+  format maple;
+
+  Local expression = $(expr);
+  .sort
+  id GAij(spa1?,spa2?,mom?,mass?) = GAij(spa1,spa2,mom+mass*unity);
+  .sort
+
+  #call SimplificationNoExpand();
+
+  #call contractDiracIndicesNoExpand();
+
+  #call SimplificationNoExpand();
+
+  #include kin_relation.frm
+  .sort
+
+  ***repeat;
+  ***  id once FermionChain(?vars1, GA(mom?), ?vars2 ) = FV(mom,rho100)*FermionChain(?vars1, GA(rho100), ?vars2 );
+  ***  sum rho100;
+  ***endrepeat;
+
+
+  id FV(mom?,rho?)*VecEpsilon?{VecEp,VecEpC}(int?,rho?,mom?,mass?) = 0;
+  .sort
+
+  while( match(FermionChain(?vars1,GA(rho?NonEPMU\$LORENTZ),?vars2)) );
+    sum \$LORENTZ;
+  endwhile;
+  .sort
+  *
+  * Replace system dummy indices Nm_? by our dummy indices dum in case to read back to GiNaC.
+  * We assume this should give the canonical form of FermionChain, 
+  *   since it seems dummy indices Nm_? can make canonical form of an expression automatically.
+  *
+
+  ***repeat;
+  ***if( match( SP(mom1?{q1,q2,q3,q4}\$MOM1,mom2?\$MOM2) ) );
+  ***  id once SP(\$MOM1,\$MOM2) = FV(\$MOM1,rho1)*FV(\$MOM2,rho2)*LMT(rho1,rho2);
+  ***  sum rho1;
+  ***  sum rho2;
+  ***endif;
+  ***endrepeat; 
+  ***.sort
+
+
+  #do MUIDX = 1, 20, 1
+    Multiply replace_(N`MUIDX'_?,dum`MUIDX');
+  #enddo
+  .sort
+
+  ***id FV(rho1?,rho2?) = FV(rho1,rho2);
+  ***id SP(rho1?,rho2?) = SP(rho1,rho2);
+  ***.sort
+
+  #write "%E", expression
+  .sort
+
+  .end
+
+  """
+
+  return result_str
+
+end # function make_amp_contraction_noexpand_script
 
 
 
@@ -411,6 +595,37 @@ function make_color_script(
   
   #write <$(file_name).out> "%E", colorFactor
   #close <$(file_name).out>
+  .sort
+  
+  .end
+  """
+
+  return result_str
+
+end # function make_color_script
+function make_color_script( 
+    color_factor::Basic
+)::String
+#############################################################
+
+  result_str = """
+  #-
+  Off Statistics;
+  
+  format nospaces;
+  format maple;
+  
+  #include color.frm
+  
+  Local colorFactor = $(color_factor);
+  
+  #call calc1_CF();
+  .sort 
+  
+  #call calc2_CF();
+  .sort 
+  
+  #write "%E", colorFactor
   .sort
   
   .end

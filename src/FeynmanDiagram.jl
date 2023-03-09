@@ -1115,7 +1115,7 @@ end # function factor_out_loop_den
 
 Contract the Dirac indices in the `lorentz_expr_list` by using FORM scripts.
 """
-function contract_Dirac_indices( 
+function contract_Dirac_indices(
     g::Graph, 
     graph_index::Int64, 
     lorentz_expr_list::Vector{Basic} 
@@ -1130,19 +1130,28 @@ function contract_Dirac_indices(
   for index in 1:length(lorentz_expr_list)
     lorentz_expr = lorentz_expr_list[index]
     file_name = "contract_lorentz_expr$(index)_diagram$(graph_index)"
-    form_script_str = make_amp_contraction_script( lorentz_expr, file_name )
+    form_file_script_str = make_amp_contraction_script( lorentz_expr, file_name )
+    form_script_str = make_amp_contraction_script( lorentz_expr )
 
     file = open( "$(file_name).frm", "w" )
-    write( file, form_script_str )
+    write( file, form_file_script_str )
     close(file)
+    result_io = IOBuffer()
 
     println( "  [ form $(file_name).frm ]" )
     run( pipeline( `$(tform()) -w$(Threads.nthreads()) $(file_name).frm`, "$(file_name).log" ) )
+    try
+      run( pipeline( `$(tform()) -w$(Threads.nthreads()) -q -`; stdin=IOBuffer(form_script_str), stdout=result_io ) )
+    catch
+      write( "$(file_name).frm", form_script_str )
+      rethrow()
+    end
 
     file = open( "$(file_name).out", "r" )
     result_str = read( file, String )
     close( file )
     result_expr = Basic(result_str)
+    @assert result_expr == (Basic∘String∘take!)(result_io)
     new_lorentz_expr_list[index] = result_expr
 
     rm( "$(file_name).frm" )
@@ -1189,19 +1198,28 @@ function contract_Dirac_indices_noexpand(
   for index in 1:length(lorentz_expr_list)
     lorentz_expr = lorentz_expr_list[index]
     file_name = "contract_lorentz_expr$(index)_diagram$(graph_index)_noexpand"
-    form_script_str = make_amp_contraction_noexpand_script( lorentz_expr, file_name )
+    form_file_script_str = make_amp_contraction_noexpand_script( lorentz_expr, file_name )
+    form_script_str = make_amp_contraction_noexpand_script( lorentz_expr )
 
     file = open( "$(file_name).frm", "w" )
-    write( file, form_script_str )
+    write( file, form_file_script_str )
     close(file)
+    result_io = IOBuffer()
 
     println( "  [ form $(file_name).frm ]" )
     run( pipeline( `$(tform()) -w$(Threads.nthreads()) $(file_name).frm`, "$(file_name).log" ) )
+    try
+      run( pipeline( `$(tform()) -w$(Threads.nthreads()) -q -`; stdin=IOBuffer(form_script_str), stdout=result_io ) )
+    catch
+      write( "$(file_name).frm", form_script_str )
+      rethrow()
+    end
 
     file = open( "$(file_name).out", "r" )
     result_str = read( file, String )
     close( file )
     result_expr = Basic(result_str)
+    @assert result_expr == (Basic∘String∘take!)(result_io)
     new_lorentz_expr_list[index] = result_expr
 
     rm( "$(file_name).frm" )
@@ -1259,8 +1277,7 @@ function check_consistency(
     q4_val = sum( ext_mom_list .* map( x->mod(x,256)+16, rand(Int64,n_ext_mom) ) )
     
 
-    file = open( "$(file_name).frm", "w" )
-    write( file, """
+    form_file_script_str = """
     #-
     
     ***#: workspace 16G
@@ -1363,18 +1380,30 @@ function check_consistency(
 
     .end
   
-    """ )
-
+    """
+    file = open( "$(file_name).frm", "w" )
+    write( file, form_file_script_str )
     close( file )
+    form_script_str = replace(form_file_script_str,
+      "<$(file_name).out>" => "",
+      "#close" => ""
+    )
 
+    result_io = IOBuffer
     cost_time = @elapsed begin
       run( pipeline( `$(tform()) -w$(Threads.nthreads()) $(file_name).frm`, "$(file_name).log" ) )
-      # run( pipeline( `tform -w$(Threads.nthreads()) $(file_name).frm`, "$(file_name).log" ) )
+      try
+        run( pipeline( `$(tform()) -w$(Threads.nthreads()) -q -`, stdin=IOBuffer(form_script_str), stdout=result_io ) )
+      catch
+        write( "$(file_name).frm", form_script_str )
+        rethrow()
+      end
     end # cost_time
     println( "<Lorentz #$(lorentz_index) repeat #$(repeat): $(cost_time) sec>" )
 
     file = open( "$(file_name).out", "r" )
     result_str = read( file, String )
+    @assert result_str == (String∘take!)(result_io)
     result_str = replace( result_str, r"\s"=>"" )
     close(file)
 
@@ -1423,22 +1452,31 @@ function simplify_color_factors(
   new_color_factor_list = Vector{Basic}( undef, length(color_factor_list) )
 
   cost_time = @elapsed begin
-  for index in 1:length(color_factor_list)
+  for index in eachindex(color_factor_list)
     one_color_factor = color_factor_list[index]
     file_name = "simplify_color$(index)_diagram$(graph_index)"
-    form_script_str = make_color_script( one_color_factor, file_name )
+    file_form_script_str = make_color_script( one_color_factor, file_name )
+    form_script_str = make_color_script( one_color_factor )
 
     file = open( "$(file_name).frm", "w" )
-    write( file, form_script_str )
+    write( file, file_form_script_str )
     close(file)
+    result_io = IOBuffer()
 
     println( "  [ form $(file_name).frm ]" )
     run( pipeline( `$(form()) $(file_name).frm`, "$(file_name).log" ) )
+    try
+      run( pipeline( `$(form()) -q -`; stdin=IOBuffer(form_script_str), stdout=result_io ) )
+    catch
+      write( "$(file_name).frm", form_script_str )
+      rethrow()
+    end
 
     file = open( "$(file_name).out", "r" )
     result_str = read( file, String )
     close( file )
     result_expr = Basic(result_str)
+    @assert result_expr == (Basic∘String∘take!)(result_io)
     new_color_factor_list[index] = result_expr
 
     run( `rm $(file_name).frm $(file_name).out $(file_name).log` )
