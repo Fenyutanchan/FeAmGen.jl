@@ -1450,7 +1450,6 @@ function simplify_color_factors(
     result_expr = (Basic∘String∘take!)(result_io)
     new_color_factor_list[index] = result_expr
 
-    run( `rm $(file_name).frm $(file_name).out $(file_name).log` )
   end # for index
   end # cost_time
   println( "<$(cost_time) sec>" )
