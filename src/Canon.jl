@@ -94,7 +94,7 @@ function gen_loop_mom_canon_map(
           transpose(SymEngine.coeff.(mom_, q_list))
               for mom_ in (sign_list .* tmp_mom_list[selected_mom_indices])
       ) # end reduce
-@show coeff_matrix typeof(coeff_matrix)
+#@show coeff_matrix typeof(coeff_matrix)
       if (iszero∘expand∘get_det)(coeff_matrix)
         break
       end # if
