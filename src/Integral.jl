@@ -142,40 +142,34 @@ function generate_integral(
   numerator_expr = irreducible_numerator * Basic( file_dict["numerator"] )
 
   file_name = "numerator_contraction"
-  file = open( "$(file_name).frm", "w" )
-  write( file, make_amp_contraction_script( numerator_expr, file_name ) )
-  close( file )
 
-  file = open( "kin_relation.frm", "w" )
-  write( file, (join∘map)( ele_->"id $(ele_[1]) = $(ele_[2]);\n", collect(kin_relation) ) )
-  close(file)
+  form_script_str = make_amp_contraction_script( numerator_expr )
 
-  file = open( "model_parameters.frm", "w" )
-  write( file, "symbol $(join( map( string, ver_mass_list ), "," ));\n" )
-  close(file)
+  result_io = IOBuffer()
+
+  kin_relations_str = join( map( ele_->"id $(ele_[1]) = $(ele_[2]);", collect(kin_relation) ), "\n" )
+  form_script_str = replace(form_script_str, "#include kin_relation.frm" => kin_relations_str)
+
+  model_parameters_str = "symbol " * join( map(string, ver_mass_list), "," ) * ";"
+  form_script_str = replace(form_script_str, "#include model_parameters.frm" => model_parameters_str)
 
   art_dir = Pkg.Artifacts.artifact"FeAmGen"
   cp( "$(art_dir)/scripts/contractor.frm", "contractor.frm", force=true )
   cp( "$(art_dir)/scripts/color.frm", "color.frm", force=true )
 
-  run( pipeline( `$(form()) $(file_name).frm`, "$(file_name).log" ) )
-  # run( pipeline( `form $(file_name).frm`, "$(file_name).log" ) )
+  try
+    run( pipeline( `$(form()) -q -`; stdin=IOBuffer(form_script_str), stdout=result_io ) )
+  catch
+    write( "$(file_name).frm", form_script_str )
+    rethrow()
+  end
   #@info "[ Done FORM script execution ]" script="$(file_name).frm"
 
-  file = open( "$(file_name).out", "r" )
-  result_str = read( file, String ) 
-  result_str = replace( result_str, "Coeff" => "" )
-  close( file )
+  result_str = replace( (String∘take!)(result_io), "Coeff" => "" )
 
   # remove intermediate files
   rm( "contractor.frm" )
   rm( "color.frm" )
-  rm( "kin_relation.frm" )
-  rm( "model_parameters.frm" )
-
-  rm( "$(file_name).frm" )
-  rm( "$(file_name).out" )
-  rm( "$(file_name).log" )
 
   # write out
   jldopen( joinpath( dir_path, "integral$(name_str).jld2" ), "w" ) do file 

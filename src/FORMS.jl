@@ -152,54 +152,57 @@ end # function make_baseINC_script
 
 
 ##############################################################################
+# Changed by Quan-feng WU (wuquanfeng@ihep.ac.cn)
+# March 9, 2023
 """
-    make_amp_contraction_script( expr::Basic, file_name::String )::String
+    make_amp_contraction_script( expr::Basic )::String
 
 Prepare the FORM script for the amplitude contraction.
 """
-function make_amp_contraction_script( 
-    expr::Basic, 
-    file_name::String 
+function make_amp_contraction_script(
+    expr::Basic
 )::String
 ##############################################################################
 
   symbol_list = free_symbols(expr)
-  symbol_str_list = filter( s->(s[1:2]=="gc"||s[1:1]=="m")&&s[1:2]!="mu", string.(symbol_list) )
+  symbol_str_list = string.(symbol_list)
+  filter!( !startswith("mu"), symbol_str_list )
+  filter!( s -> startswith(s, "gc") || startswith(s, "m"), symbol_str_list )
 
   result_str = """
   #-
-  
+
   Off Statistics;
   Off FinalStats;
-  
+
   #include model_parameters.frm
   #include contractor.frm
-  
+
   symbol sqrteta;
 
   CFunctions Coeff;
-  
+
   format nospaces;
   format maple;
-  
+
   Local expression = $(expr);
   .sort
   id GAij(spa1?,spa2?,mom?,mass?) = GAij(spa1,spa2,mom) + ONEij(spa1,spa2)*mass;
   .sort
-  
+
   #call Simplification();
-  
+
   #call contractDiracIndices();
 
   ***#call SimpleOrdering();
-  
+
   #call Simplification();
-  
+
   #include kin_relation.frm
   .sort
-  
-  
-  
+
+
+
   id FV(mom?,rho?)*VecEpsilon?{VecEp,VecEpC}(int?,rho?,mom?,mass?) = 0;
   .sort
 
@@ -209,7 +212,7 @@ function make_amp_contraction_script(
   ***  id FV(mom1?,rho?)*FV(mom2?,rho?) = SP(mom1,mom2);
   ***endrepeat;
   ***.sort
-  
+
   while( match(FermionChain(?vars1,GA(rho?NonEPMU\$LORENTZ),?vars2)) );
     sum \$LORENTZ;
   endwhile;
@@ -220,7 +223,7 @@ function make_amp_contraction_script(
   *   since it seems dummy indices Nm_? can make canonical form of an expression automatically.
   *
 
-  
+
   repeat;
   if( match( SP(mom1?{q1,q2,q3,q4}\$MOM1,mom2?\$MOM2) ) );
     id once SP(\$MOM1,\$MOM2) = FV(\$MOM1,rho101)*FV(\$MOM2,rho102)*LMT(rho101,rho102);
@@ -228,17 +231,17 @@ function make_amp_contraction_script(
   endif;
   endrepeat; 
   .sort
-  
+
   repeat;
     id once FermionChain(?vars1, GA(mom?), ?vars2 ) = FV(mom,rho100)*FermionChain(?vars1, GA(rho100), ?vars2 );
     sum rho100;
   endrepeat;
-  
+
   #do MUIDX = 1, 20, 1
     Multiply replace_(N`MUIDX'_?,dum`MUIDX');
   #enddo
   .sort
-  
+
   id FV(rho1?,rho2?) = FV(rho1,rho2);
   id SP(rho1?,rho2?) = SP(rho1,rho2);
   .sort
@@ -248,22 +251,17 @@ function make_amp_contraction_script(
   collect Coeff;
   .sort
 
-  
-  #write <$(file_name).out> "%E", expression
-  #close <$(file_name).out>
+
+  #write "%E", expression
   .sort
-  
-  ***#system tr -d "[:space:]" < $(file_name).out > $(file_name).out.trim
-  ***#system mv $(file_name).out.trim $(file_name).out
-  ***.sort
-  
+
   .end
-  
+
   """
 
   return result_str
 
-end # function make_amp_contraction_script 
+end # function make_amp_contraction_script
 
 
 
@@ -272,57 +270,57 @@ end # function make_amp_contraction_script
 
 
 ##############################################################################
+# Changed by Quan-feng WU (wuquanfeng@ihep.ac.cn)
+# March 9, 2023
 """
     make_amp_contraction_noexpand_script( 
-        expr::Basic, 
-        file_name::String 
+        expr::Basic,
     )::String
 
 Prepare the FORM script for the amplitude contraction, but do not do the expansion for the amplitude.
 """
-function make_amp_contraction_noexpand_script( 
-    expr::Basic, 
-    file_name::String 
+function make_amp_contraction_noexpand_script(
+    expr::Basic
 )::String
 ##############################################################################
 
   result_str = """
   #-
-  
+
   Off Statistics;
   Off FinalStats;
-  
+
   #include model_parameters.frm
   #include contractor.frm
-  
+
   symbol sqrteta;
-  
+
   format nospaces;
   format maple;
-  
+
   Local expression = $(expr);
   .sort
   id GAij(spa1?,spa2?,mom?,mass?) = GAij(spa1,spa2,mom+mass*unity);
   .sort
 
   #call SimplificationNoExpand();
-  
+
   #call contractDiracIndicesNoExpand();
-  
+
   #call SimplificationNoExpand();
-  
+
   #include kin_relation.frm
   .sort
-  
+
   ***repeat;
   ***  id once FermionChain(?vars1, GA(mom?), ?vars2 ) = FV(mom,rho100)*FermionChain(?vars1, GA(rho100), ?vars2 );
   ***  sum rho100;
   ***endrepeat;
-  
-  
+
+
   id FV(mom?,rho?)*VecEpsilon?{VecEp,VecEpC}(int?,rho?,mom?,mass?) = 0;
   .sort
-  
+
   while( match(FermionChain(?vars1,GA(rho?NonEPMU\$LORENTZ),?vars2)) );
     sum \$LORENTZ;
   endwhile;
@@ -332,7 +330,7 @@ function make_amp_contraction_noexpand_script(
   * We assume this should give the canonical form of FermionChain, 
   *   since it seems dummy indices Nm_? can make canonical form of an expression automatically.
   *
-  
+
   ***repeat;
   ***if( match( SP(mom1?{q1,q2,q3,q4}\$MOM1,mom2?\$MOM2) ) );
   ***  id once SP(\$MOM1,\$MOM2) = FV(\$MOM1,rho1)*FV(\$MOM2,rho2)*LMT(rho1,rho2);
@@ -341,32 +339,27 @@ function make_amp_contraction_noexpand_script(
   ***endif;
   ***endrepeat; 
   ***.sort
-  
-  
+
+
   #do MUIDX = 1, 20, 1
     Multiply replace_(N`MUIDX'_?,dum`MUIDX');
   #enddo
   .sort
-  
+
   ***id FV(rho1?,rho2?) = FV(rho1,rho2);
   ***id SP(rho1?,rho2?) = SP(rho1,rho2);
   ***.sort
-  
-  #write <$(file_name).out> "%E", expression
-  #close <$(file_name).out>
+
+  #write "%E", expression
   .sort
-  
-  ***#system tr -d "[:space:]" < $(file_name).out > $(file_name).out.trim
-  ***#system mv $(file_name).out.trim $(file_name).out
-  ***.sort
-  
+
   .end
-  
+
   """
 
   return result_str
 
-end # function make_amp_contraction_noexpand_script 
+end # function make_amp_contraction_noexpand_script
 
 
 
@@ -378,17 +371,17 @@ end # function make_amp_contraction_noexpand_script
 
 
 #############################################################
+# Changed by Quan-feng WU (wuquanfeng@ihep.ac.cn)
+# March 9, 2023
 """
     make_color_script( 
-        color_factor::Basic, 
-        file_name::String 
+        color_factor::Basic,
     )::String
 
 Specifically calculate the color factor `color_factor`.
 """
-function make_color_script( 
-    color_factor::Basic, 
-    file_name::String 
+function make_color_script(
+    color_factor::Basic
 )::String
 #############################################################
 
@@ -409,8 +402,7 @@ function make_color_script(
   #call calc2_CF();
   .sort 
   
-  #write <$(file_name).out> "%E", colorFactor
-  #close <$(file_name).out>
+  #write "%E", colorFactor
   .sort
   
   .end
