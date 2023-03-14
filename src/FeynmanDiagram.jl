@@ -1105,56 +1105,6 @@ end # function factor_out_loop_den
 
 
 
-##################################################################################
-# Changed by Quan-feng WU (wuquanfeng@ihep.ac.cn)
-# March 9, 2023
-"""
-    contract_Dirac_indices( 
-        g::Graph, 
-        graph_index::Int64, 
-        lorentz_expr_list::Vector{Basic} 
-    )::Vector{Basic}
-
-Contract the Dirac indices in the `lorentz_expr_list` by using FORM scripts.
-"""
-function contract_Dirac_indices(
-    g::Graph, 
-    graph_index::Int64, 
-    lorentz_expr_list::Vector{Basic} 
-)::Vector{Basic}
-##################################################################################
-
-  printstyled( "[ Contract the Dirac indices for diagram #$(graph_index) ]\n", color=:green )
-
-  new_lorentz_expr_list = Vector{Basic}( undef, length(lorentz_expr_list) )
-
-  cost_time = @elapsed begin
-  for index in 1:length(lorentz_expr_list)
-    lorentz_expr = lorentz_expr_list[index]
-    file_name = "contract_lorentz_expr$(index)_diagram$(graph_index)"
-    form_script_str = make_amp_contraction_script( lorentz_expr )
-
-    result_io = IOBuffer()
-
-    println( "  [ form $(file_name).frm ]" )
-    try
-      run( pipeline( `$(tform()) -w$(Threads.nthreads()) -q -`; stdin=IOBuffer(form_script_str), stdout=result_io ) )
-    catch
-      write( "$(file_name).frm", form_script_str )
-      rethrow()
-    end
-
-    result_expr = (Basic∘String∘take!)(result_io)
-    new_lorentz_expr_list[index] = result_expr
-
-  end # for index
-  end # cost_time
-  println( "<$(cost_time) sec>" )
-
-  return new_lorentz_expr_list
-
-end # function contract_Dirac_indices
-
 
 
 

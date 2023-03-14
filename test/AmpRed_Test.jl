@@ -30,27 +30,20 @@ kin_relation:
 
 
 den_list: [
-"Den(q1,0,0)",                #D1
-"Den(q2,mt,0)",               #D2
-"Den(q1+q2,mt,0)",            #D3
-"Den(q1+k1,0,0)",             #D4
-"Den(q2-k1,mt,0)",            #D5
-"Den(q2+k2-K3,0,0)",          #D6
-"Den(q2-K3,0,0)",             #D7
-"Den(q1-k2,0,0)",             #D8
-"Den(q1+k1+k2-K3,0,0)"        #D9
+"Den(q1,0,ieta)",                #D1
+"Den(q2,mt,ieta)",               #D2
+"Den(q1+q2,mt,ieta)",            #D3
+"Den(q1+k1,0,ieta)",             #D4
+"Den(q2-k1,mt,ieta)",            #D5
+"Den(q2+k2-K3,0,ieta)",          #D6
+"Den(q2-K3,0,ieta)",             #D7
+"Den(q1-k2,0,ieta)",             #D8
+"Den(q1+k1+k2-K3,0,ieta)"        #D9
 ]
 
 den_xpt_list: [ 0, 0, 1, 0, 1, 0, 1, -2, 2 ]
 
 numerator: "$(num_str)"
-
-# ieta_scheme 
-# 0: none has iη 
-# 1: all have iη
-# 2: massive has iη
-# >10: e.g. Int64(0b010100100)+10, indexing position of iη via binary number
-ieta_scheme: 1
 
 comment: "For the tensor reduction of single-top amplitude."
 """

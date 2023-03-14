@@ -155,14 +155,22 @@ end # function make_baseINC_script
 # Changed by Quan-feng WU (wuquanfeng@ihep.ac.cn)
 # March 9, 2023
 """
-    make_amp_contraction_script( expr::Basic )::String
+    make_amp_contraction_script( 
+        expr::Basic 
+    )::String
 
 Prepare the FORM script for the amplitude contraction.
 """
 function make_amp_contraction_script(
-    expr::Basic
+    expr::Basic, 
+    kin_relation::Dict{Basic,Basic}, 
+    ver_mass_list::Vector{Basic} 
 )::String
 ##############################################################################
+
+  kin_relations_str = join( map( x->"id $(x[1]) = $(x[2]);", collect(kin_relation) ), "\n" )
+
+  model_parameters_str = "symbol $(join( map(string,ver_mass_list), "," ));"
 
   symbol_list = free_symbols(expr)
   symbol_str_list = string.(symbol_list)
@@ -175,7 +183,7 @@ function make_amp_contraction_script(
   Off Statistics;
   Off FinalStats;
 
-  #include model_parameters.frm
+  $(model_parameters_str)
   #include contractor.frm
 
   symbol sqrteta;
@@ -198,7 +206,7 @@ function make_amp_contraction_script(
 
   #call Simplification();
 
-  #include kin_relation.frm
+  $(kin_relations_str)
   .sort
 
 

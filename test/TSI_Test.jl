@@ -20,23 +20,16 @@ kin_relation:
   - [ "SP(K1,K1)", "mm^2" ]
 
 den_list: [
-"Den(q1,0,0)",
-"Den(q1+K1,m0,0)",
-"Den(q2,0,0)",
-"Den(q2+K1,0,0)",
-"Den(q1+q2,0,0)"
+"Den(q1,0,ieta)",
+"Den(q1+K1,m0,ieta)",
+"Den(q2,0,ieta)",
+"Den(q2+K1,0,ieta)",
+"Den(q1+q2,0,ieta)"
 ]
 
 den_xpt_list: [ 0, 0, 0, 0, 0 ]
 
 numerator: "1"
-
-# ieta_scheme 
-# 0: none has iη 
-# 1: all have iη
-# 2: massive has iη
-# >10: e.g. Int64(0b01010)+10, indexing position of iη via binary number
-ieta_scheme: 1
 
 comment: "Seed yaml file for TSI"
 """

@@ -61,7 +61,8 @@ end # function has_ieta
 
 ###################################
 function generate_integral( 
-    yaml_file::String )::Nothing
+    yaml_file::String 
+)::Nothing
 ###################################
 
   dir_path_list = splitpath( yaml_file )[1:end-1]
@@ -71,17 +72,16 @@ function generate_integral(
   @assert collect(keys(file_dict)) == [
       "name", "n_loop", "min_ep_xpt", "max_ep_xpt", 
       "external_momenta", "kin_relation", "den_list", 
-      "den_xpt_list", "numerator", "ieta_scheme", "comment"]
+      "den_xpt_list", "numerator", "comment"]
 
   name_str = file_dict["name"]
   n_loop = file_dict["n_loop"]::Int64
   min_ep_xpt = file_dict["min_ep_xpt"]::Int64
   max_ep_xpt = file_dict["max_ep_xpt"]::Int64
-  ext_mom_list = map( Basic, file_dict["external_momenta"] )
-  kin_relation = (Dict∘map)( p_->(Basic(p_[1]),Basic(p_[2])), file_dict["kin_relation"] ) 
-  loop_den_list = map( Basic, file_dict["den_list"] )
+  ext_mom_list = to_Basic( file_dict["external_momenta"] )
+  kin_relation = to_Basic_dict( file_dict["kin_relation"] ) 
+  loop_den_list = to_Basic( file_dict["den_list"] )
   loop_den_xpt_list = file_dict["den_xpt_list"]
-  ieta_scheme = file_dict["ieta_scheme"]
 
   #-----------------------
   ver_mass_list = (free_symbols∘vcat)( 
@@ -120,38 +120,31 @@ function generate_integral(
     one_den = loop_den_list[den_index]
     den_xpt = loop_den_xpt_list[den_index]
 
-    den_arg_list = get_args(one_den)
-    neg_mass2 = -den_arg_list[2]^2
-    if has_ieta( den_index, loop_den_list, ext_mom_list, kin_relation, ieta_scheme )
-      den_arg_list[3] = ieta
+    mom, mass, width = get_args(one_den)
+    neg_mass2 = -mass^2
+    if width == ieta
       neg_mass2 += im*sqrteta^2
     end # if
-    new_den = Den( den_arg_list... )
+    #new_den = one_den
   
     if den_xpt > 0 
-      push!( positive_loop_den_list, new_den )
+      push!( positive_loop_den_list, one_den )
       push!( positive_loop_den_xpt_list, den_xpt )
     end # if  
 
     if den_xpt < 0
-      mom2 = make_SP(den_arg_list[1],den_arg_list[1])
+      mom2 = make_SP(mom,mom)
+      mom2 = subs( mom2, kin_relation )
       irreducible_numerator *= ( mom2 + neg_mass2 )^(-den_xpt) 
     end # if
   end # for den_index
 
   numerator_expr = irreducible_numerator * Basic( file_dict["numerator"] )
 
-  file_name = "numerator_contraction"
-
-  form_script_str = make_amp_contraction_script( numerator_expr )
+  #--------------
+  form_script_str = make_amp_contraction_script( numerator_expr, kin_relation, ver_mass_list )
 
   result_io = IOBuffer()
-
-  kin_relations_str = join( map( ele_->"id $(ele_[1]) = $(ele_[2]);", collect(kin_relation) ), "\n" )
-  form_script_str = replace(form_script_str, "#include kin_relation.frm" => kin_relations_str)
-
-  model_parameters_str = "symbol " * join( map(string, ver_mass_list), "," ) * ";"
-  form_script_str = replace(form_script_str, "#include model_parameters.frm" => model_parameters_str)
 
   art_dir = Pkg.Artifacts.artifact"FeAmGen"
   cp( "$(art_dir)/scripts/contractor.frm", "contractor.frm", force=true )
@@ -160,10 +153,10 @@ function generate_integral(
   try
     run( pipeline( `$(form()) -q -`; stdin=IOBuffer(form_script_str), stdout=result_io ) )
   catch
+    file_name = "numerator_contraction"
     write( "$(file_name).frm", form_script_str )
     rethrow()
   end
-  #@info "[ Done FORM script execution ]" script="$(file_name).frm"
 
   result_str = replace( (String∘take!)(result_io), "Coeff" => "" )
 
@@ -174,7 +167,6 @@ function generate_integral(
   # write out
   jldopen( joinpath( dir_path, "integral$(name_str).jld2" ), "w" ) do file 
     write( file, "Generator", "FeAmGen.jl" )
-    write( file, "ieta_scheme", ieta_scheme )
     write( file, "n_loop", n_loop )
     write( file, "min_ep_xpt", min_ep_xpt )
     write( file, "max_ep_xpt", max_ep_xpt )
@@ -218,7 +210,7 @@ function generate_multi_yaml(
   @assert collect(keys(file_dict)) == [
       "name", "n_loop", "min_ep_xpt", "max_ep_xpt", 
       "external_momenta", "kin_relation", "den_list", 
-      "den_xpt_list", "numerator", "ieta_scheme", "comment"]
+      "den_xpt_list", "numerator", "comment"]
 
   original_name = split( file_dict["name"], "_" )[1]
   new_multi_yaml_list = Vector{String}()
@@ -242,7 +234,10 @@ end # function generate_multi_yaml
 
 #---------------------------------------------------------------------
 """
-    generate_shiftUP_yaml( scalar_yaml_list::Vector{String}, target_dir::String )::Vector{String}
+    generate_shiftUP_yaml( 
+        scalar_yaml_list::Vector{String}, 
+        target_dir::String 
+    )::Vector{String}
 
 This is used to generate the derivative to the set of master integrals.
 [0,-1,1,1] => [ [0,-1,2,1], [0,-1,1,2] ]
