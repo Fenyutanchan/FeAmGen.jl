@@ -1680,7 +1680,7 @@ function is_null_graph(
     end # if
     push!( loop_mom_list, one_edge.property[:momentum] )
     push!( loop_mass_list, one_edge.property[:particle].mass )
-    push!( loop_ext_mom_list, subs( one_edge.property[:momentum], qi_vanish_map... ) )
+    push!( loop_ext_mom_list, subs( one_edge.property[:momentum], qi_vanish_map ) )
   end # for one_edge
 
   for n_sub in 1:n_loop
@@ -1902,7 +1902,7 @@ function generate_amplitude(
     lorentz_list_pre = lorentz_list_pre[nonzero_pos_list]
 
     if !isempty(symmetry_map) 
-      lorentz_list_pre = map( x->subs(x,symmetry_map...), lorentz_list_pre )
+      lorentz_list_pre = map( x->subs(x,symmetry_map), lorentz_list_pre )
     end # if
 
     lorentz_list = contract_Dirac_indices_noexpand( g, graph_index, lorentz_list_pre )

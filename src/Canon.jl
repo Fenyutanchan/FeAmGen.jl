@@ -150,8 +150,8 @@ function canonicalize_amp(
     new_loop_den_list = loop_den_list 
     new_amp_lorentz_list = amp_lorentz_list 
   else
-    new_loop_den_list = map( den -> subs( den, canon_map... ), loop_den_list )
-    new_amp_lorentz_list = map( amp -> subs( amp, canon_map... ), amp_lorentz_list )
+    new_loop_den_list = map( den -> subs( den, canon_map ), loop_den_list )
+    new_amp_lorentz_list = map( amp -> subs( amp, canon_map ), amp_lorentz_list )
   end # if
 
   # Normalize the leading coefficient sign of the loop momenta.

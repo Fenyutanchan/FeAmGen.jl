@@ -18,7 +18,7 @@ function has_ieta(
   vanish_ext_mom_map = Dict{Basic,Basic}( map( m_ -> m_ => zero(Basic), ext_mom_list ) )
   den_ex = den_list[den_index]
   mom = get_args(den_ex)[1]
-  loop_mom = subs( mom, vanish_ext_mom_map... )
+  loop_mom = subs( mom, vanish_ext_mom_map )
   ext_mom = expand( mom - loop_mom )
   mass = get_args(den_ex)[2]
 
@@ -34,7 +34,7 @@ function has_ieta(
     end # if 
   elseif ieta_scheme == 3
     mass_list = map( den -> get_args(den)[2], den_list )
-    kin_SP = subs( make_SP(ext_mom,ext_mom), kin_relation... )
+    kin_SP = subs( make_SP(ext_mom,ext_mom), kin_relation )
     has_mass = !isempty( free_symbols( kin_SP) ∩ mass_list )
     if !has_mass && iszero(mass)
       return false
