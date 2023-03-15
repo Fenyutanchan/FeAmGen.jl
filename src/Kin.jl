@@ -195,7 +195,7 @@ function generate_kin_relation(
     for ii = 3:(nn-1)
       rhs += (-1)*make_SP(mom[1],mom[ii])
     end # for ii
-    rhs = subs( rhs, kin_relation... )
+    rhs = subs( rhs, kin_relation )
     push!( kin_relation, make_SP(mom[1],mom[nn]) => rhs )
   end # if
 
@@ -216,7 +216,7 @@ function generate_kin_relation(
   if nn >= 4
     if nn == 4
       # (k_2\cdot k_3) = k_1\cdot k_2 + k_2^2 - k_2\cdot k_4
-      push!( kin_relation, make_SP(mom[2],mom[3]) => k2_sign*(expand∘subs)( k2_sign*make_SP(mom[1],mom[2]) + mass2[2] - k2_sign*make_SP(mom[2],mom[4]), kin_relation... ) )
+      push!( kin_relation, make_SP(mom[2],mom[3]) => k2_sign*(expand∘subs)( k2_sign*make_SP(mom[1],mom[2]) + mass2[2] - k2_sign*make_SP(mom[2],mom[4]), kin_relation ) )
     else 
       # (k_2\cdot k_{n-1})=\frac{1}{2}(s_{n-4+(n-3)}-k_n^2-s_{n-4}+s_{n-3}),
       push!( kin_relation, make_SP(mom[2],mom[nn-1]) => k2_sign*half*Basic("ver$(nn-4+nn-3) - $(mass2[nn]) - ver$(nn-4) + ver$(nn-3)") )
@@ -225,12 +225,12 @@ function generate_kin_relation(
 
   if nn == 4
     # (k_2\cdot k_3)=\frac{1}{2}(k_1^2+k_2^2+k_3^2+2k_1\cdot k_2-2k_1\cdot k_3-k_4^2)
-    push!( kin_relation, make_SP(mom[2],mom[3]) => k2_sign*half*(expand∘subs)( mass2[1] + mass2[2] + mass2[3] + k2_sign*2*make_SP(mom[1],mom[2]) - 2*make_SP(mom[1],mom[3]) - mass2[4], kin_relation... ) )
+    push!( kin_relation, make_SP(mom[2],mom[3]) => k2_sign*half*(expand∘subs)( mass2[1] + mass2[2] + mass2[3] + k2_sign*2*make_SP(mom[1],mom[2]) - 2*make_SP(mom[1],mom[3]) - mass2[4], kin_relation ) )
   elseif n_out == 1
     push!( kin_relation, make_SP(mom[2],mom[3]) => half*( mass2[3] + mass2[2] - mass2[1] ) )
   else 
     # (k_2\cdot k_3)=\frac{1}{2}(k_1^2+k_2^2+k_3^2+2k_1\cdot k_2-2k_1\cdot k_3-s_{1+n-3})
-    push!( kin_relation, make_SP(mom[2],mom[3]) => k2_sign*half*(expand∘subs)( mass2[1] + mass2[2] + mass2[3] + k2_sign*2*make_SP(mom[1],mom[2]) - 2*make_SP(mom[1],mom[3]) - Basic("ver$(1+nn-3)"), kin_relation... ) )
+    push!( kin_relation, make_SP(mom[2],mom[3]) => k2_sign*half*(expand∘subs)( mass2[1] + mass2[2] + mass2[3] + k2_sign*2*make_SP(mom[1],mom[2]) - 2*make_SP(mom[1],mom[3]) - Basic("ver$(1+nn-3)"), kin_relation ) )
   end # if
 
 
@@ -251,7 +251,7 @@ function generate_kin_relation(
     for jj in 4:(ii+2)
       rhs += (-2)*make_SP(mom[jj],mom[ii+3])
     end # for jj
-    push!( kin_relation, make_SP(mom[3],mom[ii+3]) => half*(expand∘subs)( rhs, kin_relation... ) )
+    push!( kin_relation, make_SP(mom[3],mom[ii+3]) => half*(expand∘subs)( rhs, kin_relation ) )
   end # for ii
 
   # (k_3\cdot k_n) = k_3\cdot(k_1+k_2-k_3-\cdots-k_{n-1})
@@ -262,7 +262,7 @@ function generate_kin_relation(
   if n_out == 1
     push!( kin_relation, make_SP(mom[3],mom[3]) => mass2[3] )
   else
-    push!( kin_relation, make_SP(mom[3],mom[nn]) => (expand∘subs)( rhs, kin_relation... ) )
+    push!( kin_relation, make_SP(mom[3],mom[nn]) => (expand∘subs)( rhs, kin_relation ) )
   end # if
 
 
@@ -282,7 +282,7 @@ function generate_kin_relation(
     for jj in (ii+4):(nn-1)
       rhs += (-2)*make_SP(mom[ii+3],mom[jj])
     end # for jj
-    push!( kin_relation, make_SP(mom[ii+3],mom[nn]) => half*(expand∘subs)( rhs, kin_relation... ) )
+    push!( kin_relation, make_SP(mom[ii+3],mom[nn]) => half*(expand∘subs)( rhs, kin_relation ) )
   end # for ii
 
 
@@ -519,8 +519,8 @@ function generate_kin_relation( graph_list::Vector{Graph} )::Dict{Basic,Basic}
 
       subs_den_mom = (expand∘subs)( den_mom, mom[nn] => mom_n )
       if den_mom != subs_den_mom
-        push!( kin_relation, Den(expand(den_mom),den_mass,den_width) => subs(Den(subs_den_mom,den_mass,den_width),kin_relation...) )
-        push!( kin_relation, Den(expand(-den_mom),den_mass,den_width) => subs(Den(subs_den_mom,den_mass,den_width),kin_relation...) )
+        push!( kin_relation, Den(expand(den_mom),den_mass,den_width) => subs(Den(subs_den_mom,den_mass,den_width),kin_relation) )
+        push!( kin_relation, Den(expand(-den_mom),den_mass,den_width) => subs(Den(subs_den_mom,den_mass,den_width),kin_relation) )
       end # if
 
     end # for edge
