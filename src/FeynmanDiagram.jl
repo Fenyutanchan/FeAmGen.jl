@@ -1454,8 +1454,8 @@ function write_out_amplitude(
 ###############################################################################################
 
 
-  printstyled( "\n[ Generate amplitude_diagram$(graph_index).out ]\n", color=:green )
-  amp_file = open( "$(proc_str)_amplitudes/amplitude_diagram$(graph_index).out", "w" )
+  printstyled( "\n[ Generate amp$(graph_index).out ]\n", color=:green )
+  amp_file = open( "$(proc_str)_amplitudes/amp$(graph_index).out", "w" )
   write( amp_file, """
     n_loop: $(n_loop)
     couplingfactor: $(couplingfactor)
@@ -1516,13 +1516,13 @@ function write_out_amplitude(
 
   close( amp_file )
 
-  if isfile( "$(proc_str)_amplitudes/amplitude_diagram$(graph_index).jld2" )
-    rm( "$(proc_str)_amplitudes/amplitude_diagram$(graph_index).jld2" )
+  if isfile( "$(proc_str)_amplitudes/amp$(graph_index).jld2" )
+    rm( "$(proc_str)_amplitudes/amp$(graph_index).jld2" )
   end # if
 
 
 
-  jldopen( "$(proc_str)_amplitudes/amplitude_diagram$(graph_index).jld2", "w" ) do file 
+  jldopen( "$(proc_str)_amplitudes/amp$(graph_index).jld2", "w" ) do file 
     write( file, "Generator", "FeAmGen.jl" )
     write( file, "n_inc", n_inc )
     write( file, "n_loop", n_loop )
