@@ -66,6 +66,7 @@ function gen_loop_mom_canon_map(
   sort!(q_list, by=q->parse(Int, string(q)[2:end]))
 
   tmp_mom_list = mom_list - subs.(mom_list, Ref(Dict(q_ => 0 for q_ ∈ q_list)))
+  map!( expand, tmp_mom_list, tmp_mom_list )
   filter!(!iszero, tmp_mom_list)
   unique!(mom -> abs(mom), tmp_mom_list)
   sort!( tmp_mom_list, by=mom->(findfirst(!iszero, SymEngine.coeff.(mom,q_list)), (length∘free_symbols)(mom)) )
