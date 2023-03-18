@@ -23,6 +23,7 @@ using YAML
 
 export digest_seed_proc, generate_amp, generate_integral
 export generate_multi_yaml, generate_shiftUP_yaml
+export canonicalize_amp
 
 include("Universe.jl")
 include("Graph.jl")

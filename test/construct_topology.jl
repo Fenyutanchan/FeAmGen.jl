@@ -275,6 +275,40 @@ function make_parent_dentop(
 )::Union{DenTop,Nothing} 
 ###############################
 
+  @vars q1 q2 q3
+
+##all_den_list = union( dentop1.den_list, dentop2.den_list )
+##all_mom_list = map( first∘get_args, all_den_list )
+##var_list = free_symbols( all_mom_list )
+##ki_list = filter( x->!startswith(string(x),'q'), var_list )
+##qi_list = filter( x->startswith(string(x),'q'), var_list )
+##n_loop = length(qi_list)
+##
+##null_dict = Dict(ki_list.=>zero(Basic))
+##dentop1_qi_list = (unique∘map)( x->subs(x,null_dict), map(first∘get_args,dentop1.den_list) )
+##dentop2_qi_list = (unique∘map)( x->subs(x,null_dict), map(first∘get_args,dentop2.den_list) )
+
+  n_loop = get_n_loop( dentop1.den_list )
+  dentop1_vac_mom_list = map( first∘get_args, get_vac_den_list( dentop1.den_list ) )
+  dentop2_vac_mom_list = map( first∘get_args, get_vac_den_list( dentop2.den_list ) )
+
+  if n_loop == 2
+    @assert dentop1_vac_mom_list ⊆ [ q1, q2, q1+q2 ]
+    @assert dentop2_vac_mom_list ⊆ [ q1, q2, q1+q2 ]
+  end # if
+  if n_loop == 3
+    #list1 = [ q1, q2, q3, q1+q2, q1+q3, q2+q3 ]
+    #list2 = [ q1, q2, q3, q1+q3, q2+q3, q1+q2+q3 ]
+    #@assert dentop1_qi_list ⊆ list1 || dentop1_qi_list ⊆ list2 "$(dentop1_qi_list)"
+    #@assert dentop2_qi_list ⊆ list1 || dentop2_qi_list ⊆ list2 "$(dentop2_qi_list)"
+    @assert length(dentop1_vac_mom_list) <= 6 && length(dentop2_vac_mom_list) <= 6
+    union_vac_mom_list = union( dentop1_vac_mom_list, dentop2_vac_mom_list ) 
+    if length(union_vac_mom_list) > 6
+      return nothing
+    end # if
+  end # if
+
+
   com_den_list, rem1_den_list, rem2_den_list = intersection( dentop1, dentop2 )
   n_com = length(com_den_list)
   n_rem1 = length(rem1_den_list)
@@ -343,6 +377,28 @@ function get_union_den_list(
 
 end # function get_union_den_list
 
+
+###############################
+function get_vac_den_list( 
+    den_list::Vector{Basic} 
+)::Vector{Basic}
+###############################
+
+  mom_list = map( first∘get_args, den_list )
+  var_list = free_symbols(mom_list)
+  ki_list = filter( x->!startswith(string(x),'q'), var_list )
+  #qi_list = filter( x->startswith(string(x),'q'), var_list )
+
+  null_dict = Dict(ki_list.=>zero(Basic))
+  vac_den_list = (unique∘map)( x->subs(x,null_dict), den_list )
+
+  return vac_den_list
+
+end # function get_vac_den_list
+
+
+
+
 ########################################
 function get_coeff_mat_rank(
     den_list::Vector{Basic},
@@ -366,6 +422,18 @@ function is_fullrank(
   return get_coeff_mat_rank(den_list,den_coeff_mat_dict) == length(den_list)
 
 end # function is_fullrank
+
+###########################
+function get_n_loop(
+  loop_den_list::Vector{Basic}, 
+)::Int64
+###########################
+
+  mom_list = map( first∘get_args, loop_den_list )
+  n_loop = (length∘unique∘filter)( x->(first∘string)(x)=='q', free_symbols(mom_list) )
+  return n_loop
+
+end # function get_n_loop
 
 ##############################
 function find_max_cover(
@@ -402,7 +470,11 @@ function find_max_cover(
     dentop_subset_union_list = map( get_union_den_list, dentop_subset_list )
 
     # number of allowed by simply counting den_list
-    allowed_pos_list = findall( x -> length(x) <= n_sp, dentop_subset_union_list ) 
+    n_loop = (get_n_loop∘first)( dentop_subset_union_list )
+    @assert n_loop in [2,3] # 2-loop has 3 vac-mom, and 3-loop has 6 vac-mom at most.
+    allowed_pos_list = findall( x -> length(x) <= n_sp && 
+                                (length∘get_vac_den_list)(x) <= 2*n_loop, 
+                                dentop_subset_union_list ) 
     n_allowed = length(allowed_pos_list) 
     #@show n_allowed 
 
@@ -505,6 +577,13 @@ function finalize_complete_dentop(
     loop_mom_list = [q1]
   elseif n_loop == 2
     loop_mom_list = [q1,q2,q1+q2]
+  elseif n_loop == 3
+    qi_mom_list = (unique∘map)( x->subs( (first∘get_args)(x), Dict(indep_mom_list.=>zero(Basic)) ), new_den_list )
+    if q1+q2+q3 in qi_mom_list
+      loop_mom_list = [q1,q2,q3,q1+q3,q2+q3,q1+q2+q3]
+    else
+      loop_mom_list = [q1,q2,q3,q1+q2,q1+q3,q2+q3]
+    end # if
   else 
     error("Exception")
     loop_mom_list = Baisc[]
@@ -550,7 +629,8 @@ function main()::Nothing
 ###########################
 
 
-  dir = "b_g_TO_Wminus_t_2Loop_amplitudes"
+  #dir = "b_g_TO_Wminus_t_2Loop_amplitudes"
+  dir = "Wplus_t_TO_Wplus_t_3Loop_amplitudes"
   root, dirs, files = (first∘collect∘walkdir)(dir)
   file_list = filter( s->endswith(s,".jld2"), files )
   @show length(file_list)
