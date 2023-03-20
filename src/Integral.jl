@@ -89,6 +89,9 @@ function generate_integral(
                       map(x->get_args(x)[2],loop_den_list) ) 
 
 
+  n_ext = length(ext_mom_list)
+  n_den = length(loop_den_list)
+  @assert n_den == n_loop + div(n_loop*(n_loop-1),2) + n_loop*n_ext
 
   #------------------------------------------------------------------
   # Prepare variable list and kinematic combo list
@@ -166,14 +169,19 @@ function generate_integral(
 
   # write out
   jldopen( joinpath( dir_path, "integral$(name_str).jld2" ), "w" ) do file 
-    write( file, "Generator", "FeAmGen.jl" )
+    write( file, "Generator", "FeAmGen.jl function generate_integral" )
+    # n_inc is used to generate mom_conserv. 
+    # And this is supposed to be scalar integral, 
+    # where the mom_conserv has been implemented already.
+    write( file, "n_inc", 0 ) 
     write( file, "n_loop", n_loop )
     write( file, "min_ep_xpt", min_ep_xpt )
     write( file, "max_ep_xpt", max_ep_xpt )
     write( file, "couplingfactor", "1" )
-    write( file, "ext_mom_list", string.(ext_mom_list) )
-    write( file, "scale2_list", string.(scale2_list) )
-    write( file, "loop_den_list", string.(positive_loop_den_list) )
+    write( file, "ext_mom_list", to_String(ext_mom_list) )
+    write( file, "scale2_list", to_String(scale2_list) )
+    write( file, "topology", to_String(loop_den_list) )
+    write( file, "loop_den_list", to_String(positive_loop_den_list) )
     write( file, "loop_den_xpt_list", positive_loop_den_xpt_list )
     write( file, "kin_relation", to_String_dict(kin_relation) ) 
     write( file, "baseINC_script_str", string() )
