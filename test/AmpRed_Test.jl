@@ -14,19 +14,15 @@ n_loop: 2
 min_ep_xpt: -4
 max_ep_xpt: 0
 
-external_momenta: [ k1, k2, K3, K4 ]
+external_momenta: [ k1, k2, K3 ]
 
 kin_relation: 
   - [ "SP(k1,k1)", "0" ]
   - [ "SP(k2,k2)", "0" ]
   - [ "SP(K3,K3)", "mw^2" ]
-  - [ "SP(K4,K4)", "mt^2" ]
   - [ "SP(k1,k2)", "(1/2)*shat" ]
   - [ "SP(K3,k1)", "(1/2)*(-ver1 + mw^2)" ]
-  - [ "SP(K4,k1)", "(1/2)*(shat + ver1 - mw^2)" ]
   - [ "SP(K3,k2)", "(1/2)*(shat + ver1 - mt^2)" ]
-  - [ "SP(K3,K4)", "(1/2)*(shat - mt^2 - mw^2)" ]
-  - [ "SP(K4,k2)", "(1/2)*(-ver1 + mt^2)" ]
 
 
 den_list: [
