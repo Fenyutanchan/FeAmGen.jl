@@ -1,4 +1,5 @@
 using Dates, FeAmGen, SymEngine, AmpTools 
+using OrderedCollections, YAML
 
 @info "AmpRed_Test starts @ $(now())"
 
@@ -44,6 +45,10 @@ numerator: "$(num_str)"
 comment: "For the tensor reduction of single-top amplitude."
 """
 
+#########################
+function main()::Nothing
+#########################
+
 @vars k1, k2, K3
 rank_str = "q1q1q1"
 num_list = generate_SPcombo( rank_str, [k1,k2,K3] )
@@ -56,6 +61,16 @@ if isdir( target_dir ) || isfile( target_dir )
 end # if
 mkdir( target_dir )
 
+#--------------------------------------------------------
+file_name = "$(target_dir)/scalar_integral_0x0_SI0.yaml"
+open( file_name, "w" ) do infile
+  write( infile, yaml_str("0x0",0,"1") )
+end 
+file_dict = YAML.load_file( file_name; dicttype=OrderedDict{String,Any} ) 
+loop_den_list = to_Basic( file_dict["den_list"] )
+#--------------------------------------------------------
+vac_top_list, vac_master_list = gen_vac_reduction_ieta( loop_den_list )
+#--------------------------------------------------------
 
 for index in 1:n_num
   one_num_str = string( num_list[index] )
@@ -65,9 +80,17 @@ for index in 1:n_num
     write( infile, yaml_str(rank_str,index,one_num_str) )
   end 
 
-  generate_integral( file_name )
+  generate_integral( file_name, vac_top_list, vac_master_list )
   rm( file_name )
 end # for index
+
+return nothing
+
+end # function main
+
+#######
+main()
+#######
 
 
 @info "AmpRed_Test ends @ $(now())"

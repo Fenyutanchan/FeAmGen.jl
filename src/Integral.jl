@@ -59,9 +59,180 @@ end # function has_ieta
 
 
 
+
+######################################
+function gen_vac_reduction_ieta(
+    topology::Vector{Basic}
+)::Tuple{ Vector{Vector{Basic}}, Vector{Basic} }
+######################################
+
+  n_loop = get_n_loop(topology)
+  qi_list = [ Basic("q$index") for index in 1:n_loop ]
+  mom_list = map( first∘get_args, topology )
+  mass_list = (free_symbols∘map)( x->get_args(x)[2], topology )
+  var_list = free_symbols( mom_list )
+  ext_mom_list = setdiff( var_list, qi_list )
+
+  null_dict = Dict( union( ext_mom_list .=> zeros(Basic), mass_list .=> zero(Basic) ) )
+  vac_den_list = (unique∘map)( x->subs(x,null_dict), topology )
+  vac_top_list = get_vac_top_list(vac_den_list)
+  vac_top_list = filter( top -> any( !iszero, (last∘get_args).(top) ), vac_top_list )
+
+  bk_mkdir( "vac_reduction" )
+  cd( "vac_reduction" )
+  mkdir( "config" )
+
+  sector_str = join( map(string,ones( Int64, n_loop+div(n_loop*(n_loop-1),2) )) )
+  file = open( "config/integralfamilies.yaml", "w" )
+  write( file, """ 
+  integralfamilies:
+  """ )
+  for vac_index in 1:length(vac_top_list)
+  vac_top = vac_top_list[vac_index]
+    write( file, """
+      - name: "vac$(n_loop)loopT$(vac_index)"
+        loop_momenta: [$(join(map(string,qi_list),","))]
+        top_level_sectors: [b$(sector_str)]
+        propagators:   
+    """ )
+  for one_den in vac_top
+    mom, mass, width = get_args(one_den)
+    write( file, """
+          - [ "$mom", "$( iszero(width) ? "0" : "nim" )" ]
+    """ )
+  end # for one_den
+  end # for vac_index
+  close( file )
+
+  file = open( "config/kinematics.yaml", "w" )
+  write( file, """
+  kinematics :
+    incoming_momenta: []
+    outgoing_momenta: []
+    momentum_conservation: []
+    kinematic_invariants:
+      - [nim, 2]
+    scalarproduct_rules: []
+  """ )
+  close( file )
+
+  file = open( "masters.yaml", "w" )
+  write( file, """
+  # rmax: the maximal sum of positive propagator powers in the seed.
+  # smax: the maximal negative sum of negative propagator powers in the seed.
+  
+  jobs:
+    - reduce_sectors:
+        reduce:
+          - {sectors: [b$(sector_str)], r: 8, s: 2}
+        run_initiate: true
+        run_triangular: false
+        run_back_substitution: false
+        integral_ordering: 2
+  """ )
+  close( file )
+
+  #-------------------
+  run( `kira --parallel=$(Threads.nthreads()) masters.yaml` )
+  #-------------------
+
+  dir_list = (collect∘walkdir)("results")
+  masters_list = filter( x->last(x)==["masters"], dir_list )
+  file_list = map( x->first(x)*"/masters", masters_list )
+  union_master_list = Vector{Basic}()
+  for file_name in file_list
+    file = open( file_name, "r" )
+    content_str = read( file, String )
+    close( file )
+    content_str = seq_replace( content_str, "["=>"(", "]"=>")" )
+    split_list = filter( !isempty, split( content_str, "\n" ) )
+    master_list = map( x->(Basic∘string∘first∘split)(x,"#"), split_list )
+    union_master_list = union( union_master_list, master_list )
+  end # for file_name
+
+  println( "[ vaccum masters ]" )
+  map( println, union_master_list )
+  println()
+
+  cd( ".." )
+
+  println( "[ Vaccum Master Integrals ]")
+  map( println, union_master_list )
+  println()
+  for vac_index in 1:length(vac_top_list)
+    vac_top = vac_top_list[vac_index]
+    println( "Vaccum Topology #$(vac_index)" )
+    map( println, vac_top )
+    println()
+  end # for vac_top
+
+  return vac_top_list, union_master_list
+
+end # function gen_vac_reduction_ieta
+
+
+
+
+##################################
+function get_vac_top_list(
+    vac_den_list::Vector{Basic}
+)::Vector{ Vector{Basic} }
+##################################
+
+  n_den = length(vac_den_list)
+  vac_mom_list = map( first∘get_args, vac_den_list )
+  unique_vac_mom_list = unique(vac_mom_list )
+
+  if length(vac_mom_list) == length(unique_vac_mom_list)
+    return [ copy(vac_den_list) ]
+  end # if
+
+  pos_list = findall( x->count(==(x),vac_mom_list)==2, unique_vac_mom_list )
+  if length(pos_list) == 1
+    split_mom = unique_vac_mom_list[first(pos_list)]
+    split_mom_pos_list = findall( ==(split_mom), vac_mom_list )
+    @assert length(split_mom_pos_list) == 2
+    split_pos1 = split_mom_pos_list[1]
+    split_pos2 = split_mom_pos_list[2]
+    return [ vac_den_list[setdiff(1:n_den,split_pos1)],
+             vac_den_list[setdiff(1:n_den,split_pos2)] ]
+  end # if
+
+  # more than one
+  split_mom_list = unique_vac_mom_list[pos_list]
+  split_mom_pos_list_collect = map( x->findall(==(x),vac_mom_list), split_mom_list )
+  drop_choice_list = (vec∘collect∘Base.product)( split_mom_pos_list_collect... )
+  @assert length(drop_choice_list) == 2^length(split_mom_list)
+  @assert all( x->length(x)==length(split_mom_list), drop_choice_list )
+
+  vac_top_list = Vector{Vector{Basic}}()
+  for drop_choice in drop_choice_list
+    push!( vac_top_list, vac_den_list[setdiff(1:n_den,drop_choice)] )
+  end # for drop_choice
+
+  return vac_top_list
+
+end # function get_vac_top_list
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ###################################
 function generate_integral( 
-    yaml_file::String 
+    yaml_file::String, 
+    vac_top_list::Vector{Vector{Basic}}, 
+    vac_master_list::Vector{Basic} 
 )::Nothing
 ###################################
 
@@ -89,7 +260,8 @@ function generate_integral(
                       map(x->get_args(x)[2],loop_den_list) ) 
 
 
-  n_ext = length(ext_mom_list)
+  qi_list = [ Basic("q$index") for index in 1:n_loop ]
+  n_ext = (length∘setdiff)( (free_symbols∘map)( first∘get_args, loop_den_list ), qi_list )
   n_den = length(loop_den_list)
   @assert n_den == n_loop + div(n_loop*(n_loop-1),2) + n_loop*n_ext
 
@@ -167,6 +339,7 @@ function generate_integral(
   rm( "contractor.frm" )
   rm( "color.frm" )
 
+
   # write out
   jldopen( joinpath( dir_path, "integral$(name_str).jld2" ), "w" ) do file 
     write( file, "Generator", "FeAmGen.jl function generate_integral" )
@@ -188,6 +361,13 @@ function generate_integral(
     write( file, "model_parameter_dict", (Dict∘map)( x->string(x)=>"0", ver_mass_list ) )
     write( file, "amp_color_list",  String["1"] )
     write( file, "amp_lorentz_list",  String[result_str] )
+
+    write( file, "vac_master_list", to_String(vac_master_list) )
+    write( file, "n_vac_top", length(vac_top_list) )
+    for vac_index in 1:length(vac_top_list)
+      vac_top = vac_top_list[vac_index]
+      write( file, "vac_top$(vac_index)", to_String(vac_top ) )
+    end # for vac_top
   end # file
 
   return nothing
