@@ -128,11 +128,12 @@ end # function gen_loop_mom_canon_map
 
 #####################################################
 function canonicalize_amp( 
-    n_loop::Int64, 
     loop_den_list::Vector{Basic},  
     amp_lorentz_list::Vector{Basic} 
 )::Tuple{Vector{Basic},Vector{Basic}}
 ######################################################
+
+  n_loop = get_n_loop( loop_den_list )
 
   if n_loop == 0
     return loop_den_list, amp_lorentz_list 
@@ -140,12 +141,6 @@ function canonicalize_amp(
 
   mom_list = (first∘get_args).(loop_den_list)
   canon_map = gen_loop_mom_canon_map(mom_list) 
-
-##println( "Canonicalization map:" )
-##for x in canon_map
-##  println( "  ", x )
-##end # for x
-##println()
 
   if isempty(canon_map)
     new_loop_den_list = loop_den_list 
@@ -157,30 +152,6 @@ function canonicalize_amp(
 
   # Normalize the leading coefficient sign of the loop momenta.
   new_loop_den_list = normalize_loop_mom( new_loop_den_list )
-
-##println( "Old loop_den_list:" )
-##for den in loop_den_list
-##  println( "  ", den )
-##end # for den
-##println()
-
-##println( "New loop_den_list:" )
-##for den in new_loop_den_list
-##  println( "  ", den )
-##end # for den
-##println()
-
-##println( "Old numerator list:" )
-##for one_lorentz in amp_lorentz_list
-##  println( "  ", one_lorentz )
-##end # for one_lorentz
-##println()
-
-##println( "New numerator list:" )
-##for one_lorentz in new_amp_lorentz_list
-##  println( "  ", one_lorentz )
-##end # for one_lorentz
-##println()
 
   # CHECK begin
   qi_list = Basic[ Basic("q$ii") for ii in 1:n_loop ]

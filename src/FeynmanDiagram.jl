@@ -1959,7 +1959,7 @@ function generate_amplitude(
 
     #-----------------------------------------------------------------
     # Make sure the vacuum bubble integrals will be in standard form.
-    loop_den_list, lorentz_list = canonicalize_amp( n_loop, loop_den_list, lorentz_list )
+    loop_den_list, lorentz_list = canonicalize_amp( loop_den_list, lorentz_list )
     #-----------------------------------------------------------------
 
     min_ep_xpt = input["Amp_Min_Ep_Xpt"]
