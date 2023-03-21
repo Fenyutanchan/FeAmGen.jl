@@ -1,4 +1,5 @@
 
+rm -r vac_reduction*
 rm -r sm 
 rm -r sm_CKMdiag_Haa
 rm -r sm_tbW
