@@ -61,63 +61,137 @@ function gen_loop_mom_canon_map(
 )::Dict{Basic,Basic}
 #########################################################
 
-  q_list = free_symbols(mom_list)
-  filter!(q -> (first∘string)(q) == 'q', q_list)
-  sort!(q_list, by=q->parse(Int, string(q)[2:end]))
+  function is_sym_index_format(input::Basic, sym::Union{Basic, String})::Bool
+    if SymEngine.get_symengine_class(input) != :Symbol
+      return false
+    end
+    if SymEngine.get_symengine_class(Basic(sym)) != :Symbol
+      return false
+    end
 
-  tmp_mom_list = mom_list - subs.(mom_list, Ref(Dict(q_ => 0 for q_ ∈ q_list)))
+    input_str = string(input)
+    sym_str = string(sym)
+    sym_len = length(sym_str)
+    
+    if !startswith(input_str, sym_str)
+      return false
+    end
+
+    index_part_range  = findnext(r"[1-9]\d*", input_str, sym_len+1)
+    if isnothing(index_part_range)
+      return false
+    end
+    return sym_len + length(index_part_range) == length(input_str)
+  end
+  is_loop_mom(mom::Basic)::Bool = is_sym_index_format(mom, "q")
+  is_ext_mom(mom::Basic)::Bool = is_sym_index_format(mom, "k")
+
+  function get_sym_index(mom::Basic, sym::Union{Basic, String})::Int
+    @assert is_sym_index_format(mom, sym)
+    mom_str = string(mom)
+    sym_len = (length∘string)(sym)
+    return parse(Int, mom_str[sym_len+1:end])
+  end
+  get_loop_index(mom::Basic)::Int = get_sym_index(mom, "q")
+  get_ext_index(mom::Basic)::Int = get_sym_index(mom, "k")
+
+  function coefficient_matrix(mom_poly_list::Vector{Basic}, mom_list::Vector{Basic})::Matrix{Basic}
+    @assert all(sym -> SymEngine.get_symengine_class(sym) == :Symbol, mom_list)
+
+    return reduce(
+      vcat,
+      (transpose ∘ map)( q -> SymEngine.coeff(mom, q), mom_list )
+        for mom ∈ mom_poly_list
+    )
+  end
+
+  target_loop_mom_list = Dict{Int, Vector{Vector{Basic}}}(
+    3 =>  [
+      map( Basic, ["q1", "q2", "q3", "q1 + q2", "q1 + q3", "q2 + q3"] ),
+      map( Basic, ["q1", "q2", "q3", "q1 + q3", "q2 + q3", "q1 + q2 + q3"] )
+    ]
+  )
+
+  single_mom_list = free_symbols(mom_list)
+  q_list = filter(is_loop_mom, single_mom_list)
+  sort!(q_list; by=get_loop_index)
+  n_loop = length(q_list)
+  @assert q_list == [Basic("q$ii") for ii ∈ eachindex(q_list)]
+
+  # orig_mom_list = copy(mom_list)
+  # sort!(
+  #   orig_mom_list;
+  #   by=mom->
+  #     (
+  #       try  
+  #         sum(get_ext_index, filter(is_ext_mom, free_symbols(mom)))
+  #       catch
+  #         @assert (isempty∘filter)(is_ext_mom, free_symbols(mom))
+  #         typemax(Int)
+  #       end,
+  #       findfirst(!iszero, SymEngine.coeff.(mom, q_list)),
+  #       (length∘free_symbols)(mom)
+  #     ) # end by
+  # ) # end sort!
+  tmp_mom_list = mom_list - subs.( mom_list, Ref(Dict(q => 0 for q ∈ q_list)) )
   map!( expand, tmp_mom_list, tmp_mom_list )
-  filter!(!iszero, tmp_mom_list)
-  unique!(mom -> abs(mom), tmp_mom_list)
-  sort!( tmp_mom_list, by=mom->(findfirst(!iszero, SymEngine.coeff.(mom,q_list)), (length∘free_symbols)(mom)) )
+  filter!( !iszero, tmp_mom_list )
+  map!(normalize_loop_mom_single, tmp_mom_list, tmp_mom_list)
+  unique!(tmp_mom_list)
 
-  if (isempty∘setdiff)(q_list,tmp_mom_list)
-    check_flag = all(
-        mom -> begin
-            coeff_list = SymEngine.coeff.(mom, q_list)
-            all( x -> x ≥ 0, coeff_list ) || all( x -> x ≤ 0, coeff_list )
-        end,
-        tmp_mom_list
-    ) # end all
+  target_loop_flag = n_loop ∈ keys(target_loop_mom_list)
+
+  if target_loop_flag
+    if any(
+      target_mom_list -> tmp_mom_list ⊆ target_mom_list,
+      target_loop_mom_list[n_loop]
+    ) # end any
+      return Dict{Basic, Basic}()
+    end # if
+  end
+
+  if (isempty∘setdiff)( q_list, tmp_mom_list )
+    check_flag = all( ≥(0), coefficient_matrix( tmp_mom_list, q_list ) )
+
     if check_flag
-      return Dict{Basic,Basic}()
+      return Dict{Basic, Basic}()
     end # if
   end # if
 
-  for selected_mom_indices in combinations(eachindex(tmp_mom_list), length(q_list))
-    for sign_list in Iterators.product([(1, -1) for _ in q_list]...)
+  first_repl_rule = Dict{Basic, Basic}()
+  
+  for selected_mom_indices ∈ permutations(eachindex(tmp_mom_list), length(q_list))
+    for sign_list ∈ Iterators.product([(1, -1) for _ in q_list]...)
       if last(sign_list) == -1
         break
-      end
+      end # if
 
-      coeff_matrix = reduce(
-          vcat,
-          transpose(SymEngine.coeff.(mom_, q_list))
-              for mom_ in (sign_list .* tmp_mom_list[selected_mom_indices])
-      ) # end reduce
-#@show coeff_matrix typeof(coeff_matrix)
-      if (iszero∘expand∘get_det)(coeff_matrix)
+      tmp_coeff_mat = coefficient_matrix( sign_list .* tmp_mom_list[selected_mom_indices], q_list )
+      if (iszero ∘ expand ∘ get_det)(tmp_coeff_mat)
         break
       end # if
-      replacement_rules = Dict(q_list .=> inv(coeff_matrix) * q_list)
-      new_mom_list = (expand∘subs).(tmp_mom_list, Ref(replacement_rules))
+
+      repl_rule = Dict(q_list .=> inv(tmp_coeff_mat) * q_list)
+      new_mom_list = (expand ∘ subs).(tmp_mom_list, Ref(repl_rule))
       @assert new_mom_list[selected_mom_indices] == sign_list .* q_list
 
-      check_flag = all(
-          mom_ -> begin
-              coeff_list = SymEngine.coeff.(mom_, q_list)
-              all( x -> x ≥ 0, coeff_list) || all( x -> x ≤ 0, coeff_list)
-          end,
-          new_mom_list
-      ) # end all
-      if check_flag
-        return replacement_rules
+      map!( normalize_loop_mom_single, new_mom_list, new_mom_list )
+      new_coeff_mat = coefficient_matrix( new_mom_list, q_list )
+
+      if !target_loop_flag || any(
+        target_mom_list -> new_mom_list ⊆ target_mom_list,
+        target_loop_mom_list[n_loop]
+      ) # end any
+        return repl_rule
+      elseif all(≥(0), new_coeff_mat) && isempty(first_repl_rule)
+        first_repl_rule = repl_rule
       end # if
-
     end # for sign_list
-  end #for selected_mom_indices
+  end # for selected_mom_indices
 
-  return Dict{Basic,Basic}()
+  # @warn "There is no fetching target loop momenta list."
+  printstyled("There is no fetching target loop momenta list.\n"; color=:yellow)
+  return first_repl_rule
 
 end # function gen_loop_mom_canon_map
 
