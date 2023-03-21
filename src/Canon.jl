@@ -61,6 +61,7 @@ function gen_loop_mom_canon_map(
 )::Dict{Basic,Basic}
 #########################################################
 
+  ### should be moved to AmpTools.jl
   function is_sym_index_format(input::Basic, sym::Union{Basic, String})::Bool
     if SymEngine.get_symengine_class(input) != :Symbol
       return false
@@ -118,6 +119,7 @@ function gen_loop_mom_canon_map(
     sort!(k_list; by=get_ext_index)
     return k_list
   end
+  ### should be moved to AmpTools.jl
 
   function gen_repl_rule_sort_index(mom_list::Vector{Basic})::Vector{Basic}
     local tmp_mom_list = unique( abs, mom_list )
