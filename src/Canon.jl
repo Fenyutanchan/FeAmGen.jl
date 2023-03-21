@@ -84,7 +84,7 @@ function gen_loop_mom_canon_map(
     return sym_len + length(index_part_range) == length(input_str)
   end
   is_loop_mom(mom::Basic)::Bool = is_sym_index_format(mom, "q")
-  is_ext_mom(mom::Basic)::Bool = is_sym_index_format(mom, "k")
+  is_ext_mom(mom::Basic)::Bool = is_sym_index_format(mom, "K")
 
   function get_sym_index(mom::Basic, sym::Union{Basic, String})::Int
     @assert is_sym_index_format(mom, sym)
@@ -93,7 +93,7 @@ function gen_loop_mom_canon_map(
     return parse(Int, mom_str[sym_len+1:end])
   end
   get_loop_index(mom::Basic)::Int = get_sym_index(mom, "q")
-  get_ext_index(mom::Basic)::Int = get_sym_index(mom, "k")
+  get_ext_index(mom::Basic)::Int = get_sym_index(mom, "K")
 
   function coefficient_matrix(mom_poly_list::Vector{Basic}, mom_list::Vector{Basic})::Matrix{Basic}
     @assert all(sym -> SymEngine.get_symengine_class(sym) == :Symbol, mom_list)
@@ -105,6 +105,49 @@ function gen_loop_mom_canon_map(
     )
   end
 
+  function get_loop_momenta(mom_list::Vector{Basic})::Vector{Basic}
+    single_mom_list = free_symbols(mom_list)
+    q_list = filter(is_loop_mom, single_mom_list)
+    sort!(q_list; by=get_loop_index)
+    return q_list
+  end
+
+  function get_ext_momenta(mom_list::Vector{Basic})::Vector{Basic}
+    single_mom_list = free_symbols(mom_list)
+    k_list = filter(is_ext_mom, single_mom_list)
+    sort!(k_list; by=get_ext_index)
+    return k_list
+  end
+
+  function gen_repl_rule_sort_index(mom_list::Vector{Basic})::Vector{Basic}
+    local tmp_mom_list = unique( abs, mom_list )
+    q_list = get_loop_momenta( tmp_mom_list )
+    @assert q_list == [Basic("q$ii") for ii ∈ eachindex(q_list)]
+
+    count_mat = zeros(Basic, length(tmp_mom_list), length(q_list))
+    for (mom_index, tmp_mom) ∈ enumerate(tmp_mom_list)
+      q_coeff_list = SymEngine.coeff.(tmp_mom, q_list)
+      k_list = get_ext_momenta([tmp_mom])
+      k_index_sum = if isempty(k_list)
+        zero(Basic)
+      else
+        sum( get_ext_index, k_list )
+      end
+      count_mat[mom_index, findall(!iszero, q_coeff_list)] .+= k_index_sum
+    end
+
+    result_list = Basic[]
+    for col ∈ eachcol(count_mat)
+      tmp_col = filter( !iszero, col )
+      if isempty(tmp_col)
+        push!( result_list, (Basic∘typemax)(Int) )
+      else
+        push!( result_list, minimum(tmp_col) )
+      end
+    end
+    return result_list
+  end
+
   target_loop_mom_list = Dict{Int, Vector{Vector{Basic}}}(
     3 =>  [
       map( Basic, ["q1", "q2", "q3", "q1 + q2", "q1 + q3", "q2 + q3"] ),
@@ -112,9 +155,7 @@ function gen_loop_mom_canon_map(
     ]
   )
 
-  single_mom_list = free_symbols(mom_list)
-  q_list = filter(is_loop_mom, single_mom_list)
-  sort!(q_list; by=get_loop_index)
+  q_list = get_loop_momenta(mom_list)
   n_loop = length(q_list)
   @assert q_list == [Basic("q$ii") for ii ∈ eachindex(q_list)]
 
@@ -141,24 +182,19 @@ function gen_loop_mom_canon_map(
 
   target_loop_flag = n_loop ∈ keys(target_loop_mom_list)
 
-  if target_loop_flag
-    if any(
+  if target_loop_flag && any(
       target_mom_list -> tmp_mom_list ⊆ target_mom_list,
       target_loop_mom_list[n_loop]
     ) # end any
       return Dict{Basic, Basic}()
-    end # if
-  end
-
-  if (isempty∘setdiff)( q_list, tmp_mom_list )
-    check_flag = all( ≥(0), coefficient_matrix( tmp_mom_list, q_list ) )
-
-    if check_flag
+  elseif !target_loop_flag &&
+    (isempty∘setdiff)( q_list, tmp_mom_list ) && 
+    all( ≥(0), coefficient_matrix( tmp_mom_list, q_list ) )
       return Dict{Basic, Basic}()
-    end # if
   end # if
-
-  first_repl_rule = Dict{Basic, Basic}()
+  
+  target_all_repl_rules = Tuple{Vector{Basic}, Dict{Basic, Basic}}[]
+  all_repl_rules = Tuple{Vector{Basic}, Dict{Basic, Basic}}[]
   
   for selected_mom_indices ∈ permutations(eachindex(tmp_mom_list), length(q_list))
     for sign_list ∈ Iterators.product([(1, -1) for _ in q_list]...)
@@ -178,20 +214,52 @@ function gen_loop_mom_canon_map(
       map!( normalize_loop_mom_single, new_mom_list, new_mom_list )
       new_coeff_mat = coefficient_matrix( new_mom_list, q_list )
 
-      if !target_loop_flag || any(
-        target_mom_list -> new_mom_list ⊆ target_mom_list,
-        target_loop_mom_list[n_loop]
-      ) # end any
-        return repl_rule
-      elseif all(≥(0), new_coeff_mat) && isempty(first_repl_rule)
-        first_repl_rule = repl_rule
+      if target_loop_flag
+        if any(
+          target_mom_list -> new_mom_list ⊆ target_mom_list,
+          target_loop_mom_list[n_loop]
+        ) # end any
+          sort_index = gen_repl_rule_sort_index( subs.(mom_list, Ref(repl_rule)) )
+          push!( target_all_repl_rules, (sort_index, repl_rule) )
+        elseif all(≥(0), new_coeff_mat)
+          sort_index = gen_repl_rule_sort_index( subs.(mom_list, Ref(repl_rule)) )
+          push!( all_repl_rules, (sort_index, repl_rule) )
+        end
+      elseif all(≥(0), new_coeff_mat)
+        sort_index = gen_repl_rule_sort_index( subs.(mom_list, Ref(repl_rule)) )
+        push!( all_repl_rules, (sort_index, repl_rule) )
       end # if
     end # for sign_list
   end # for selected_mom_indices
 
-  # @warn "There is no fetching target loop momenta list."
-  printstyled("There is no fetching target loop momenta list.\n"; color=:yellow)
-  return first_repl_rule
+  if target_loop_flag
+    if isempty(target_all_repl_rules)
+      printstyled("Warning: There is no fetching target loop momenta list.\n"; color=:yellow)
+      sort!( all_repl_rules; by=first )
+
+tmp_new_mom_list = map( mom -> subs(mom, (last∘first)(all_repl_rules) ), mom_list )
+@show gen_repl_rule_sort_index(mom_list)
+@show gen_repl_rule_sort_index(tmp_new_mom_list)
+
+      return (last∘first)(all_repl_rules)
+    end
+
+    sort!( target_all_repl_rules; by=first )
+
+tmp_new_mom_list = map( mom -> subs(mom, (last∘first)(target_all_repl_rules) ), mom_list )
+@show gen_repl_rule_sort_index(mom_list)
+@show gen_repl_rule_sort_index(tmp_new_mom_list)
+
+    return (last∘first)(target_all_repl_rules)
+  else
+    sort!( all_repl_rules; by=first )
+
+tmp_new_mom_list = map( mom -> subs(mom, (last∘first)(all_repl_rules) ), mom_list )
+@show gen_repl_rule_sort_index(mom_list)
+@show gen_repl_rule_sort_index(tmp_new_mom_list)
+
+    return (last∘first)(all_repl_rules)
+  end
 
 end # function gen_loop_mom_canon_map
 
