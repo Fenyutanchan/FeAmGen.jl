@@ -17,6 +17,7 @@ using OrderedCollections
 using Pipe
 using Pkg
 using PyCall
+using SHA
 using SymEngine
 using Test
 using YAML

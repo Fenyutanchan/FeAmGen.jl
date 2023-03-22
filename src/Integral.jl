@@ -57,6 +57,30 @@ function has_ieta(
 end # function has_ieta
 
 
+#############################
+function read_in_masters( 
+    reduce_dir::String
+)::Vector{Basic} 
+#############################
+
+  dir_list = (collect∘walkdir)("$(reduce_dir)/results")
+  masters_list = filter( x->last(x)==["masters"], dir_list )
+  file_list = map( x->first(x)*"/masters", masters_list )
+  union_master_list = Vector{Basic}()
+  for file_name in file_list
+    file = open( file_name, "r" )
+    content_str = read( file, String )
+    close( file )
+    content_str = seq_replace( content_str, "["=>"(", "]"=>")" )
+    split_list = filter( !isempty, split( content_str, "\n" ) )
+    master_list = map( x->(Basic∘string∘first∘split)(x,"#"), split_list )
+    union_master_list = union( union_master_list, master_list )
+  end # for file_name
+
+  return union_master_list
+
+end # function read_in_masters
+
 
 
 
@@ -78,30 +102,56 @@ function gen_vac_reduction_ieta(
   vac_top_list = get_vac_top_list(vac_den_list)
   vac_top_list = filter( top -> any( !iszero, (last∘get_args).(top) ), vac_top_list )
 
-  bk_mkdir( "vac_reduction" )
-  cd( "vac_reduction" )
-  mkdir( "config" )
-
+  #------------------------------------------------------
   sector_str = join( map(string,ones( Int64, n_loop+div(n_loop*(n_loop-1),2) )) )
-  file = open( "config/integralfamilies.yaml", "w" )
-  write( file, """ 
+  integralfamilies_yaml = """ 
   integralfamilies:
-  """ )
+  """ 
   for vac_index in 1:length(vac_top_list)
-  vac_top = vac_top_list[vac_index]
-    write( file, """
+    vac_top = vac_top_list[vac_index]
+    integralfamilies_yaml *= """
       - name: "vac$(n_loop)loopT$(vac_index)"
         loop_momenta: [$(join(map(string,qi_list),","))]
         top_level_sectors: [b$(sector_str)]
         propagators:   
-    """ )
+    """ 
   for one_den in vac_top
     mom, mass, width = get_args(one_den)
-    write( file, """
+    integralfamilies_yaml *= """
           - [ "$mom", "$( iszero(width) ? "0" : "nim" )" ]
-    """ )
+    """ 
   end # for one_den
   end # for vac_index
+  #------------------------------------------------------
+
+  art_dir = Pkg.Artifacts.artifact"FeAmGen"
+  sha_code = (bytes2hex∘sha1)( integralfamilies_yaml )
+  script_dir = "$(art_dir)/vac_reduction_scripts/$(sha_code)"
+  if isdir( script_dir )
+    println( "[ Found $(sha_code) ]" )
+    vac_master_list = read_in_masters( script_dir )
+
+    println( "[ Vaccum Master Integrals ]")
+    map( println, vac_master_list )
+    println()
+    for vac_index in 1:length(vac_top_list)
+      vac_top = vac_top_list[vac_index]
+      println( "Vaccum Topology #$(vac_index)" )
+      map( println, vac_top )
+      println()
+    end # for vac_top
+
+    return vac_top_list, vac_master_list
+  end # if
+
+
+  #--------------------------------
+  bk_mkdir( "vac_reduction_$(sha_code)" )
+  cd( "vac_reduction_$(sha_code)" )
+  mkdir( "config" )
+
+  file = open( "config/integralfamilies.yaml", "w" )
+  write( file, integralfamilies_yaml )
   close( file )
 
   file = open( "config/kinematics.yaml", "w" )
@@ -116,7 +166,7 @@ function gen_vac_reduction_ieta(
   """ )
   close( file )
 
-  file = open( "masters.yaml", "w" )
+  file = open( "reduce.yaml", "w" )
   write( file, """
   # rmax: the maximal sum of positive propagator powers in the seed.
   # smax: the maximal negative sum of negative propagator powers in the seed.
@@ -126,38 +176,40 @@ function gen_vac_reduction_ieta(
         reduce:
           - {sectors: [b$(sector_str)], r: 8, s: 2}
         run_initiate: true
-        run_triangular: false
-        run_back_substitution: false
+        run_triangular: true
+        run_firefly: back
         integral_ordering: 2
   """ )
   close( file )
 
-  #-------------------
-  run( `kira --parallel=$(Threads.nthreads()) masters.yaml` )
-  #-------------------
+  file = open( "export.yaml", "w" )
+  write( file, """
+  jobs:
+    - kira2form:
+       target:
+  """ )
+  for vac_index in 1:length(vac_top_list)
+  write( file, """
+        - [ vac$(n_loop)loopT$(vac_index), integrals_vac$(n_loop)loopT$(vac_index) ]
+  """ )
+  end # for vac_index
+  write( file, """
+       reconstruct_mass: true
+  """ )
+  close( file )
 
-  dir_list = (collect∘walkdir)("results")
-  masters_list = filter( x->last(x)==["masters"], dir_list )
-  file_list = map( x->first(x)*"/masters", masters_list )
-  union_master_list = Vector{Basic}()
-  for file_name in file_list
-    file = open( file_name, "r" )
-    content_str = read( file, String )
-    close( file )
-    content_str = seq_replace( content_str, "["=>"(", "]"=>")" )
-    split_list = filter( !isempty, split( content_str, "\n" ) )
-    master_list = map( x->(Basic∘string∘first∘split)(x,"#"), split_list )
-    union_master_list = union( union_master_list, master_list )
-  end # for file_name
-
-  println( "[ vaccum masters ]" )
-  map( println, union_master_list )
-  println()
+  #-------------------
+  run( `kira --parallel=$(Threads.nthreads()) reduce.yaml` )
+  #-------------------
+  vac_master_list = read_in_masters( "." )
+  #-------------------
 
   cd( ".." )
 
+
+
   println( "[ Vaccum Master Integrals ]")
-  map( println, union_master_list )
+  map( println, vac_master_list )
   println()
   for vac_index in 1:length(vac_top_list)
     vac_top = vac_top_list[vac_index]
@@ -166,7 +218,7 @@ function gen_vac_reduction_ieta(
     println()
   end # for vac_top
 
-  return vac_top_list, union_master_list
+  return vac_top_list, vac_master_list
 
 end # function gen_vac_reduction_ieta
 
