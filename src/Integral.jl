@@ -64,7 +64,7 @@ function read_in_masters(
 #############################
 
   dir_list = (collect∘walkdir)("$(reduce_dir)/results")
-  masters_list = filter( x->last(x)==["masters"], dir_list )
+  masters_list = filter( x->"masters" in last(x), dir_list )
   file_list = map( x->first(x)*"/masters", masters_list )
   union_master_list = Vector{Basic}()
   for file_name in file_list
@@ -130,6 +130,7 @@ function gen_vac_reduction_ieta(
   if isdir( script_dir )
     println( "[ Found $(sha_code) ]" )
     vac_master_list = read_in_masters( script_dir )
+    @assert !isempty(vac_master_list)
 
     println( "[ Vaccum Master Integrals ]")
     map( println, vac_master_list )
@@ -387,11 +388,18 @@ function generate_integral(
 
   result_str = replace( (String∘take!)(result_io), "Coeff" => "" )
 
+  #--------------------------
   # remove intermediate files
   rm( "contractor.frm" )
   rm( "color.frm" )
 
+  #---------------------------------------------
+  # Make sure the canonical form of the loop denominators.
+  numerator_list = [ Basic(result_str) ] 
+  positive_loop_den_list, numerator_list = 
+      canonicalize_amp( positive_loop_den_list, numerator_list )
 
+  #---------------------------------------------
   # write out
   jldopen( joinpath( dir_path, "integral$(name_str).jld2" ), "w" ) do file 
     write( file, "Generator", "FeAmGen.jl function generate_integral" )
@@ -412,7 +420,7 @@ function generate_integral(
     write( file, "baseINC_script_str", string() )
     write( file, "model_parameter_dict", (Dict∘map)( x->string(x)=>"0", ver_mass_list ) )
     write( file, "amp_color_list",  String["1"] )
-    write( file, "amp_lorentz_list",  String[result_str] )
+    write( file, "amp_lorentz_list",  to_String(numerator_list) )
 
     write( file, "vac_master_list", to_String(vac_master_list) )
     write( file, "n_vac_top", length(vac_top_list) )
