@@ -401,7 +401,7 @@ function generate_integral(
 
   #---------------------------------------------
   # write out
-  jldopen( joinpath( dir_path, "integral$(name_str).jld2" ), "w" ) do file 
+  jldopen( joinpath( dir_path, "$(name_str).jld2" ), "w" ) do file 
     write( file, "Generator", "FeAmGen.jl function generate_integral" )
     # n_inc is used to generate mom_conserv. 
     # And this is supposed to be scalar integral, 
