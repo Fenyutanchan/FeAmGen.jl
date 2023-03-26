@@ -97,7 +97,9 @@ function gen_vac_reduction_ieta(
   var_list = free_symbols( mom_list )
   ext_mom_list = setdiff( var_list, qi_list )
 
-  null_dict = Dict( union( ext_mom_list .=> zeros(Basic), mass_list .=> zero(Basic) ) )
+  @vars ieta
+  null_dict = (Dict∘union)( ext_mom_list .=> zeros(Basic), mass_list .=> zero(Basic) )
+  push!( null_dict, ieta => im )
   vac_den_list = (unique∘map)( x->subs(x,null_dict), topology )
   vac_top_list = get_vac_top_list(vac_den_list)
   vac_top_list = filter( top -> any( !iszero, (last∘get_args).(top) ), vac_top_list )
@@ -117,6 +119,7 @@ function gen_vac_reduction_ieta(
     """ 
   for one_den in vac_top
     mom, mass, width = get_args(one_den)
+    @assert iszero(mass)
     integralfamilies_yaml *= """
           - [ "$mom", "$( iszero(width) ? "0" : "nim" )" ]
     """ 
