@@ -82,27 +82,14 @@ function read_in_masters(
 end # function read_in_masters
 
 
+############################################
+function gen_integralfamilies_yaml_str(
+    vac_top_list::Vector{Vector{Basic}} 
+)::String
+############################################
 
-
-######################################
-function gen_vac_reduction_ieta(
-    topology::Vector{Basic}
-)::Tuple{ Vector{Vector{Basic}}, Vector{Basic} }
-######################################
-
-  n_loop = get_n_loop(topology)
+  n_loop = (get_n_loop∘first)(vac_top_list)
   qi_list = [ Basic("q$index") for index in 1:n_loop ]
-  mom_list = map( first∘get_args, topology )
-  mass_list = (free_symbols∘map)( x->get_args(x)[2], topology )
-  var_list = free_symbols( mom_list )
-  ext_mom_list = setdiff( var_list, qi_list )
-
-  @vars ieta
-  null_dict = (Dict∘union)( ext_mom_list .=> zeros(Basic), mass_list .=> zero(Basic) )
-  push!( null_dict, ieta => im )
-  vac_den_list = (unique∘map)( x->subs(x,null_dict), topology )
-  vac_top_list = get_vac_top_list(vac_den_list)
-  vac_top_list = filter( top -> any( !iszero, (last∘get_args).(top) ), vac_top_list )
 
   #------------------------------------------------------
   sector_str = join( map(string,ones( Int64, n_loop+div(n_loop*(n_loop-1),2) )) )
@@ -127,9 +114,60 @@ function gen_vac_reduction_ieta(
   end # for vac_index
   #------------------------------------------------------
 
-  art_dir = Pkg.Artifacts.artifact"FeAmGen"
+  return integralfamilies_yaml
+
+end # function gen_integralfamilies_yaml_str
+
+
+######################################
+function gen_vac_reduction_ieta(
+    topology::Vector{Basic}
+)::Tuple{ Vector{Vector{Basic}}, Vector{Basic} }
+######################################
+
+  n_loop = get_n_loop(topology)
+  qi_list = [ Basic("q$index") for index in 1:n_loop ]
+  mom_list = map( first∘get_args, topology )
+  mass_list = (free_symbols∘map)( x->get_args(x)[2], topology )
+  var_list = free_symbols( mom_list )
+  ext_mom_list = setdiff( var_list, qi_list )
+
+  @vars ieta
+  null_dict = (Dict∘union)( ext_mom_list .=> zeros(Basic), mass_list .=> zero(Basic) )
+  push!( null_dict, ieta => im )
+  vac_den_list = (unique∘map)( x->subs(x,null_dict), topology )
+  vac_top_list = get_vac_top_list(vac_den_list)
+  vac_top_list = filter( top -> any( !iszero, (last∘get_args).(top) ), vac_top_list )
+
+###------------------------------------------------------
+##sector_str = join( map(string,ones( Int64, n_loop+div(n_loop*(n_loop-1),2) )) )
+##integralfamilies_yaml = """ 
+##integralfamilies:
+##""" 
+##for vac_index in 1:length(vac_top_list)
+##  vac_top = vac_top_list[vac_index]
+##  integralfamilies_yaml *= """
+##    - name: "vac$(n_loop)loopT$(vac_index)"
+##      loop_momenta: [$(join(map(string,qi_list),","))]
+##      top_level_sectors: [b$(sector_str)]
+##      propagators:   
+##  """ 
+##for one_den in vac_top
+##  mom, mass, width = get_args(one_den)
+##  @assert iszero(mass)
+##  integralfamilies_yaml *= """
+##        - [ "$mom", "$( iszero(width) ? "0" : "nim" )" ]
+##  """ 
+##end # for one_den
+##end # for vac_index
+###------------------------------------------------------
+
+  #------------------------------------------------------
+  integralfamilies_yaml = gen_integralfamilies_yaml_str( vac_top_list )
+  #------------------------------------------------------
+
   sha_code = (bytes2hex∘sha1)( integralfamilies_yaml )
-  script_dir = "$(art_dir)/vac_reduction_scripts/$(sha_code)"
+  script_dir = "$(art_dir())/vac_reduction_scripts/$(sha_code)"
   if isdir( script_dir )
     println( "[ Found $(sha_code) ]" )
     vac_master_list = read_in_masters( script_dir )
@@ -154,10 +192,12 @@ function gen_vac_reduction_ieta(
   cd( "vac_reduction_$(sha_code)" )
   mkdir( "config" )
 
+  #-------------------
   file = open( "config/integralfamilies.yaml", "w" )
   write( file, integralfamilies_yaml )
   close( file )
 
+  #-------------------
   file = open( "config/kinematics.yaml", "w" )
   write( file, """
   kinematics :
@@ -170,6 +210,7 @@ function gen_vac_reduction_ieta(
   """ )
   close( file )
 
+  #-------------------
   file = open( "reduce.yaml", "w" )
   write( file, """
   # rmax: the maximal sum of positive propagator powers in the seed.
@@ -178,7 +219,7 @@ function gen_vac_reduction_ieta(
   jobs:
     - reduce_sectors:
         reduce:
-          - {sectors: [b$(sector_str)], r: 8, s: 2}
+          - {sectors: [b$(sector_str)], r: 32, s: 2}
         run_initiate: true
         run_triangular: true
         run_firefly: back
@@ -186,6 +227,7 @@ function gen_vac_reduction_ieta(
   """ )
   close( file )
 
+  #-------------------
   file = open( "export.yaml", "w" )
   write( file, """
   jobs:
@@ -201,6 +243,128 @@ function gen_vac_reduction_ieta(
        reconstruct_mass: true
   """ )
   close( file )
+
+  #-------------------
+  file = open( "gen_integrals.jl", "w" )
+  write( file, """
+ 
+  # rmax: the maximal sum of positive propagator powers in the seed.
+  # smax: the maximal negative sum of negative propagator powers in the seed.
+  
+  ##########################
+  function generate_lists( 
+      n::Int64, 
+      r_max::Int64, 
+      s_max::Int64 
+  )::Vector{Vector{Int64}}
+  ##########################
+  
+    if n == 1
+  
+      indices_list = Vector{Vector{Int64}}()
+      for index in (-s_max):r_max
+        push!( indices_list, [index] )
+      end # for index
+      return indices_list
+  
+    else
+  
+      indices_list = Vector{Vector{Int64}}()
+      for index in (-s_max):r_max
+  
+        if index >= 0
+          sub_indices_list = generate_lists( n-1, r_max-index, s_max )
+        else # index < 0
+          sub_indices_list = generate_lists( n-1, r_max, s_max-abs(index) )
+        end # if
+  
+        for sub_indices in sub_indices_list
+          new_indices = vcat( [index], sub_indices )
+          r_value = (sum∘filter)( x -> x > 0, new_indices ) 
+          s_value = (abs∘sum∘filter)( x -> x < 0, new_indices ) 
+          if r_value <= r_max && s_value <= s_max
+            push!( indices_list, new_indices )
+          end # if
+        end # for sub_indices
+  
+      end # for index
+      return indices_list
+  
+    end # if
+  
+  end # function generate_lists
+  
+  
+  ########################
+  function main()::Nothing
+  ########################
+  
+    n_loop = $(n_loop)
+    n_type = $(length(vac_top_list))
+  
+    r_max = 32
+    s_max = 0 # we assume vaccum integrals have no negative xpt. 
+  
+    indices_list = Vector{Vector{Int64}}()
+    for indices in generate_lists( $(n_loop+div(n_loop*(n_loop-1),2)), r_max, s_max )
+      if sum(indices) < 1
+        continue
+      end # if
+      if (length∘filter)( !iszero, indices ) < n_loop 
+        continue
+      end # if
+      push!( indices_list, indices )
+    end # for indices
+  
+    for typei in 1:n_type 
+      file = open( "integrals_vac$(n_loop)loopT\$(typei)", "w" )
+      for indices in indices_list
+        write( file, "vac$(n_loop)loopT\$(typei)\$(indices)\n" ) 
+      end # for indices
+      close( file )
+    end # for typei
+  
+    return nothing
+  
+  end # function main
+  
+  ###########
+  main()
+  ###########
+
+  """ )
+  close( file )
+
+  #-------------------
+  file = open( "combinefilter.jl", "w" )
+  write( file, """
+  ###########################
+  function main()::Nothing
+  ###########################
+  
+    n_type = $(length(vac_top_list))
+    combine_file = open( "vac_ibp.inc", "w" )
+    for typei in 1:n_type
+      file = open( "results/vac$(n_loop)loopT\$(typei)/kira_integrals_vac$(n_loop)loopT\$(typei).inc", "r" )
+      content_str = read( file, String )
+      close( file )
+      for id in 1:n_type
+        content_str = replace( content_str, "id vac$(n_loop)loopT\$(id)(" => "id vacloopT\$(id)(d?," )
+        content_str = replace( content_str, "vac$(n_loop)loopT\$(id)(" => "vacloopT\$(id)(d," )
+      end # for id
+      write( combine_file, content_str )
+    end # for typei
+    close( combine_file )
+  
+  end # function main
+  
+  #######
+  main()
+  #######
+
+  """ )
+  close( file )
+
 
   #-------------------
   run( `kira --parallel=$(Threads.nthreads()) reduce.yaml` )
@@ -377,9 +541,8 @@ function generate_integral(
 
   result_io = IOBuffer()
 
-  art_dir = Pkg.Artifacts.artifact"FeAmGen"
-  cp( "$(art_dir)/scripts/contractor.frm", "contractor.frm", force=true )
-  cp( "$(art_dir)/scripts/color.frm", "color.frm", force=true )
+  cp( "$(art_dir())/scripts/contractor.frm", "contractor.frm", force=true )
+  cp( "$(art_dir())/scripts/color.frm", "color.frm", force=true )
 
   try
     run( pipeline( `$(form()) -q -`; stdin=IOBuffer(form_script_str), stdout=result_io ) )

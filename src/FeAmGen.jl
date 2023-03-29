@@ -25,6 +25,8 @@ using YAML
 export digest_seed_proc, generate_amp, generate_integral
 export generate_multi_yaml, generate_shiftUP_yaml
 export canonicalize_amp, gen_vac_reduction_ieta
+export gen_integralfamilies_yaml_str
+
 
 include("Universe.jl")
 include("Graph.jl")

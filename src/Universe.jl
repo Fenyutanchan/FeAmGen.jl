@@ -3,6 +3,8 @@
 ######################################################
 const root_dir()::String = (dirname∘dirname∘pathof∘Base.moduleroot)(FeAmGen)
 ######################################################
+const art_dir()::String = Pkg.Artifacts.artifact"FeAmGen"
+######################################################
 
 
 

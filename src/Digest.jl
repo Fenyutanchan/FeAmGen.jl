@@ -171,12 +171,11 @@ function readin_model( input::Dict{Any,Any} )::Model
 #############################################################
 
   model_name = input["model_name"]
-  art_dir = Pkg.Artifacts.artifact"FeAmGen"
 
   # append the path that python can find the model files
   sys = pyimport( "sys" )
-  @assert isfile( "$(art_dir)/Models/$(model_name)/object_library.py" )
-  push!( sys."path", "$(art_dir)/Models" )
+  @assert isfile( "$(art_dir())/Models/$(model_name)/object_library.py" )
+  push!( sys."path", "$(art_dir())/Models" )
 
   # For example sm.object_library include the basic structure of this model
   py_model = pyimport( "$(model_name).object_library" )

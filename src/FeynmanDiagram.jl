@@ -1854,9 +1854,8 @@ function generate_amplitude(
 
   #------------------------------------------------  
   # Calculate amplitude for each graph
-  art_dir = Pkg.Artifacts.artifact"FeAmGen"
-  cp( "$(art_dir)/scripts/contractor.frm", "contractor.frm", force=true )
-  cp( "$(art_dir)/scripts/color.frm", "color.frm", force=true )
+  cp( "$(art_dir())/scripts/contractor.frm", "contractor.frm", force=true )
+  cp( "$(art_dir())/scripts/color.frm", "color.frm", force=true )
 
   file = open( "model_parameters.frm", "w" )
   write( file, "symbol $(join( map( string, (collect∘keys)(model.parameter_dict) ), "," ));\n" )
@@ -1984,9 +1983,8 @@ function generate_amplitude(
   rm( "model_parameters.frm" )
 
   #---------------------
-  art_dir = Pkg.Artifacts.artifact"FeAmGen"
-  cp( "$(art_dir)/scripts/tikz-feynman.sty", "$(proc_str)_visuals/tikz-feynman.sty" )
-  cp( "$(art_dir)/scripts/generate_diagram_pdf.jl", "$(proc_str)_visuals/generate_diagram_pdf.jl" )
+  cp( "$(art_dir())/scripts/tikz-feynman.sty", "$(proc_str)_visuals/tikz-feynman.sty" )
+  cp( "$(art_dir())/scripts/generate_diagram_pdf.jl", "$(proc_str)_visuals/generate_diagram_pdf.jl" )
 
   @info "Users can generate PDF files for all diagrams." script="generate_diagram_pdf.jl"
 
