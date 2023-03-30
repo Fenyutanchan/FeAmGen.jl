@@ -211,6 +211,7 @@ function gen_vac_reduction_ieta(
   close( file )
 
   #-------------------
+  sector_str = join( map(string,ones( Int64, n_loop+div(n_loop*(n_loop-1),2) )) )
   file = open( "reduce.yaml", "w" )
   write( file, """
   # rmax: the maximal sum of positive propagator powers in the seed.
