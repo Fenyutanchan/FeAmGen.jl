@@ -1,7 +1,7 @@
 [FeAmGen]
-git-tree-sha1 = "c66752d39f62756705b6dc9443bc6989fafd791e"
+git-tree-sha1 = "0cbfa364b37c0a9a6e58bf65c0026821480eaa8b"
 
     [[FeAmGen.download]]
     url = "https://raw.githubusercontent.com/zhaoli-IHEP/FeAmGen_artifacts/main/utils.tar.gz"
-    sha256 = "8e0a6a16d1cce2cba3ae0298eff145df799eab221a68917766d65cfa608ceba4"
+    sha256 = "7f242104217ceb49fdddf0f52342e4d45719002b263063809a2fee1c7ad99615"
 

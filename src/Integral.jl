@@ -139,28 +139,6 @@ function gen_vac_reduction_ieta(
   vac_top_list = get_vac_top_list(vac_den_list)
   vac_top_list = filter( top -> any( !iszero, (last∘get_args).(top) ), vac_top_list )
 
-###------------------------------------------------------
-##sector_str = join( map(string,ones( Int64, n_loop+div(n_loop*(n_loop-1),2) )) )
-##integralfamilies_yaml = """ 
-##integralfamilies:
-##""" 
-##for vac_index in 1:length(vac_top_list)
-##  vac_top = vac_top_list[vac_index]
-##  integralfamilies_yaml *= """
-##    - name: "vac$(n_loop)loopT$(vac_index)"
-##      loop_momenta: [$(join(map(string,qi_list),","))]
-##      top_level_sectors: [b$(sector_str)]
-##      propagators:   
-##  """ 
-##for one_den in vac_top
-##  mom, mass, width = get_args(one_den)
-##  @assert iszero(mass)
-##  integralfamilies_yaml *= """
-##        - [ "$mom", "$( iszero(width) ? "0" : "nim" )" ]
-##  """ 
-##end # for one_den
-##end # for vac_index
-###------------------------------------------------------
 
   #------------------------------------------------------
   integralfamilies_yaml = gen_integralfamilies_yaml_str( vac_top_list )
@@ -369,6 +347,9 @@ function gen_vac_reduction_ieta(
 
   #-------------------
   run( `kira --parallel=$(Threads.nthreads()) reduce.yaml` )
+  run( `julia gen_integrals.jl` )
+  run( `kira export.yaml` )
+  run( `julia combinefilter.jl` )
   #-------------------
   vac_master_list = read_in_masters( "." )
   #-------------------
@@ -428,9 +409,12 @@ function get_vac_top_list(
 
   vac_top_list = Vector{Vector{Basic}}()
   for drop_choice in drop_choice_list
-    push!( vac_top_list, vac_den_list[setdiff(1:n_den,drop_choice)] )
+    this_vac_top = vac_den_list[setdiff(1:n_den,drop_choice)]
+    sort!( this_vac_top, by=gen_sorted_str )
+    push!( vac_top_list, this_vac_top )
   end # for drop_choice
 
+  sort!( vac_top_list, by=gen_sorted_str∘prod )
   return vac_top_list
 
 end # function get_vac_top_list
