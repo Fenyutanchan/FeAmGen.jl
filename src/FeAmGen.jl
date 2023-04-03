@@ -19,7 +19,6 @@ using Pkg
 using PyCall
 using SHA
 using SymEngine
-using Test
 using YAML
 
 export digest_seed_proc, generate_amp, generate_integral
