@@ -16,5 +16,10 @@ Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
 SHA = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 SymEngine = "123dc426-2d89-5057-bbad-38513e3affd8"
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
