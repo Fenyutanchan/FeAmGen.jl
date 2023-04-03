@@ -386,7 +386,9 @@ function get_vac_top_list(
   unique_vac_mom_list = unique(vac_mom_list )
 
   if length(vac_mom_list) == length(unique_vac_mom_list)
-    return [ copy(vac_den_list) ]
+    this_vac_top = copy(vac_den_list)
+    sort!( this_vac_top, by=gen_sorted_str )
+    return [ this_vac_top ]
   end # if
 
   pos_list = findall( x->count(==(x),vac_mom_list)==2, unique_vac_mom_list )
