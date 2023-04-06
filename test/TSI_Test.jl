@@ -41,12 +41,12 @@ function main()::Nothing
 
 #--------------------------------------------------------------------------
 # The last five (except the first one) integrals are master integarls.
-indices_list = [ [0,3,3,0,3], [0,1,2,0,1], [0,2,1,0,1], [0,1,1,0,1], [0,0,0,1,1], [0,1,0,0,1] ]
+all_den_xpt_list = [ [0,3,3,0,3], [0,1,2,0,1], [0,2,1,0,1], [0,1,1,0,1], [0,0,0,1,1], [0,1,0,0,1] ]
 # Generate original YAML file and then convert it into specific YAML files.
 open( "TSI_original.yaml", "w" ) do infile
   write( infile, TSI_origin_str )
 end # close
-multi_yaml_list = generate_multi_yaml( "TSI_original.yaml", indices_list, "TSI_integrals" )
+multi_yaml_list = gen_integral_multi_yaml( "TSI_original.yaml", all_den_xpt_list, "TSI_integrals" )
 #--------------------------------------------------------------------------
 
 #--------------------------------------------------------
@@ -71,10 +71,10 @@ end # for one_yaml
 #-------------------------------
 # Generate YAML files for shifted integrals.
 scalar_yaml_list = Vector{String}()
-for one_indices in indices_list
-  indices_str = join( map( string, one_indices ), "," )
+for den_xpt_list in all_den_xpt_list
+  indices_str = join( map( string, den_xpt_list ), "," )
   push!( scalar_yaml_list, "TSI_integrals/TSI_$(indices_str).yaml" )
-end # for one_indices
+end # for den_xpt_list
 new_yaml_list = generate_shiftUP_yaml( scalar_yaml_list, "TSI_shiftUP_integrals" )
 #-------------------------------
 

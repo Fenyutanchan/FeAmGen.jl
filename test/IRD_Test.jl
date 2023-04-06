@@ -41,12 +41,12 @@ function main()::Nothing
 
 #--------------------------------------------------------
 # The integrals
-indices_list = [ [0,1,1,-1,1], [0,1,3,-2,1] ]
+all_den_xpt_list = [ [0,1,1,-1,1], [0,1,3,-2,1] ]
 # Generate original YAML file and then convert it into specific YAML files.
 open( "IRD_original.yaml", "w" ) do infile
   write( infile, IRD_origin_str )
 end # close
-multi_yaml_list = generate_multi_yaml( "IRD_original.yaml", indices_list, "IRD_integrals" )
+multi_yaml_list = gen_integral_multi_yaml( "IRD_original.yaml", all_den_xpt_list, "IRD_integrals" )
 #--------------------------------------------------------
 
 #--------------------------------------------------------
