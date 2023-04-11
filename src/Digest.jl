@@ -167,15 +167,25 @@ Read-in the model detail from python model file.
 In this seed program, we only need particle list.
 The directory of model files are supposed in ".".
 """
-function readin_model( input::Dict{Any,Any} )::Model
+function readin_model(
+  input::Dict{Any,Any};
+  model_paths::Vector{String}=[pwd()]
+)::Model
 #############################################################
 
   model_name = input["model_name"]
 
   # append the path that python can find the model files
   sys = pyimport( "sys" )
-  @assert isfile( "$(art_dir())/Models/$(model_name)/object_library.py" )
-  push!( sys."path", "$(art_dir())/Models" )
+  model_path_index = findfirst( isfile, joinpath( model_paths, model_name, "object_library.py" ) )
+  if isnothing(model_path_index)
+    if (!isfife∘joinpath)( art_dir(), "Models", model_name, "object_library.py" )
+      error("Model $(model_name) not found @ $model_paths and \"$(art_dir())/Models\".")
+    end
+    push!( sys."path", "$(art_dir())/Models" )
+  else
+    push!( sys."path", model_paths[model_path_index] )
+  end
 
   # For example sm.object_library include the basic structure of this model
   py_model = pyimport( "$(model_name).object_library" )
