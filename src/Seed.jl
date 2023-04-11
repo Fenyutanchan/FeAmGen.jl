@@ -7,7 +7,7 @@ Read-in the card for seed process, and write-out the cards for the relevant spec
 This function is one of the front-end functions in FeAmGen.jl.
 The directory of model files are supposed in ".".
 """
-function digest_seed_proc( seed_file::String )::Vector{String}
+function digest_seed_proc( seed_file::String; model_paths::Vector{String}=[pwd()] )::Vector{String}
 ##########################################################################
 
 
@@ -21,7 +21,7 @@ function digest_seed_proc( seed_file::String )::Vector{String}
 
   #-------------------------------------------------------
   @info "Choose model" model=input["model_name"]
-  particle_dict = simple_readin_model( input["model_name"] )
+  particle_dict = simple_readin_model( input["model_name"]; model_paths=model_paths )
 
   @info "All the particles" join( particle_dict, " " ) 
   #-------------------------------------------------------
