@@ -177,9 +177,9 @@ function readin_model(
 
   # append the path that python can find the model files
   sys = pyimport( "sys" )
-  model_path_index = findfirst( isfile, joinpath( model_paths, model_name, "object_library.py" ) )
+  model_path_index = findfirst( isfile, joinpath.( model_paths, model_name, "object_library.py" ) )
   if isnothing(model_path_index)
-    if (!isfife∘joinpath)( art_dir(), "Models", model_name, "object_library.py" )
+    if (!isfile∘joinpath)( art_dir(), "Models", model_name, "object_library.py" )
       error("Model $(model_name) not found @ $model_paths and \"$(art_dir())/Models\".")
     end
     push!( sys."path", "$(art_dir())/Models" )
