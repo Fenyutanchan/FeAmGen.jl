@@ -157,8 +157,11 @@ end # function gen_loop_mom_canon_map
 # Mar. 26 2023
 # 
 # A simple trial for sorting the replace rules generated in `gen_loop_mom_canon_map`.
-function gen_repl_rule_sort_index( mom_list::Vector{Basic} )::Vector{Basic}
+function gen_repl_rule_sort_index( 
+    mom_list::Vector{Basic} 
+)::Vector{Basic}
 #########################################################
+
   tmp_mom_list = unique( abs, mom_list )
   q_list = get_loop_momenta( tmp_mom_list )
   @assert q_list == [Basic("q$ii") for ii ∈ eachindex(q_list)]

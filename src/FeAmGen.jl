@@ -21,10 +21,8 @@ using SHA
 using SymEngine
 using YAML
 
-export digest_seed_proc, generate_amp, generate_integral
-export gen_integral_multi_yaml, generate_shiftUP_yaml
-export canonicalize_amp, gen_vac_reduction_ieta
-export gen_integralfamilies_yaml_str
+export digest_seed_proc, generate_amp 
+export canonicalize_amp 
 
 
 include("Universe.jl")
@@ -34,7 +32,6 @@ include("Digest.jl")
 include("FeynmanDiagram.jl")
 include("FORMS.jl")
 include("GenAmp.jl")
-include("Integral.jl")
 include("Kin.jl")
 include("Seed.jl")
 include("SimpleDigest.jl")

@@ -1,12 +1,17 @@
 
 ###########################################################
 """
-    check_has_yt( coupling_dict::Dict{Any,Any} )::Bool
+    check_has_yt( 
+        coupling_dict::Dict{Any,Any} 
+    )::Bool
 
 Check if there is "yt" in the values of couplings in one "Vertex".
 """
-function check_has_yt( coupling_dict::Dict{Any,Any} )::Bool
+function check_has_yt( 
+    coupling_dict::Dict{Any,Any} 
+)::Bool
 ###########################################################
+
   value_list_str = join( map( v_ -> v_.value, values(coupling_dict) ), "," )
   has_yt = occursin( "yt", value_list_str )
 
@@ -16,15 +21,20 @@ end # function check_has_yt
 
 
 
-##################################################################################
+#########################################################################
 """
-    extract_QCD_QED_order( coupling_dict::Dict{Any,Any} )::Tuple{Int64,Int64,Int64}
+    extract_QCD_QED_order( 
+        coupling_dict::Dict{Any,Any} 
+    )::Tuple{Int64,Int64,Int64}
 
 Extract the QCD, QED and special orders from the python model file 
   for the "couplings" property in one "Vertex".
 """
-function extract_QCD_QED_order( coupling_dict::Dict{Any,Any} )::Tuple{Int64,Int64,Int64}
-##################################################################################
+function extract_QCD_QED_order( 
+    coupling_dict::Dict{Any,Any} 
+)::Tuple{Int64,Int64,Int64}
+##########################################################################
+
   QCD_order_set = Set{Int64}( map( v_ -> haskey(v_.order,"QCD") ? v_.order["QCD"] : 0, values(coupling_dict) ) )
   QED_order_set = Set{Int64}( map( v_ -> haskey(v_.order,"QED") ? v_.order["QED"] : 0, values(coupling_dict) ) )
   HIG_order_set = Set{Int64}( map( v_ -> haskey(v_.order,"HIG") ? v_.order["HIG"] : 0, values(coupling_dict) ) )
@@ -44,14 +54,23 @@ function extract_QCD_QED_order( coupling_dict::Dict{Any,Any} )::Tuple{Int64,Int6
 end # function extract_QCD_QED_order
 
 
-#####################################################################################################
+###########################################################################
 """
-    calculate_CTcoeff( link_part_list::Vector{Particle}, has_yt::Bool, QCD_order::Int64 )::Basic
+    calculate_CTcoeff( 
+        link_part_list::Vector{Particle}, 
+        has_yt::Bool, 
+        QCD_order::Int64 
+    )::Basic
 
-Generate the expression for the QCD counter-term coefficient up-to second order for this vertex.
+Generate the expression for the QCD counter-term 
+  coefficient up-to second order for this vertex.
 """
-function calculate_CTcoeff( link_part_list::Vector{Particle}, has_yt::Bool, QCD_order::Int64 )::Basic
-#####################################################################################################
+function calculate_CTcoeff( 
+    link_part_list::Vector{Particle}, 
+    has_yt::Bool, 
+    QCD_order::Int64 
+)::Basic
+############################################################################
 
   local CTcoeff = Basic(" (1+dZgx1*CTorder+dZgx2*CTorder^2)^$QCD_order ")
   if has_yt == true 
@@ -80,16 +99,24 @@ end # function calculate_CTcoeff
 
 
 
-#####################################################################################################
+#######################################################################################
 """
-    extract_couplings_matrix( couplings_dict::Dict{Any,Any}, color_dim::Int64, lorentz_dim::Int64, CTcoeff::Basic )::Array{Basic,2}
+    extract_couplings_matrix( 
+        couplings_dict::Dict{Any,Any}, 
+        color_dim::Int64, 
+        lorentz_dim::Int64, 
+        CTcoeff::Basic 
+    )::Array{Basic,2}
 
 Translate the coupling Dict into a two-dimensional matrix, which can be used later.
 """
 function extract_couplings_matrix( 
-    couplings_dict::Dict{Any,Any}, color_dim::Int64, lorentz_dim::Int64, 
-    CTcoeff::Basic )::Array{Basic,2}
-#####################################################################################################
+    couplings_dict::Dict{Any,Any}, 
+    color_dim::Int64, 
+    lorentz_dim::Int64, 
+    CTcoeff::Basic 
+)::Array{Basic,2}
+#########################################################################################
 
   local couplings_matrix = zeros(Basic,color_dim,lorentz_dim)
   for ele_coup in couplings_dict
@@ -111,14 +138,19 @@ end # function extract_couplings_matrix
 
 
 
-################################################################################################################
+#########################################################################
 """
-    generate_color_lorentz_couplings( part::Particle )::Tuple{Array{Basic,1},Array{Basic,1},Array{Basic,2}}
+    generate_color_lorentz_couplings( 
+        part::Particle 
+    )::Tuple{Array{Basic,1},Array{Basic,1},Array{Basic,2}}
 
-Manually generate the color and lorentz couplings for selfenergy line, which is indicated by `part::Particle`.
+Manually generate the color and lorentz couplings for selfenergy line, 
+  which is indicated by `part::Particle`.
 """
-function generate_color_lorentz_couplings( part::Particle )::Tuple{Array{Basic,1},Array{Basic,1},Array{Basic,2}}
-################################################################################################################
+function generate_color_lorentz_couplings( 
+    part::Particle 
+)::Tuple{Array{Basic,1},Array{Basic,1},Array{Basic,2}}
+###########################################################################
 
   color_row_list = [ Basic("Identity(1,2)") ]
 
@@ -267,7 +299,9 @@ function readin_model( input::Dict{Any,Any} )::Model
 
   #--------------------------------------
   # Universe Model instance
-  model = Model( model_name, input["unitary_gauge"]::Bool, particle_list, particle_name_dict, particle_kf_dict, interaction_list, sorted_kf_list_dict, parameter_dict )
+  model = Model( model_name, input["unitary_gauge"]::Bool, 
+                 particle_list, particle_name_dict, particle_kf_dict, 
+                 interaction_list, sorted_kf_list_dict, parameter_dict )
   #--------------------------------------
 
   return model

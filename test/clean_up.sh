@@ -6,12 +6,6 @@ rm -r sm_tbW
 rm sm.log sm_CKMdiag_Haa.log sm_tbW.log
 rm *.bz2
 
-rm -r TSI_integrals*
-rm -r TSI_shiftUP_integrals*
-
-rm -r IRD_integrals*
-
-rm -r AmpRed_integrals*
 
 rm seed_dy_proc_?Loop.yaml 
 rm -rf dbar_u_TO_Wplus_?Loop*

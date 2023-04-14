@@ -1,12 +1,18 @@
 
-################################################################
+#######################################################
 """
-    prepare_qgraf_dat( model::Model, input::Dict{Any,Any} )
+    prepare_qgraf_dat( 
+        model::Model, 
+        input::Dict{Any,Any} 
+    )::Nothing
 
 Prepare the model file for `QGRAF`.
 """
-function prepare_qgraf_dat( model::Model, input::Dict{Any,Any} )
-################################################################
+function prepare_qgraf_dat( 
+    model::Model, 
+    input::Dict{Any,Any} 
+)::Nothing
+#######################################################
 
   inc_part_list = map( s_ -> model.particle_name_dict[s_], input["incoming"] )
   inc_idx_str_list = map( i_ -> string(i_), eachindex(inc_part_list) )
@@ -102,17 +108,24 @@ function prepare_qgraf_dat( model::Model, input::Dict{Any,Any} )
   """)
   close(file)
 
+  return nothing
 
 end # function prepare_qgraf_dat
 
 
 #######################################################################
 """
-    generate_Feynman_diagram( model::Model, input::Dict{Any,Any} )
+    generate_Feynman_diagram( 
+        model::Model, 
+        input::Dict{Any,Any} 
+    )::Nothing
 
 Interface to generating Feynman diagrams by using `QGRAF`.
 """
-function generate_Feynman_diagram( model::Model, input::Dict{Any,Any} )
+function generate_Feynman_diagram( 
+    model::Model, 
+    input::Dict{Any,Any} 
+)::Nothing
 #######################################################################
 
   printstyled( "[ Generate Feynman diagrams using QGRAF ]\n", color=:green )
@@ -130,21 +143,29 @@ function generate_Feynman_diagram( model::Model, input::Dict{Any,Any} )
   rm( "model.qgraf" )
   rm( "miracle.sty" )
 
+  return nothing
+
 end # function generate_Feynman_diagram
 
 
 
 
 
-###################################################################################################
+#######################################################################
 """
-    get_interaction( field_name_list::Vector{String}, model::Model )::Tuple{Interaction,Int64}
+    get_interaction( 
+        field_name_list::Vector{String}, 
+        model::Model 
+    )::Tuple{Interaction,Int64}
 
-Based on `model.particle_name_dict`, get the interaction according to the link field name list.
+Based on `model.particle_name_dict`, 
+  get the interaction according to the link field name list.
 """
-###################################################################################################
-function get_interaction( field_name_list::Vector{String}, model::Model )::Tuple{Interaction,Int64}
-###################################################################################################
+function get_interaction( 
+    field_name_list::Vector{String}, 
+    model::Model 
+)::Tuple{Interaction,Int64}
+########################################################################
 
   QCDct_link_name_list = filter( s_ -> s_ in ["QCDct1","QCDct2"], field_name_list )
   QCDct_order = length( QCDct_link_name_list )
@@ -156,19 +177,27 @@ function get_interaction( field_name_list::Vector{String}, model::Model )::Tuple
 
   return inter, QCDct_order
 end # function get_interaction
-#################################################
 
 
 
 
-###########################################################################################################
+###################################################################
 """
-    get_incoming_couplings_lorentz_list( part::Particle, mark::Int64, momentum::Basic )::Vector{Basic}
+    get_incoming_couplings_lorentz_list( 
+        part::Particle, 
+        mark::Int64, 
+        momentum::Basic 
+    )::Vector{Basic}
 
-Produce the Basic expression for the incoming particles, which can be spinors or polarization vectors.
+Produce the Basic expression for the incoming particles, 
+  which can be spinors or polarization vectors.
 """
-function get_incoming_couplings_lorentz_list( part::Particle, mark::Int64, momentum::Basic )::Vector{Basic}
-###########################################################################################################
+function get_incoming_couplings_lorentz_list( 
+    part::Particle, 
+    mark::Int64, 
+    momentum::Basic 
+)::Vector{Basic}
+#####################################################################
 
   if part.spin == :fermion && part.kf > 0 
     return [ Basic(" SpU( $mark, spb$mark, $momentum, $(part.mass) ) ") ]
@@ -185,14 +214,28 @@ function get_incoming_couplings_lorentz_list( part::Particle, mark::Int64, momen
 end # function get_incoming_couplings_lorentz_list
 
 
-###########################################################################################################
-"""
-    get_outgoing_couplings_lorentz_list( part::Particle, mark::Int64, momentum::Basic )::Vector{Basic}
 
-Produce the Basic expression for the outgoing particles, which can be spinors or polarization vectors.
+
+
+
+
+################################################################
 """
-function get_outgoing_couplings_lorentz_list( part::Particle, mark::Int64, momentum::Basic )::Vector{Basic}
-###########################################################################################################
+    get_outgoing_couplings_lorentz_list( 
+        part::Particle, 
+        mark::Int64, 
+        momentum::Basic 
+    )::Vector{Basic}
+
+Produce the Basic expression for the outgoing particles, 
+  which can be spinors or polarization vectors.
+"""
+function get_outgoing_couplings_lorentz_list( 
+    part::Particle, 
+    mark::Int64, 
+    momentum::Basic 
+)::Vector{Basic}
+################################################################
 
   if part.spin == :fermion && part.kf > 0
     return [ Basic(" SpUB( $mark, spa$mark, $momentum, $(part.mass) ) ") ]
@@ -209,14 +252,24 @@ function get_outgoing_couplings_lorentz_list( part::Particle, mark::Int64, momen
 end # function get_outgoing_couplings_lorentz_list
 
 
-##########################################################################################################
+###############################################################################
 """
-    get_remnant_couplings_lorentz_list( part::Particle, mark::Int64, momentum::Basic, use_unitary_gauge::Bool )::Vector{Basic}
+    get_remnant_couplings_lorentz_list( 
+        part::Particle, 
+        mark::Int64, 
+        momentum::Basic, 
+        use_unitary_gauge::Bool 
+    )::Vector{Basic}
 
 Produce the Basic expression for the internal/loop propagator particles.
 """
-function get_remnant_couplings_lorentz_list( part::Particle, mark::Int64, momentum::Basic, use_unitary_gauge::Bool )::Vector{Basic}
-##########################################################################################################
+function get_remnant_couplings_lorentz_list( 
+    part::Particle, 
+    mark::Int64, 
+    momentum::Basic, 
+    use_unitary_gauge::Bool 
+)::Vector{Basic}
+###################################################################################
 
   if part.spin == :fermion
     #return [ Basic(" I*( GAij(spb$mark,spa$mark,$momentum)+ONEij(spb$mark,spa$mark)*$(part.mass) )*Den($momentum,$(part.mass),$(part.width)) ") ]
@@ -239,7 +292,7 @@ end # function get_remnant_couplings_lorentz_list
 
 
 
-###########################################################################################
+#############################################################
 """
     edge_from_link_index( 
         vert_id::Int64, 
@@ -247,14 +300,15 @@ end # function get_remnant_couplings_lorentz_list
         g::Graph 
     )::Edge
 
-Get the Edge according to the link_index in the vertex index `vert_id` in the Graph `g`.
+Get the Edge according to the link_index 
+  in the vertex index `vert_id` in the Graph `g`.
 """
 function edge_from_link_index( 
     g::Graph, 
     vert_id::Int64, 
     link_index::Int64  
 )::Edge
-###########################################################################################
+##################################################################
 
   propagator_index = get_node_index_prop( g, vert_id, :propagator_index_list )[link_index]
   the_edge_pos = findfirst( e_ -> e_.property[:propagator_index] == propagator_index, g.edge_list )
@@ -922,32 +976,6 @@ end # function convert_qgraf_TO_Graph
 
 
 
-# ###########################################
-# """
-#     tensor_product( 
-#         ex_list1::Union{Vector{Basic},Vector{Int64}}, 
-#         ex_list2::Union{Vector{Basic},Vector{Int64}}
-#     )::Vector{Basic}
-
-# tensor_product( x, y ): 
-# x and y are two string lists/arrays.
-# This function calculate the tensor production of two arrays.
-# """
-# function tensor_product( 
-#     ex_list1::Union{Vector{Basic},Vector{Int64}}, 
-#     ex_list2::Union{Vector{Basic},Vector{Int64}}
-# )::Vector{Basic}
-# ###########################################
-
-#   res = Vector{Basic}()
-#   for ex1 in ex_list1, ex2 in ex_list2
-#     push!(res,ex1*ex2)
-#   end
-#   return res
-
-# end # function tensor_product
-
-
 
 
 ###################################################################
@@ -1163,192 +1191,6 @@ function contract_Dirac_indices_noexpand(
 end # function contract_Dirac_indices_noexpand
 
 
-##################################
-function check_consistency( 
-    n_loop::Int64, 
-    graph_index::Int64, 
-    lorentz_list::Vector{Basic}, 
-    lorentz_noexpand_list::Vector{Basic}, 
-    ext_mom_list::Vector{Basic}, 
-    baseINC_script_str::String 
-)::Nothing
-##################################
-
-  if iszero(n_loop)
-    return nothing
-  end # if
-
-  @assert n_loop >= 1
-  @vars q1 q2 q3 q4
-  n_ext_mom = length(ext_mom_list)
-
-  # baseINC only needs information from the external fields.
-  file = open( "baseINC.frm", "w" )
-  write( file, baseINC_script_str )
-  close(file)
-
-  box_message( "Check consistency between two versions of amplitudes", color=:green )
-
-  n_lorentz = length( lorentz_list )
-  @assert n_lorentz == length( lorentz_noexpand_list )
-
-  for lorentz_index ∈ 1:n_lorentz, repeat in 1:4 # check for the randomness
-    one_lorentz = lorentz_list[lorentz_index]
-    one_lorentz_noexpand = lorentz_noexpand_list[lorentz_index]
-    diff = one_lorentz-one_lorentz_noexpand
-
-    file_name = "check_diagram$(graph_index)_lorentz$(lorentz_index)"
-
-    q1_val = sum( ext_mom_list .* map( x->mod(x,256)+16, rand(Int64,n_ext_mom) ) )
-    q2_val = sum( ext_mom_list .* map( x->mod(x,256)+16, rand(Int64,n_ext_mom) ) )
-    q3_val = sum( ext_mom_list .* map( x->mod(x,256)+16, rand(Int64,n_ext_mom) ) )
-    q4_val = sum( ext_mom_list .* map( x->mod(x,256)+16, rand(Int64,n_ext_mom) ) )
-    
-
-    form_file_script_str = """
-    #-
-    
-    ***#: workspace 16G
-    ***#: maxtermsize 40M
-    
-    Off Statistics;
-    Off FinalStats;
-    
-    #include model_parameters.frm
-    #include contractor.frm
-    
-    CFunctions Coeff;
-    Symbol expr;
-
-    format nospaces;
-    format maple;
-
-    *** $(one_lorentz)
-    *** $(one_lorentz_noexpand)
-
-    Local expression = $(diff);
-    .sort
-
-
-    repeat;
-      id FermionChain( ?vars1, GA(mom?), ?vars2 ) = FermionChain( ?vars1, GA(rho), ?vars2 )*FV(mom,rho);
-      sum rho;
-    endrepeat;
-    .sort
-
-    id Coeff(expr?) = expr;
-    .sort
-
-    argument;
-      id q1 = $(q1_val);
-      id q2 = $(q2_val);
-      id q3 = $(q3_val);
-      id q4 = $(q4_val);
-      argument;
-        id q1 = $(q1_val);
-        id q2 = $(q2_val);
-        id q3 = $(q3_val);
-        id q4 = $(q4_val);
-      endargument;
-    endargument;
-    .sort
-
-    #call ArrangeTrace();
-    .sort
-  
-    *** linearize momenta
-    id FV(rho1?,rho2?) = FV(rho1,rho2);
-    id SP(rho1?,rho2?) = SP(rho1,rho2);
-    id im^2 = -1;
-    .sort
-
-    repeat;
-      id SP(mom?NULL,mom?NULL) = 0;
-      id LMT(rho1?,rho2?)*FV(mom?,rho1?) = FV(mom,rho2);
-      id FV(mom?NULL,rho?)^2 = 0;
-    endrepeat;
-    .sort
-
-    repeat id FV(unity,rho?)*FermionChain( ?vars1, GA(rho?), ?vars2 ) = FermionChain( ?vars1, ?vars2 );
-    .sort
-    repeat id FV(mom?NonLOOP,rho?)*FermionChain( ?vars1, GA(rho?), ?vars2 ) = FermionChain( ?vars1, GA(mom), ?vars2 );
-    .sort
-
-    repeat;
-      id FV(mom?NULL,rho?)^2 = 0;
-      id LMT(rho1?,rho2?)*LMT(rho2?,rho3?) = LMT(rho1,rho3);
-      id LMT(rho?,rho?) = diim;
-      id LMT(rho1?,rho2?)*FV(mom?,rho1?) = FV(mom,rho2);
-      id FV(mom?,rho?)*FermionChain(?vars1,GA(rho?),?vars2) = FermionChain(?vars1,GA(mom),?vars2);
-      id LMT(rho1?,rho2?)*FermionChain(?vars1,GA(rho2?),?vars2) = FermionChain(?vars1,GA(rho1),?vars2);
-      id FV(mom1?,rho?)*FV(mom2?,rho?) = SP(mom1,mom2);
-      id SP(mom?NULL,mom?NULL) = 0;
-      id FermionChain(?vars,GA(mom?NULL),Spinor?{U,V}(int?,mom?NULL,0)) = 0;
-      id FermionChain(Spinor?{UB,VB}(int?,mom?NULL,0),GA?{PL,PR},GA(mom?NULL),?vars) = 0;
-      id FermionChain(?vars1,GA(mom?NULL),GA(mom?NULL),?vars2) = 0;
-      id FermionChain(?vars1,GA(rho?ALLLOR),GA(rho?ALLLOR),?vars2) = diim*FermionChain(?vars1,?vars2);
-    endrepeat;
-    .sort
-    
-    #call SimpleOrdering();
-    .sort
-
-    #call Simplification();
-    .sort
-
-    #include kin_relation.frm
-    .sort
-
-    id im^2 = -1;
-    .sort
-
-    #write <$(file_name).out> "%E", expression
-    #close <$(file_name).out>
-    .sort
-
-    .end
-  
-    """
-    file = open( "$(file_name).frm", "w" )
-    write( file, form_file_script_str )
-    close( file )
-    # form_script_str = replace(form_file_script_str,
-    #   "<$(file_name).out>" => "",
-    #   "#close" => ""
-    # )
-
-    # result_io = IOBuffer
-    cost_time = @elapsed begin
-      run( pipeline( `$(tform()) -w$(Threads.nthreads()) $(file_name).frm`, "$(file_name).log" ) )
-      # try
-      #   run( pipeline( `$(tform()) -w$(Threads.nthreads()) -q -`, stdin=IOBuffer(form_script_str), stdout=result_io ) )
-      # catch
-      #   write( "$(file_name).frm", form_script_str )
-      #   rethrow()
-      # end
-    end # cost_time
-    println( "<Lorentz #$(lorentz_index) repeat #$(repeat): $(cost_time) sec>" )
-
-    file = open( "$(file_name).out", "r" )
-    result_str = read( file, String )
-    # @assert result_str == (String∘take!)(result_io)
-    result_str = replace( result_str, r"\s"=>"" )
-    close(file)
-
-    @assert length(result_str) < 4
-    @assert (iszero∘Basic)(result_str) 
-  
-    rm( "$(file_name).frm" )
-    rm( "$(file_name).log" )
-    rm( "$(file_name).out" )
-
-  end # for lorentz_index
-
-  printstyled( "[ CHECK PASS ]\n", color=:green )
-
-  return nothing
-
-end # function check_consistency
 
 
 
