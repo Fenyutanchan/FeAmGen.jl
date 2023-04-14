@@ -21,9 +21,9 @@ using SHA
 using SymEngine
 using YAML
 
-export digest_seed_proc, generate_amp 
+export digest_seed_proc
+export generate_amp 
 export canonicalize_amp 
-
 
 include("Universe.jl")
 include("Graph.jl")
