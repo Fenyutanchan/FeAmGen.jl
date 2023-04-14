@@ -7,7 +7,7 @@ Read-in the card for the specific process and produce the relevant amplitude.
 This function is one of the front-end functions in FeAmGen.jl.
 The directory of model files are supposed in ".".
 """
-function generate_amp( proc_file::String )::Nothing
+function generate_amp( proc_file::String; model_paths=[pwd()] )::Nothing
 ######################################################################
 
   #------------------------------------------------------------------
@@ -18,7 +18,7 @@ function generate_amp( proc_file::String )::Nothing
 
   #------------------------------------------------------------------
   @info "Choose model" model=input["model_name"]
-  model = readin_model( input )
+  model = readin_model( input; model_paths=model_paths )
   generate_QGRAF_model( model )
   logging_model( model )
   #------------------------------------------------------------------
