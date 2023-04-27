@@ -35,6 +35,7 @@ include("GenAmp.jl")
 include("Kin.jl")
 include("Seed.jl")
 include("SimpleDigest.jl")
+include("Topology.jl")
 include("Visual.jl")
 
 
