@@ -1,57 +1,112 @@
 import Base: intersect, isempty, issubset, length, setdiff, union
 
 ###########################################
-mutable struct DenTopology
+mutable struct DenTop
   n_loop::Int
   ind_ext_mom::Vector{Basic}
   den_list::Vector{Basic}
-end # mutable struct DenTopology
-function DenTopology( den_list::Vector{Basic}; kwargs... )::DenTopology
+end # mutable struct DenTop
+###########################################
+
+
+
+
+###########################################
+function DenTop( 
+    den_list::Vector{Basic}; 
+    kwargs... 
+)::DenTop
+###########################################
+
   n_loop = haskey( kwargs, :n_loop ) ? kwargs[:n_loop] : (get_loop_index∘last∘get_loop_momenta)( den_list )
   ind_ext_mom = haskey( kwargs, :ind_ext_mom ) ? kwargs[:ind_ext_mom] : get_ext_momenta( den_list )
-  return DenTopology( n_loop, ind_ext_mom, den_list )
-end # function DenTopology
+  return DenTop( n_loop, ind_ext_mom, den_list )
 
-function intersect( den_topology_1::DenTopology, den_topology_2::DenTopology )::DenTopology
-  @assert den_topology_1.n_loop == den_topology_2.n_loop
-  @assert den_topology_1.ind_ext_mom == den_topology_2.ind_ext_mom
-  new_den_list = intersect( den_topology_1.den_list, den_topology_2.den_list )
-  return DenTopology( den_topology_1.n_loop, den_topology_1.ind_ext_mom, new_den_list )
-end
-intersect( den_topology::DenTopology )::DenTopology = DenTopology( den_topology.n_loop, den_topology.ind_ext_mom, intersect(den_topology.den_list) )
-intersect( den_topology::DenTopology, den_topologies... )::DenTopology = intersect( den_topology, reduce( intersect, den_topologies ) )
-isempty( den_topology::DenTopology ) = isempty( den_topology.den_list )
-issubset( den_topology_1::DenTopology, den_topology_2::DenTopology )::Bool = den_topology_1.n_loop == den_topology_2.n_loop && den_topology_1.ind_ext_mom == den_topology_2.ind_ext_mom && issubset( den_topology_1.den_list, den_topology_2.den_list )
-length( den_topology::DenTopology )::Int = length( den_topology.den_list )
-function setdiff( den_topology_1::DenTopology, den_topology_2::DenTopology )::DenTopology
-  @assert den_topology_1.n_loop == den_topology_2.n_loop
-  @assert den_topology_1.ind_ext_mom == den_topology_2.ind_ext_mom
-  new_den_list = setdiff( den_topology_1.den_list, den_topology_2.den_list )
-  return DenTopology( den_topology_1.n_loop, den_topology_1.ind_ext_mom, new_den_list )
-end
-function union( den_topology_1::DenTopology, den_topology_2::DenTopology )::DenTopology
-  @assert den_topology_1.n_loop == den_topology_2.n_loop
-  @assert den_topology_1.ind_ext_mom == den_topology_2.ind_ext_mom
-  new_den_list = union( den_topology_1.den_list, den_topology_2.den_list )
-  return DenTopology( den_topology_1.n_loop, den_topology_1.ind_ext_mom, new_den_list )
-end
-function union( den_topology::DenTopology, den_list::Vector{Basic} )::DenTopology
-  @assert (get_loop_index∘last∘get_loop_momenta)( den_list ) ≤ den_topology.n_loop
-  @assert get_ext_momenta( den_list ) ⊆ den_topology.ind_ext_mom
-
-  return DenTopology( den_topology.n_loop, den_topology.ind_ext_mom, union(den_topology.den_list,den_list) )
-end
-union( den_topology::DenTopology, den::Basic ) = union( den_topology, [den] )
-union( den_topology::DenTopology )::DenTopology = DenTopology( den_topology.n_loop, den_topology.ind_ext_mom, union(den_topology.den_list) )
-union( den_topology::DenTopology, den_topologies... )::DenTopology = union( den_topology, reduce( union, den_topologies ) )
-###########################################
+end # function DenTop
 
 ###########################################
-function is_valid_dentopology( den_topology::DenTopology )::Bool
+function intersect( 
+    dentop1::DenTop, 
+    dentop2::DenTop 
+)::DenTop
 ###########################################
-  n_loop = den_topology.n_loop
-  ind_ext_mom = den_topology.ind_ext_mom
-  den_list = den_topology.den_list
+
+  @assert dentop1.n_loop == dentop2.n_loop
+  @assert dentop1.ind_ext_mom == dentop2.ind_ext_mom
+  new_den_list = intersect( dentop1.den_list, dentop2.den_list )
+  return DenTop( dentop1.n_loop, dentop1.ind_ext_mom, new_den_list )
+
+end # function intersect
+
+intersect( dentop::DenTop )::DenTop = 
+    DenTop( dentop.n_loop, dentop.ind_ext_mom, intersect(dentop.den_list) )
+
+intersect( dentop::DenTop, dentop_list... )::DenTop = 
+    intersect( dentop, reduce( intersect, dentop_list ) )
+
+isempty( dentop::DenTop ) = isempty( dentop.den_list )
+
+issubset( dentop1::DenTop, dentop2::DenTop )::Bool = 
+    dentop1.n_loop == dentop2.n_loop && 
+    dentop1.ind_ext_mom == dentop2.ind_ext_mom && 
+    issubset( dentop1.den_list, dentop2.den_list )
+
+length( dentop::DenTop )::Int64 = length( dentop.den_list )
+
+###########################################
+function setdiff( 
+    dentop1::DenTop, 
+    dentop2::DenTop 
+)::DenTop
+###########################################
+  @assert dentop1.n_loop == dentop2.n_loop
+  @assert dentop1.ind_ext_mom == dentop2.ind_ext_mom
+  new_den_list = setdiff( dentop1.den_list, dentop2.den_list )
+  return DenTop( dentop1.n_loop, dentop1.ind_ext_mom, new_den_list )
+end # function setdiff
+
+###########################################
+function union( 
+    dentop1::DenTop, 
+    dentop2::DenTop 
+)::DenTop
+###########################################
+  @assert dentop1.n_loop == dentop2.n_loop
+  @assert dentop1.ind_ext_mom == dentop2.ind_ext_mom
+  new_den_list = union( dentop1.den_list, dentop2.den_list )
+  return DenTop( dentop1.n_loop, dentop1.ind_ext_mom, new_den_list )
+end # function union
+
+###########################################
+function union( 
+    dentop::DenTop, 
+    den_list::Vector{Basic} 
+)::DenTop
+###########################################
+
+  @assert (get_loop_index∘last∘get_loop_momenta)( den_list ) ≤ dentop.n_loop
+  @assert get_ext_momenta( den_list ) ⊆ dentop.ind_ext_mom
+
+  return DenTop( dentop.n_loop, dentop.ind_ext_mom, union(dentop.den_list,den_list) )
+
+end # function union
+
+union( dentop::DenTop, den::Basic ) = union( dentop, [den] )
+
+union( dentop::DenTop )::DenTop = DenTop( dentop.n_loop, dentop.ind_ext_mom, union(dentop.den_list) )
+
+union( dentop::DenTop, dentop_list... )::DenTop = union( dentop, reduce( union, dentop_list ) )
+
+
+###########################################
+function is_valid_dentop( 
+    dentop::DenTop 
+)::Bool
+###########################################
+
+  n_loop = dentop.n_loop
+  ind_ext_mom = dentop.ind_ext_mom
+  den_list = dentop.den_list
 
   !all( is_ext_mom, ind_ext_mom ) && return false
   if !isempty(den_list)
@@ -71,39 +126,60 @@ function is_valid_dentopology( den_topology::DenTopology )::Bool
   end # if
 
   return true
-end # function is_valid_dentopology
+end # function is_valid_dentop
 
-function get_vacuum_loop_momenta_list(n_loop::Int)::Vector{Vector{Basic}}
-  if n_loop == 1
-    return [ [ Basic("q1") ] ]
-  elseif n_loop == 2
-    return [ to_Basic( ["q1", "q2", "q1 + q2"] )] 
-  elseif n_loop == 3
-    return [ to_Basic( ["q1", "q2", "q3", "q1 + q3", "q2 + q3", "q1 + q2 + q3"] ),
-             to_Basic( ["q1", "q2", "q3", "q1 + q2", "q1 + q3", "q2 + q3"] ) ]
-  else
-    error("#loop ≥ 4 is not supported")
-  end
-end
+
+
+
+###########################################
+function get_vac_loop_momenta_list(
+  ::Val{1} # n_loop
+)::Vector{Vector{Basic}}
+###########################################
+
+  return [ [ Basic("q1") ] ]
+
+end # function get_vac_loop_momenta_list
+
+###########################################
+function get_vac_loop_momenta_list(
+  ::Val{2} # n_loop
+)::Vector{Vector{Basic}}
+###########################################
+
+  return [ to_Basic( ["q1", "q2", "q1 + q2"] )] 
+
+end # function get_vac_loop_momenta_list
+
+###########################################
+function get_vac_loop_momenta_list(
+  ::Val{3} # n_loop
+)::Vector{Vector{Basic}}
+###########################################
+
+  return [ to_Basic( ["q1", "q2", "q3", "q1 + q3", "q2 + q3", "q1 + q2 + q3"] ),
+           to_Basic( ["q1", "q2", "q3", "q1 + q2", "q1 + q3", "q2 + q3"] ) ]
+
+end # function get_vac_loop_momenta_list
 
 ###########################################
 function gen_sp_dict(
-  den_topology::DenTopology
+  dentop::DenTop
 )::Dict{Basic, Basic}
 ###########################################
 
-  n_loop = den_topology.n_loop
-  n_ext_mom = length(den_topology.ind_ext_mom)
+  n_loop = dentop.n_loop
+  n_ext_mom = length(dentop.ind_ext_mom)
   sp_index = 1
   sp_dict = Dict{Basic, Basic}()
 
-  for ii ∈ 1:n_loop, jj ∈ ii:den_topology.n_loop
+  for ii ∈ 1:n_loop, jj ∈ ii:dentop.n_loop
     qi, qj = Basic("q$ii"), Basic("q$jj")
     sp_dict[ make_SP(qi, qj) ] = Basic("sp$(sp_index)")
     sp_index += 1
   end # for ii, jj
 
-  for one_ext_mom ∈ den_topology.ind_ext_mom, loop_ii ∈ 1:n_loop
+  for one_ext_mom ∈ dentop.ind_ext_mom, loop_ii ∈ 1:n_loop
     q = Basic("q$(loop_ii)")
     sp_dict[ make_SP(one_ext_mom, q) ] = Basic("sp$(sp_index)")
     sp_index += 1
@@ -112,27 +188,35 @@ function gen_sp_dict(
   @assert sp_index == n_loop * (n_loop + 1) / 2 + n_loop * n_ext_mom + 1
 
   return sp_dict
+
 end # function gen_sp_dict
 
 ###########################################
-function gen_vac_topology( den_topology::DenTopology )::DenTopology
+function gen_vac_top( 
+    dentop::DenTop 
+)::DenTop
 ###########################################
-  den_list = den_topology.den_list
+
+  den_list = dentop.den_list
   ext_momenta = get_ext_momenta( den_list )
   vac_den_list = subs.( den_list, (ext_momenta .=> 0)... )
   unique!(vac_den_list)
 
-  return DenTopology( den_topology.n_loop, den_topology.ind_ext_mom, vac_den_list )
-end # function gen_vac_topology
+  return DenTop( dentop.n_loop, dentop.ind_ext_mom, vac_den_list )
+
+end # function gen_vac_top
 
 ###########################################
-function get_coeff_mat_mom2_sp( den_topology::DenTopology )::Matrix{Rational}
+function get_coeff_mat_mom2_sp( 
+    dentop::DenTop 
+)::Matrix{Rational}
 ###########################################
-  sp_dict = gen_sp_dict( den_topology )
+
+  sp_dict = gen_sp_dict( dentop )
   n_sp = length(sp_dict)
 
-  coeff_mat = zeros( Rational, length(den_topology), n_sp )
-  mom2_list = subs.( map( make_SP∘expand∘first∘get_args, den_topology.den_list ), Ref(sp_dict) )
+  coeff_mat = zeros( Rational, length(dentop), n_sp )
+  mom2_list = subs.( map( make_SP∘expand∘first∘get_args, dentop.den_list ), Ref(sp_dict) )
 
   for (mom2_index, mom2) ∈ enumerate(mom2_list), sp_index ∈ 1:n_sp
     the_coeff = SymEngine.coeff.( mom2, Basic("sp$(sp_index)") )
@@ -140,56 +224,62 @@ function get_coeff_mat_mom2_sp( den_topology::DenTopology )::Matrix{Rational}
   end # (mom2_index, mom2), sp_index
   
   return coeff_mat
-end
+
+end # function get_coeff_mat_mom2_sp
 
 ###########################################
-function get_superior_den_topology_collect(
-  den_topology_collect::Vector{DenTopology}
-)::Vector{DenTopology}
+function get_superior_dentop_collect(
+  dentop_collect::Vector{DenTop}
+)::Vector{DenTop}
 ###########################################
 
-  new_den_topology_collect = DenTopology[]
+  new_dentop_collect = DenTop[]
 
-  for den_topology ∈ den_topology_collect
-    included_by_pos = findfirst( new_den_topology->den_topology⊆new_den_topology, new_den_topology_collect )
+  for dentop ∈ dentop_collect
+    included_by_pos = findfirst( new_dentop -> dentop ⊆ new_dentop, new_dentop_collect )
     !isnothing(included_by_pos) && continue
-    filter!( new_den_topology->new_den_topology⊈den_topology, new_den_topology_collect )
-    push!( new_den_topology_collect, den_topology )
-  end # den_topology
+    filter!( new_dentop -> new_dentop ⊈ dentop, new_dentop_collect )
+    push!( new_dentop_collect, dentop )
+  end # for dentop
 
-  return new_den_topology_collect
-end # function get_superior_den_topology_collect
+  return new_dentop_collect
 
-function get_cover_indices_list( den_topology_collect::Vector{DenTopology} )::Vector{Vector{Int}}
-  n_loop = first( den_topology_collect ).n_loop
-  n_ind_ext = length( first(den_topology_collect).ind_ext_mom )
+end # function get_superior_dentop_collect
+
+###########################################
+function get_cover_indices_list( 
+    dentop_collect::Vector{DenTop} 
+)::Vector{Vector{Int}}
+###########################################
+  n_loop = first( dentop_collect ).n_loop
+  n_ind_ext = length( first(dentop_collect).ind_ext_mom )
   n_sp::Int = (n_loop + 1) * n_loop / 2 + n_loop * n_ind_ext
 
-  n_den_topology = length( den_topology_collect )
-  prev_indices_list = [ [ii] for ii ∈ 1:n_den_topology ]
+  n_dentop = length( dentop_collect )
+  prev_indices_list = [ [ii] for ii ∈ 1:n_dentop ]
 
-  for _ ∈ 2:n_den_topology
+  for _ ∈ 2:n_dentop
     indices_list = Vector{Int}[]
     for one_indices ∈ prev_indices_list
-      remaining_indices = setdiff( 1:n_den_topology, one_indices )
+      remaining_indices = setdiff( 1:n_dentop, one_indices )
       for one_index ∈ remaining_indices
         push!( indices_list, (sort∘union)( one_indices, one_index ) )
       end # for one_index
     end # for one_indices
     unique!( sort, indices_list )
 
-    den_topology_union_list = map( indices->union(den_topology_collect[indices]...), indices_list )
+    dentop_union_list = map( indices->union(dentop_collect[indices]...), indices_list )
 
     allowed_pos_list = findall(
-      den_topology -> length(den_topology)≤n_sp&&(length∘gen_vac_topology)(den_topology)≤3*(n_loop-1),
-      den_topology_union_list
+      dentop -> length(dentop)≤n_sp&&(length∘gen_vac_top)(dentop)≤3*(n_loop-1),
+      dentop_union_list
     ) # end findall
 
     indices_list = indices_list[ allowed_pos_list ]
-    den_topology_union_list = den_topology_union_list[ allowed_pos_list ]
+    dentop_union_list = dentop_union_list[ allowed_pos_list ]
     fullrank_pos_list = findall(
-      den_topology->length(den_topology)==(rank∘get_coeff_mat_mom2_sp)(den_topology),
-      den_topology_union_list
+      dentop->length(dentop)==(rank∘get_coeff_mat_mom2_sp)(dentop),
+      dentop_union_list
     ) # end findall
 
     isempty(fullrank_pos_list) && return prev_indices_list
@@ -197,13 +287,15 @@ function get_cover_indices_list( den_topology_collect::Vector{DenTopology} )::Ve
 
   end # n_choice
 
-  error("The `den_topology_collect` should be covered by one topology.")
+  error("The `dentop_collect` should be covered by one topology.")
 
 end # function get_cover_indices_list
 
 ###########################################
 # greedy algorithm
-function greedy( indices_list::Vector{Vector{Int}} )::Vector{Vector{Int}}
+function greedy( 
+    indices_list::Vector{Vector{Int}} 
+)::Vector{Vector{Int}}
 ###########################################
   @show indices_list
 
@@ -216,42 +308,45 @@ function greedy( indices_list::Vector{Vector{Int}} )::Vector{Vector{Int}}
     push!( new_indices_list, indices_list[pos] )
     setdiff!( universe, indices_list[pos] )
     deleteat!( indices_list, pos )
-  end
+  end # while
 
   @show new_indices_list
 
   return new_indices_list
+
 end # function greedy
 
 ###########################################
-function make_complete_den_topology_collect(
-  den_topology_list::Vector{DenTopology}
-)::Vector{DenTopology}
+function make_complete_dentop_collect(
+  dentop_list::Vector{DenTop}
+)::Vector{DenTop}
 ###########################################
-  n_loop = first(den_topology_list).n_loop
-  ind_ext_mom = first(den_topology_list).ind_ext_mom
+
+  n_loop = first(dentop_list).n_loop
+  ind_ext_mom = first(dentop_list).ind_ext_mom
   n_sp::Int = (n_loop + 1) * n_loop / 2 + n_loop * length( ind_ext_mom )
 
-  incomplete_den_topology_list = copy(den_topology_list)
-  complete_den_topology_list = DenTopology[]
+  incomplete_dentop_list = copy(dentop_list)
+  complete_dentop_list = DenTop[]
 
-  while !isempty(incomplete_den_topology_list)
-    cover_indices_list = (greedy∘get_cover_indices_list)( incomplete_den_topology_list )
+  while !isempty(incomplete_dentop_list)
+    cover_indices_list = (greedy∘get_cover_indices_list)( incomplete_dentop_list )
     to_be_deleted_indices = Int[]
     for indices ∈ cover_indices_list
-      this_den_topology_list = incomplete_den_topology_list[indices]
-      to_be_complete_den_topology = union( this_den_topology_list... )
+      this_dentop_list = incomplete_dentop_list[indices]
+      to_be_complete_dentop = union( this_dentop_list... )
 
-      while length(to_be_complete_den_topology) < n_sp
-        println( "$to_be_complete_den_topology need to be completed." )
-        @assert length(to_be_complete_den_topology) == (rank∘get_coeff_mat_mom2_sp)( to_be_complete_den_topology )
+      while length(to_be_complete_dentop) < n_sp
+        println( "$to_be_complete_dentop need to be completed." )
+        @assert length(to_be_complete_dentop) == (rank∘get_coeff_mat_mom2_sp)( to_be_complete_dentop )
+        @assert nloop in 1:3 
         vac_loop_mom_list = if n_loop ∈ 1:2
-          (first∘get_vacuum_loop_momenta_list)( n_loop )
+          (first∘get_vac_loop_momenta_list)( Val(n_loop) )
         elseif n_loop == 3
-          mom_list = map( first∘get_args, to_be_complete_den_topology.den_list )
+          mom_list = map( first∘get_args, to_be_complete_dentop.den_list )
           map!( mom->subs(mom,Dict(ind_ext_mom.=>0)), mom_list, mom_list )
           unique!(mom_list)
-          vac_loop_mom_list_collect = get_vacuum_loop_momenta_list( n_loop )
+          vac_loop_mom_list_collect = get_vac_loop_momenta_list( Val(n_loop) )
           selected_index = findfirst( vac_loop_mom_list->(isempty∘setdiff)(mom_list,vac_loop_mom_list), vac_loop_mom_list_collect )
           @assert !isnothing(selected_index)
           vac_loop_mom_list_collect[ selected_index ]
@@ -259,28 +354,34 @@ function make_complete_den_topology_collect(
 
         for ext_mom ∈ vcat( zero(Basic), ind_ext_mom ), q ∈ vac_loop_mom_list, the_sign ∈ [1,-1]
           trial_den = Basic( "Den( $(expand( q + the_sign * ext_mom )), 0, 0 )" )
-          trial_topology = union( to_be_complete_den_topology, trial_den )
-          rank_trial_topology = (rank∘get_coeff_mat_mom2_sp)(trial_topology)
-          if rank_trial_topology > length(to_be_complete_den_topology)
-            @show n_sp, rank_trial_topology, length(to_be_complete_den_topology)
-            to_be_complete_den_topology = trial_topology
-            rank_trial_topology == n_sp && break
+          trial_top = union( to_be_complete_dentop, trial_den )
+          rank_trial_top = (rank∘get_coeff_mat_mom2_sp)(trial_top)
+          if rank_trial_top > length(to_be_complete_dentop)
+            @show n_sp, rank_trial_top, length(to_be_complete_dentop)
+            to_be_complete_dentop = trial_top
+            rank_trial_top == n_sp && break
           end # if
-        end # for
+        end # for ext_mom
         println()
       end # while
 
-      @assert length( to_be_complete_den_topology ) == (rank∘get_coeff_mat_mom2_sp)( to_be_complete_den_topology ) == n_sp
-      push!( complete_den_topology_list, to_be_complete_den_topology )
+      @assert length( to_be_complete_dentop ) == (rank∘get_coeff_mat_mom2_sp)( to_be_complete_dentop ) == n_sp
+      push!( complete_dentop_list, to_be_complete_dentop )
       union!( to_be_deleted_indices, indices )
     end # for indices
-    deleteat!( incomplete_den_topology_list, sort!(to_be_deleted_indices) )
+    deleteat!( incomplete_dentop_list, sort!(to_be_deleted_indices) )
   end # while
 
-  return complete_den_topology_list
-end # function make_complete_den_topology_collect
+  return complete_dentop_list
 
-function construct_den_topology( amp_dir::String )::Vector{DenTopology}
+end # function make_complete_dentop_collect
+
+###########################################
+function construct_den_topology( 
+    amp_dir::String 
+)::Vector{DenTop}
+###########################################
+
   @assert isdir(amp_dir)
   amp_file_list = filter( endswith(".jld2"), readdir( amp_dir; join=true, sort=false ) )
   sort!( amp_file_list;
@@ -297,32 +398,47 @@ function construct_den_topology( amp_dir::String )::Vector{DenTopology}
   end # n_loop, ext_mom_list
   ind_ext_mom = ext_mom_list[1:end-1]
 
-  den_topology_collect = [
-    DenTopology( n_loop, ind_ext_mom, (to_Basic∘load)( amp_file, "loop_den_list" ) )
+  dentop_collect = [
+    DenTop( n_loop, ind_ext_mom, (to_Basic∘load)( amp_file, "loop_den_list" ) )
       for amp_file in amp_file_list
   ]
-  backup_den_topology_collect = deepcopy( den_topology_collect )
+  backup_dentop_collect = deepcopy( dentop_collect )
 
-  unique!( den_topology->reduce(*,den_topology.den_list), den_topology_collect )
-  den_topology_collect = get_superior_den_topology_collect( den_topology_collect )
-  @info "$(length(den_topology_collect)) topolgies found."
+  unique!( dentop->reduce(*,dentop.den_list), dentop_collect )
+  dentop_collect = get_superior_dentop_collect( dentop_collect )
+  @info "$(length(dentop_collect)) topolgies found."
 
-  complete_den_topology_collect = make_complete_den_topology_collect( den_topology_collect )
-  @info "$(length(complete_den_topology_collect)) complete topologies found."
+  complete_dentop_collect = make_complete_dentop_collect( dentop_collect )
+  @info "$(length(complete_dentop_collect)) complete topologies found."
 
-  for (index, complete_den_topology) ∈ enumerate( complete_den_topology_collect )
-    @assert is_valid_dentopology(complete_den_topology)
-    pos_list = findall( den_topology->den_topology⊆complete_den_topology, backup_den_topology_collect )
+  file = open( "topology.out", "w" )
+  for (index, complete_dentop) ∈ enumerate( complete_dentop_collect )
+    @assert is_valid_dentop(complete_dentop)
+    pos_list = findall( dentop->dentop⊆complete_dentop, backup_dentop_collect )
     
+    line_str = "-"^14
     println()
-    println( "-"^14 )
+    println( line_str )
     println( "Complete topology #$(index) covers files:" )
     map( println, amp_file_list[ pos_list ] )
-    println( "-"^14 )
-    map( println, complete_den_topology.den_list )
+    println( line_str )
+    map( println, complete_dentop.den_list )
 
-  end # for (index, complete_den_topology)
+    write( file, """
+    $(line_str)
+    Complete topology #$(index) covers files:
+    $(join( map(string,amp_file_list[ pos_list ]), "\n" ))
+    $(line_str)
+    $(join( map(string,complete_den_top.den_list), "\n" ))
 
-  return complete_den_topology_collect
+    """ )
+
+  end # for (index, complete_dentop)
+  close( file )
+
+  return complete_dentop_collect
 
 end # function construct_den_topology
+
+
+
