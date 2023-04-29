@@ -339,7 +339,7 @@ function make_complete_dentop_collect(
       while length(to_be_complete_dentop) < n_sp
         println( "$to_be_complete_dentop need to be completed." )
         @assert length(to_be_complete_dentop) == (rank∘get_coeff_mat_mom2_sp)( to_be_complete_dentop )
-        @assert nloop in 1:3 
+        @assert n_loop in 1:3 
         vac_loop_mom_list = if n_loop ∈ 1:2
           (first∘get_vac_loop_momenta_list)( Val(n_loop) )
         elseif n_loop == 3
@@ -429,12 +429,14 @@ function construct_den_topology(
     Complete topology #$(index) covers files:
     $(join( map(string,amp_file_list[ pos_list ]), "\n" ))
     $(line_str)
-    $(join( map(string,complete_den_top.den_list), "\n" ))
+    $(join( map(string,complete_dentop.den_list), "\n" ))
 
     """ )
 
   end # for (index, complete_dentop)
   close( file )
+
+  box_message( "Information is in topology.out" )
 
   return complete_dentop_collect
 

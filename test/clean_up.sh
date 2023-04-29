@@ -5,6 +5,7 @@ rm -r sm_CKMdiag_Haa
 rm -r sm_tbW
 rm sm.log sm_CKMdiag_Haa.log sm_tbW.log
 rm *.bz2
+rm topology.out 
 
 
 rm seed_dy_proc_?Loop.yaml 
