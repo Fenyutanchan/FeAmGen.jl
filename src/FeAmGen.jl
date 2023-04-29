@@ -23,7 +23,8 @@ using YAML
 
 export digest_seed_proc
 export generate_amp 
-export canonicalize_amp 
+export canonicalize_amp
+export construct_den_topology
 
 include("Universe.jl")
 include("Graph.jl")

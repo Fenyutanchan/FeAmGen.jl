@@ -13,3 +13,4 @@ include("tWb_Test.jl")
 
 include("tWtW_Test.jl")
 
+include("test_construct_topology.jl")
