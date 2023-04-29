@@ -17,7 +17,7 @@ mutable struct Graph
   node_list::Vector{Node}
   edge_list::Vector{Edge}
   property::Dict{Symbol,Any}
-end # struct
+end # struct Graph
 
 
 function graph()::Graph
