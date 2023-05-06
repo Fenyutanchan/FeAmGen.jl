@@ -12,6 +12,11 @@ function generate_amp( proc_file::String; model_paths=[pwd()] )::Nothing
 
   #------------------------------------------------------------------
   @assert isfile(proc_file) "The first argument is not a file!"
+  working_dir = pwd()
+  proc_dir = begin
+    tmp_dir = dirname(proc_file)
+    isempty(tmp_dir) ? pwd() : tmp_dir
+  end # proc_dir
   input = YAML.load_file( proc_file )
   #------------------------------------------------------------------
 
@@ -19,6 +24,7 @@ function generate_amp( proc_file::String; model_paths=[pwd()] )::Nothing
   #------------------------------------------------------------------
   @info "Choose model" model=input["model_name"]
   model = readin_model( input; model_paths=model_paths )
+  cd(proc_dir)
   generate_QGRAF_model( model )
   logging_model( model )
   #------------------------------------------------------------------
@@ -52,6 +58,8 @@ function generate_amp( proc_file::String; model_paths=[pwd()] )::Nothing
   generate_Feynman_diagram( model, input )
 
   generate_amplitude( model, input )
+
+  cd(working_dir)
 
   return nothing
 

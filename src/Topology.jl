@@ -382,7 +382,13 @@ function construct_den_topology(
 )::Vector{DenTop}
 ###########################################
 
-  @assert isdir(amp_dir)
+  @assert isdir(amp_dir) && endswith( amp_dir, "_amplitudes" )
+  topology_name = begin
+    tmp_dir, tmp_name = splitdir(amp_dir)
+    tmp_dir = isempty(tmp_dir) ? pwd() : tmp_dir
+    tmp_name = replace( tmp_name, "_amplitudes" => "_topology.out" )
+    joinpath( tmp_dir, tmp_name )
+  end # topology_name
   amp_file_list = filter( endswith(".jld2"), readdir( amp_dir; join=true, sort=false ) )
   sort!( amp_file_list;
     by=file_name->begin
@@ -411,7 +417,7 @@ function construct_den_topology(
   complete_dentop_collect = make_complete_dentop_collect( dentop_collect )
   @info "$(length(complete_dentop_collect)) complete topologies found."
 
-  file = open( "topology.out", "w" )
+  file = open( topology_name, "w" )
   for (index, complete_dentop) ∈ enumerate( complete_dentop_collect )
     @assert is_valid_dentop(complete_dentop)
     pos_list = findall( dentop->dentop⊆complete_dentop, backup_dentop_collect )
