@@ -372,6 +372,8 @@ function make_complete_dentop_collect(
     deleteat!( incomplete_dentop_list, sort!(to_be_deleted_indices) )
   end # while
 
+  complete_dentop_list = get_superior_dentop_collect( complete_dentop_list )
+
   return complete_dentop_list
 
 end # function make_complete_dentop_collect
