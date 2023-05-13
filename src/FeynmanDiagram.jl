@@ -133,7 +133,7 @@ function generate_Feynman_diagram(
   prepare_qgraf_dat( model, input )
 
   rm( "qgraf_out.dat"; force=true, recursive=true )
-  run( pipeline( `qgraf`, "qgraf.log" ) )
+  run( pipeline( `$(qgraf())`, "qgraf.log" ) )
   @assert isfile( "qgraf_out.dat" )
 
   rm( "qgraf.dat" )
