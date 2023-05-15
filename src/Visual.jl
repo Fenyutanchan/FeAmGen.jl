@@ -152,6 +152,15 @@ function generate_visual_graph( g::Graph, model::Model )::String
 
   """
 
+  ## remove redundant label for `[crossed dot]`
+  num_crossed_dot_str = (length∘findall)( "[crossed dot]", result_str )
+  first_range = findfirst( "[crossed dot]", result_str )
+  while num_crossed_dot_str > 1
+    second_range = findnext( "[crossed dot]", result_str, last(first_range) )
+    result_str = result_str[begin:first(second_range)-1] * result_str[last(second_range)+1:end]
+    num_crossed_dot_str -= 1
+  end # while
+
   return result_str
 
 end # function generate_visual_graph
