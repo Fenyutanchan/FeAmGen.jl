@@ -192,19 +192,19 @@ function gen_sp_dict(
 end # function gen_sp_dict
 
 ###########################################
-function gen_vac_top( 
+function get_vac_den_list( 
     dentop::DenTop 
-)::DenTop
+)::Vector{Basic}
 ###########################################
 
   den_list = dentop.den_list
   ext_momenta = get_ext_momenta( den_list )
   vac_den_list = subs.( den_list, (ext_momenta .=> 0)... )
-  unique!(vac_den_list)
+  unique!(abs, vac_den_list)
 
-  return DenTop( dentop.n_loop, dentop.ind_ext_mom, vac_den_list )
+  return vac_den_list
 
-end # function gen_vac_top
+end # function get_vac_den_list
 
 ###########################################
 function get_coeff_mat_mom2_sp( 
@@ -218,12 +218,14 @@ function get_coeff_mat_mom2_sp(
   coeff_mat = zeros( Rational, length(dentop), n_sp )
   mom2_list = subs.( map( make_SP∘expand∘first∘get_args, dentop.den_list ), Ref(sp_dict) )
 
-  for (mom2_index, mom2) ∈ enumerate(mom2_list), sp_index ∈ 1:n_sp
-    the_coeff = SymEngine.coeff.( mom2, Basic("sp$(sp_index)") )
-    coeff_mat[ mom2_index, sp_index ] = (Rational∘parse)( Int, string(the_coeff) )
-  end # (mom2_index, mom2), sp_index
-  
-  return coeff_mat
+  return map( Rational∘Int,
+              coefficient_matrix( mom2_list, [ Basic("sp$(index)") for index ∈ 1:n_sp ] )
+  ) # end map
+  # for (mom2_index, mom2) ∈ enumerate(mom2_list), sp_index ∈ 1:n_sp
+  #   the_coeff = SymEngine.coeff.( mom2, Basic("sp$(sp_index)") )
+  #   coeff_mat[ mom2_index, sp_index ] = (Rational∘parse)( Int, string(the_coeff) )
+  # end # (mom2_index, mom2), sp_index
+  # return coeff_mat
 
 end # function get_coeff_mat_mom2_sp
 
@@ -254,6 +256,11 @@ function get_cover_indices_list(
   n_loop = first( dentop_collect ).n_loop
   n_ind_ext = length( first(dentop_collect).ind_ext_mom )
   n_sp::Int = (n_loop + 1) * n_loop / 2 + n_loop * n_ind_ext
+  preferred_vac_mom_list = if haskey( preferred_vac_den_mom_Dict(), n_loop )
+    preferred_vac_den_mom_Dict()[n_loop]
+  else
+    Vector{Basic}[]
+  end
 
   n_dentop = length( dentop_collect )
   prev_indices_list = [ [ii] for ii ∈ 1:n_dentop ]
@@ -261,29 +268,52 @@ function get_cover_indices_list(
   for _ ∈ 2:n_dentop
     indices_list = Vector{Int}[]
     for one_indices ∈ prev_indices_list
-      remaining_indices = setdiff( 1:n_dentop, one_indices )
-      for one_index ∈ remaining_indices
+      # remaining_indices = setdiff( 1:n_dentop, one_indices )
+      # for one_index ∈ remaining_indices
+      for one_index ∈ (last(one_indices)+1):n_dentop
         push!( indices_list, (sort∘union)( one_indices, one_index ) )
       end # for one_index
     end # for one_indices
-    unique!( sort, indices_list )
+    # unique!( sort, indices_list )
 
     dentop_union_list = map( indices->union(dentop_collect[indices]...), indices_list )
 
-    allowed_pos_list = findall(
-      dentop -> length(dentop)≤n_sp&&(length∘gen_vac_top)(dentop)≤3*(n_loop-1),
-      dentop_union_list
+    # allowed_pos_list = findall(
+    #   dentop -> length(dentop)≤n_sp&&(length∘gen_vac_top)(dentop)≤3*(n_loop-1),
+    #   dentop_union_list
+    # ) # end findall
+
+    # @info "Begin pos_list"
+    pos_list = findall( dentop -> begin
+                                    vac_den_list = get_vac_den_list(dentop)
+                                    vac_mom_list = map( first∘get_args, vac_den_list )
+                                    flag = length(dentop) ≤ n_sp && length(vac_den_list) ≤ 3 * (n_loop - 1)
+                                    flag &= isempty( preferred_vac_mom_list ) ? true :
+                                              any( mom_list->vac_mom_list⊆mom_list, preferred_vac_mom_list )
+                                    # flag &= length(dentop) == (rank∘get_coeff_mat_mom2_sp)(dentop)
+                                  end, # begin
+                        dentop_union_list
     ) # end findall
 
-    indices_list = indices_list[ allowed_pos_list ]
-    dentop_union_list = dentop_union_list[ allowed_pos_list ]
-    fullrank_pos_list = findall(
-      dentop->length(dentop)==(rank∘get_coeff_mat_mom2_sp)(dentop),
-      dentop_union_list
-    ) # end findall
+    indices_list = indices_list[ pos_list ]
+    dentop_union_list = dentop_union_list[ pos_list ]
 
-    isempty(fullrank_pos_list) && return prev_indices_list
-    prev_indices_list = indices_list[ fullrank_pos_list ]
+    pos_list = findall( dentop->length(dentop)==(rank∘get_coeff_mat_mom2_sp)(dentop),
+                        dentop_union_list )
+
+    isempty( pos_list ) && return greedy(prev_indices_list)
+
+    prev_indices_list = indices_list[ pos_list ]
+
+    # indices_list = indices_list[ allowed_pos_list ]
+    # dentop_union_list = dentop_union_list[ allowed_pos_list ]
+    # fullrank_pos_list = findall(
+    #   dentop->length(dentop)==(rank∘get_coeff_mat_mom2_sp)(dentop),
+    #   dentop_union_list
+    # ) # end findall
+
+    # isempty(fullrank_pos_list) && return prev_indices_list
+    # prev_indices_list = indices_list[ fullrank_pos_list ]
 
   end # n_choice
 
@@ -297,8 +327,6 @@ function greedy(
     indices_list::Vector{Vector{Int}} 
 )::Vector{Vector{Int}}
 ###########################################
-  @show indices_list
-
   universe = union( indices_list... )
 
   new_indices_list = Vector{Int}[]
@@ -310,10 +338,7 @@ function greedy(
     deleteat!( indices_list, pos )
   end # while
 
-  @show new_indices_list
-
   return new_indices_list
-
 end # function greedy
 
 ###########################################
@@ -330,7 +355,7 @@ function make_complete_dentop_collect(
   complete_dentop_list = DenTop[]
 
   while !isempty(incomplete_dentop_list)
-    cover_indices_list = (greedy∘get_cover_indices_list)( incomplete_dentop_list )
+    cover_indices_list = get_cover_indices_list( incomplete_dentop_list )
     to_be_deleted_indices = Int[]
     for indices ∈ cover_indices_list
       this_dentop_list = incomplete_dentop_list[indices]
@@ -339,7 +364,7 @@ function make_complete_dentop_collect(
       while length(to_be_complete_dentop) < n_sp
         println( "$to_be_complete_dentop need to be completed." )
         @assert length(to_be_complete_dentop) == (rank∘get_coeff_mat_mom2_sp)( to_be_complete_dentop )
-        @assert n_loop in 1:3 
+        @assert n_loop in 1:3 # n ≥ 4 is not supported now
         vac_loop_mom_list = if n_loop ∈ 1:2
           (first∘get_vac_loop_momenta_list)( Val(n_loop) )
         elseif n_loop == 3
@@ -357,15 +382,16 @@ function make_complete_dentop_collect(
           trial_top = union( to_be_complete_dentop, trial_den )
           rank_trial_top = (rank∘get_coeff_mat_mom2_sp)(trial_top)
           if rank_trial_top > length(to_be_complete_dentop)
-            @show n_sp, rank_trial_top, length(to_be_complete_dentop)
+            @show n_sp, rank_trial_top
             to_be_complete_dentop = trial_top
             rank_trial_top == n_sp && break
           end # if
         end # for ext_mom
-        println()
       end # while
 
       @assert length( to_be_complete_dentop ) == (rank∘get_coeff_mat_mom2_sp)( to_be_complete_dentop ) == n_sp
+      # println( "$to_be_complete_dentop is complete." )
+      println()
       push!( complete_dentop_list, to_be_complete_dentop )
       union!( to_be_deleted_indices, indices )
     end # for indices
@@ -404,6 +430,10 @@ function construct_den_topology(
   n_loop, ext_mom_list = jldopen( first(amp_file_list), "r" ) do jld_file
     jld_file["n_loop"], to_Basic( jld_file["ext_mom_list"] )
   end # n_loop, ext_mom_list
+  if iszero(n_loop)
+    @warn "There is nothing to do for tree-level!"
+    return DenTop[]
+  end # if
   ind_ext_mom = ext_mom_list[1:end-1]
 
   dentop_collect = [

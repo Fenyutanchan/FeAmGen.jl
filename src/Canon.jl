@@ -151,11 +151,11 @@ function gen_loop_mom_canon_map(
 
   if preferred_flag
     if isempty( prefered_all_possible_repl_rules )
-      printstyled("Warning: There is no fetching preferred_flag loop momenta list.\n"; color=:yellow)
+      error( "There is no fetching preferred_flag loop momenta list" )
 
-      sort!( all_possible_repl_rules; 
-             by=repl->get_repl_rule_sort_index( subs.( mom_list, Ref(repl) ) ) )
-      return first( all_possible_repl_rules )
+      # sort!( all_possible_repl_rules; 
+      #        by=repl->get_repl_rule_sort_index( subs.( mom_list, Ref(repl) ) ) )
+      # return first( all_possible_repl_rules )
     end
 
     sort!( prefered_all_possible_repl_rules; 
