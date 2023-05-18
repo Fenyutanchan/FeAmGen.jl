@@ -1,11 +1,11 @@
 ###################################
 # const definition
-const preferred_vac_den_mom_Dict() = Dict{Int,Vector{Vector{Basic}}}(
+const preferred_vac_mom_Dict() = Dict{Int,Vector{Vector{Basic}}}(
   1 => [ [ Basic("q1") ] ],
   2 => [ to_Basic( ["q1", "q2", "q1 + q2"] ) ],
   3 => [ to_Basic( ["q1", "q2", "q3", "q1 + q3", "q2 + q3", "q1 + q2 + q3"] ),
          to_Basic( ["q1", "q2", "q3", "q1 + q2", "q1 + q3", "q2 + q3"] ) ]
-) # end preferred_vac_den_mom_Dict
+) # end preferred_vac_mom_Dict
 ###################################
 
 
@@ -80,7 +80,7 @@ function gen_loop_mom_canon_map(
 )::Dict{Basic,Basic}
 #########################################################
 
-  # preferred_vac_den_mom_Dict = Dict{Int, Vector{Vector{Basic}}}(
+  # preferred_vac_mom_Dict = Dict{Int, Vector{Vector{Basic}}}(
   #   3 =>  [
   #     map( Basic, ["q1", "q2", "q3", "q1 + q2", "q1 + q3", "q2 + q3"] ),
   #     map( Basic, ["q1", "q2", "q3", "q1 + q3", "q2 + q3", "q1 + q2 + q3"] )
@@ -97,11 +97,11 @@ function gen_loop_mom_canon_map(
   map!( normalize_loop_mom_single, vac_mom_list, vac_mom_list )
   unique!(vac_mom_list)
 
-  preferred_flag = n_loop ∈ keys(preferred_vac_den_mom_Dict())
+  preferred_flag = n_loop ∈ keys(preferred_vac_mom_Dict())
 
   # if preferred_flag && any(
   #     preferred_mom_list -> vac_mom_list ⊆ preferred_mom_list,
-  #     preferred_vac_den_mom_Dict[n_loop]
+  #     preferred_vac_mom_Dict[n_loop]
   #   ) # end any
   #     return Dict{Basic, Basic}()
   # elseif !preferred_flag &&
@@ -134,7 +134,7 @@ function gen_loop_mom_canon_map(
       if preferred_flag
         if any(
           preferred_mom_list -> new_vac_mom_list ⊆ preferred_mom_list,
-          preferred_vac_den_mom_Dict()[n_loop]
+          preferred_vac_mom_Dict()[n_loop]
         ) # end any
           # sort_index = gen_repl_rule_sort_index( subs.(mom_list, Ref(repl_rule)) )
           push!( prefered_all_possible_repl_rules, repl_rule )

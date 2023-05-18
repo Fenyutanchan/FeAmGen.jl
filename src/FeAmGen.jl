@@ -16,6 +16,7 @@ using JLD2
 using OrderedCollections
 using Pipe
 using Pkg
+using ProgressMeter
 using PyCall
 using SHA
 using SymEngine
