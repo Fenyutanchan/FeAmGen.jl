@@ -165,10 +165,16 @@ function get_interaction(
 )::Tuple{Interaction,Int64}
 ########################################################################
 
-  QCDct_link_name_list = filter( s_ -> s_ in ["QCDct1","QCDct2"], field_name_list )
-  QCDct_order = length( QCDct_link_name_list )
+  # QCDct_link_name_list = filter( s_ -> s_ in ["QCDct1","QCDct2"], field_name_list )
+  # QCDct_order = length( QCDct_link_name_list )
+  QCDct_order = begin
+    QCDct_link_name_list = filter( s_->startswith(s_,"QCDct")&&(!endswith(s_,"bar")), field_name_list )
+    @assert all( s_->(!isnothing∘findfirst)(r"^QCDct[1-9]\d*$",s_), QCDct_link_name_list )
+    isempty(QCDct_link_name_list) ? 0 : sum( s_->parse(Int,match(r"[1-9]\d*",s_).match), QCDct_link_name_list )
+  end # QCDct_order
 
-  normal_link_name_list = filter( s_ -> (s_ in ["QCDct1","QCDct2"]) == false, field_name_list ) 
+  # normal_link_name_list = filter( s_ -> (s_ in ["QCDct1","QCDct2"]) == false, field_name_list )
+  normal_link_name_list = filter( !contains("QCDct"), field_name_list ) 
   normal_link_kf_list = map( s_ -> model.particle_name_dict[s_].kf, normal_link_name_list )
   sorted_normal_link_kf_list = sort( normal_link_kf_list )
   inter = model.sorted_kf_list_dict[sorted_normal_link_kf_list]
@@ -802,7 +808,7 @@ function convert_qgraf_TO_Graph(
     # Now we need to re-order the list "propagator_index_list" associated with one_vert["fields"] (source)
     #     according to the vertex Feynman rule "inter.link_list" (destination).
     #-----------------------------------------------------------------------------------------------
-    src_part_name_list = one_vert["fields"] # source list of particle names
+    src_part_name_list = filter( !contains("QCDct"), one_vert["fields"] ) # source list of particle names
     p_src = sortperm( src_part_name_list )
     dst_part_name_list = map( p_ -> p_.name, inter.link_list ) # destination list of particle names
     p_dst = sortperm( dst_part_name_list )
