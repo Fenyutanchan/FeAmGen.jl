@@ -266,7 +266,7 @@ function get_cover_indices_list(
   graded_indices_list = [ [ [ii] for ii ∈ 1:n_dentop ] ]
   prev_indices_list = last( graded_indices_list )
 
-  @showprogress "Try all possible coverings..." for _ ∈ 2:n_dentop
+  for _ ∈ 2:n_dentop
     this_indices_list = Vector{Int}[]
     for one_indices ∈ prev_indices_list
       for one_index ∈ (last(one_indices)+1):n_dentop
@@ -299,7 +299,7 @@ function get_cover_indices_list(
   end # for _
 
   result_indices_list = Vector{Int}[]
-  @showprogress "Reducing redundant indices..." for n_index ∈ (reverse∘eachindex)( graded_indices_list )
+  for n_index ∈ (reverse∘eachindex)( graded_indices_list )
     this_indices_list = graded_indices_list[ n_index ]
     filter!( this_indices->all(result_indices->isempty(result_indices∩this_indices),
                             result_indices_list),
@@ -352,7 +352,7 @@ function make_complete_dentop_collect(
   cover_indices_list = get_cover_indices_list( incomplete_dentop_list )
   @assert (length∘reduce)( union, cover_indices_list ) == length( incomplete_dentop_list )
 
-  @showprogress "Adding denominators..." for indices ∈ cover_indices_list
+  for indices ∈ cover_indices_list
     to_be_complete_dentop = union( incomplete_dentop_list[indices]... )
 
     while length(to_be_complete_dentop) < n_sp
