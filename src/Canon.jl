@@ -80,13 +80,6 @@ function gen_loop_mom_canon_map(
 )::Dict{Basic,Basic}
 #########################################################
 
-  # preferred_vac_mom_Dict = Dict{Int, Vector{Vector{Basic}}}(
-  #   3 =>  [
-  #     map( Basic, ["q1", "q2", "q3", "q1 + q2", "q1 + q3", "q2 + q3"] ),
-  #     map( Basic, ["q1", "q2", "q3", "q1 + q3", "q2 + q3", "q1 + q2 + q3"] )
-  #   ]
-  # )
-
   q_list = get_loop_momenta(mom_list)
   n_loop = isempty(q_list) ? 0 : (get_loop_index∘last)( q_list )
   @assert q_list == [Basic("q$ii") for ii ∈ 1:n_loop]
@@ -215,6 +208,7 @@ function canonicalize_amp(
 
   # n_loop = get_n_loop( loop_den_list )
   q_list = get_loop_momenta( loop_den_list )
+  k_list = get_ext_momenta( loop_den_list )
   n_loop = isempty(q_list) ? 0 : (get_loop_index∘last)( q_list )
 
   if n_loop == 0
@@ -224,22 +218,30 @@ function canonicalize_amp(
   mom_list = map( first∘get_args, loop_den_list )
   canon_map = gen_loop_mom_canon_map(mom_list) 
 
-  if isempty(canon_map)
-    new_loop_den_list = loop_den_list 
-    new_amp_lorentz_list = amp_lorentz_list 
-  else
-    new_loop_den_list = map( den->subs(den,canon_map), loop_den_list )
-    new_amp_lorentz_list = map( amp->subs(amp,canon_map), amp_lorentz_list )
-  end # if
-
-  # Normalize the leading coefficient sign of the loop momenta.
+  new_loop_den_list = map( den->subs(den,canon_map), loop_den_list )
   new_loop_den_list = normalize_loop_mom( new_loop_den_list )
+  new_amp_lorentz_list = map( amp->subs(amp,canon_map), amp_lorentz_list )
+
+  new_mom_list = map( first∘get_args, new_loop_den_list )
+  k_coeff_mat = coefficient_matrix( new_mom_list, k_list )
+  for col ∈ eachcol(k_coeff_mat)
+    rr_list = findall( !iszero, col )
+    rr_index = findfirst( rndex->(!iszero∘SymEngine.coeff)(new_mom_list[rndex],first(q_list)), 
+                            rr_list )
+    isnothing(rr_index) && continue
+
+    rr = rr_list[rr_index]
+    col[rr] > 0 && break
+
+    flip_rule = Dict{Basic,Basic}( k_list .=> map( -, k_list ) )
+    new_loop_den_list = map( den->subs(den,flip_rule), new_loop_den_list )
+    new_mom_list = map( mom->subs(mom,flip_rule), new_mom_list )
+  end # for col
 
   # CHECK begin
   # qi_list = Basic[ Basic("q$ii") for ii in 1:n_loop ]
-  new_mom_list = map( first∘get_args, new_loop_den_list )
-  coeff_list = union( coefficient_matrix( new_mom_list, q_list ) )
-  @assert all( ≥(0), coeff_list ) "$new_mom_list"
+  unique_coeff_list = union( coefficient_matrix( new_mom_list, q_list ) )
+  @assert all( ≥(0), unique_coeff_list ) "$new_mom_list"
   # CHECK end
 
   return new_loop_den_list, new_amp_lorentz_list 
