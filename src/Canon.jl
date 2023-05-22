@@ -80,86 +80,88 @@ function gen_loop_mom_canon_map(
 )::Dict{Basic,Basic}
 #########################################################
 
-  q_list = get_loop_momenta(mom_list)
+  q_list = get_loop_momenta( mom_list )
+  k_list = get_ext_momenta( mom_list )
   n_loop = isempty(q_list) ? 0 : (get_loop_index∘last)( q_list )
   @assert q_list == [Basic("q$ii") for ii ∈ 1:n_loop]
 
-  vac_mom_list = mom_list - subs.( mom_list, Ref(Dict(q_list .=> 0)) )
-  map!( expand, vac_mom_list, vac_mom_list )
-  filter!( !iszero, vac_mom_list )
-  map!( normalize_loop_mom_single, vac_mom_list, vac_mom_list )
-  unique!(vac_mom_list)
+  # Find all branches of the loop momenta.
+  mom_q_coeff_mat = coefficient_matrix( mom_list, q_list )
+  mom_q_coeff_list = unique( row->sort([row,-row]), eachrow(mom_q_coeff_mat) )
+  filter( !iszero, mom_q_coeff_list )
+  branch_indices_list = Vector{Int}[]
+  for mom_q_coeff ∈ mom_q_coeff_list
+    branch_indices = findall( row->row==mom_q_coeff||row==-mom_q_coeff,
+                                eachrow(mom_q_coeff_mat) )
+    push!( branch_indices_list, branch_indices )
+  end # for mom_q_coeff
+  ##########################################
+
+  vac_mom_list = map( mom_q_coeff->transpose(mom_q_coeff)*q_list, mom_q_coeff_list )
+  # vac_mom_list = mom_list - subs.( mom_list, Ref(Dict(q_list .=> 0)) )
+  # map!( expand, vac_mom_list, vac_mom_list )
+  # filter!( !iszero, vac_mom_list )
+  # map!( normalize_loop_mom_single, vac_mom_list, vac_mom_list )
+  # unique!( vac_mom_list )
 
   preferred_flag = n_loop ∈ keys(preferred_vac_mom_Dict())
 
-  # if preferred_flag && any(
-  #     preferred_mom_list -> vac_mom_list ⊆ preferred_mom_list,
-  #     preferred_vac_mom_Dict[n_loop]
-  #   ) # end any
-  #     return Dict{Basic, Basic}()
-  # elseif !preferred_flag &&
-  #   (isempty∘setdiff)( q_list, vac_mom_list ) && 
-  #   all( ≥(0), coefficient_matrix( vac_mom_list, q_list ) )
-  #     return Dict{Basic, Basic}()
-  # end # if
+  # prefered_all_possible_repl_rules = Dict{Basic, Basic}[]
+  # all_possible_repl_rules = Dict{Basic,Basic}[]
+  chosen_repl_order = typemax(Int)
+  chosen_repl_rule = Dict{Basic,Basic}()
   
-  prefered_all_possible_repl_rules = Dict{Basic, Basic}[]
-  all_possible_repl_rules = Dict{Basic,Basic}[]
-  
-  for selected_mom_indices ∈ permutations(eachindex(vac_mom_list), length(q_list))
+  for selected_vac_mom_indices ∈ permutations( eachindex(vac_mom_list), length(q_list) )
     for sign_list ∈ Iterators.product([(1, -1) for _ in q_list]...)
-      if last(sign_list) == -1
-        break
-      end # if
+      last(sign_list) == -1 && break
 
-      tmp_coeff_mat = coefficient_matrix( sign_list .* vac_mom_list[selected_mom_indices], q_list )
-      if (iszero∘expand∘get_det)(tmp_coeff_mat)
-        break
-      end # if
+      selected_vac_mom_list = sign_list .* vac_mom_list[selected_vac_mom_indices]
+      selected_coeff_mat = coefficient_matrix( selected_vac_mom_list, q_list )
+      (iszero∘expand∘get_det)( selected_coeff_mat ) && break
 
-      repl_rule = Dict( q_list .=> inv(tmp_coeff_mat) * q_list )
-      new_vac_mom_list = (expand∘subs).( vac_mom_list, Ref(repl_rule) )
-      @assert new_vac_mom_list[selected_mom_indices] == sign_list .* q_list
+      repl_rule = Dict( q_list .=> inv( selected_coeff_mat ) * q_list )
+      new_vac_mom_list = map( vac_mom->(expand∘subs)(vac_mom,repl_rule), vac_mom_list )
+      @assert new_vac_mom_list[selected_vac_mom_indices] == sign_list .* q_list
 
       map!( normalize_loop_mom_single, new_vac_mom_list, new_vac_mom_list )
       new_coeff_mat = coefficient_matrix( new_vac_mom_list, q_list )
+      !all( ≥(0), new_coeff_mat ) && continue
 
-      if preferred_flag
-        if any(
-          preferred_mom_list -> new_vac_mom_list ⊆ preferred_mom_list,
-          preferred_vac_mom_Dict()[n_loop]
-        ) # end any
-          # sort_index = gen_repl_rule_sort_index( subs.(mom_list, Ref(repl_rule)) )
-          push!( prefered_all_possible_repl_rules, repl_rule )
-        elseif all( ≥(0), new_coeff_mat )
-          # sort_index = gen_repl_rule_sort_index( subs.(mom_list, Ref(repl_rule)) )
-          push!( all_possible_repl_rules, repl_rule )
+      preferred_flag &&
+        !any( preferred_mom_list->new_vac_mom_list⊆preferred_mom_list,
+                preferred_vac_mom_Dict()[n_loop] ) && break
+
+      for mom_indices ∈ Iterators.product( branch_indices_list[selected_vac_mom_indices]... )
+        tmp_k_coeff_mat = coefficient_matrix( mom_list[collect(mom_indices)], k_list )
+        tmp_repl_rule = copy( repl_rule )
+        for q_index ∈ eachindex(q_list)
+          tmp_repl_rule[ q_list[q_index] ] = repl_rule[ q_list[q_index] ] - 
+                                              transpose(tmp_k_coeff_mat[ q_index, : ]) * k_list
+        end # for q_index
+
+        tmp_mom_list = map( mom->(expand∘subs)(mom,tmp_repl_rule), mom_list )
+        tmp_q_coeff_mat = coefficient_matrix( tmp_mom_list, q_list )
+        tmp_k_coeff_mat = coefficient_matrix( tmp_mom_list, k_list )
+        map!( abs, tmp_q_coeff_mat, tmp_q_coeff_mat )
+        map!( abs, tmp_k_coeff_mat, tmp_k_coeff_mat )
+        tmp_repl_order = transpose( tmp_q_coeff_mat * map( get_loop_index, q_list ) ) *
+                          tmp_k_coeff_mat * map( get_ext_index, k_list )
+
+        if tmp_repl_order < chosen_repl_order
+          chosen_repl_order = tmp_repl_order
+          chosen_repl_rule = tmp_repl_rule
+        elseif tmp_repl_order == chosen_repl_order
+          chosen_mom_list = map( mom->(expand∘subs)(mom,chosen_repl_rule), mom_list )
+          sort!( tmp_mom_list; by=string )
+          sort!( chosen_mom_list; by=string )
+          _, index = findmin( string, [chosen_mom_list, tmp_mom_list] )
+          index == 2 && (chosen_repl_rule = tmp_repl_rule)
         end # if
-      elseif all( ≥(0), new_coeff_mat )
-        # sort_index = gen_repl_rule_sort_index( subs.(mom_list, Ref(repl_rule)) )
-        push!( all_possible_repl_rules, repl_rule )
-      end # if
+      end # for mom_indices
     end # for sign_list
   end # for selected_mom_indices
 
-  if preferred_flag
-    if isempty( prefered_all_possible_repl_rules )
-      error( "There is no fetching preferred_flag loop momenta list" )
-
-      # sort!( all_possible_repl_rules; 
-      #        by=repl->get_repl_rule_sort_index( subs.( mom_list, Ref(repl) ) ) )
-      # return first( all_possible_repl_rules )
-    end
-
-    sort!( prefered_all_possible_repl_rules; 
-           by=repl->get_repl_rule_sort_index( subs.( mom_list, Ref(repl) ) ) )
-    return first( prefered_all_possible_repl_rules )
-  end # if preferred_flag
-
-  sort!( all_possible_repl_rules;
-         by=repl->get_repl_rule_sort_index( subs.( mom_list, Ref(repl) ) ) )
-  return first( all_possible_repl_rules )
-
+  return chosen_repl_rule
 end # function gen_loop_mom_canon_map
 
 
@@ -168,7 +170,7 @@ end # function gen_loop_mom_canon_map
 
 
 #########################################################
-# Created by Quanfeng Wu 
+# Created by Quan-feng Wu 
 # Mar. 26 2023
 # 
 # A simple trial for sorting the replace rules generated in `gen_loop_mom_canon_map`.
