@@ -6,16 +6,15 @@ const preferred_vac_mom_Dict() = Dict{Int,Vector{Vector{Basic}}}(
   3 => [ to_Basic( ["q1", "q2", "q3", "q1 + q3", "q2 + q3", "q1 + q2 + q3"] ),
          to_Basic( ["q1", "q2", "q3", "q1 + q2", "q1 + q3", "q2 + q3"] ) ],
   4 => [ to_Basic( ["q1", "q2", "q3", "q4",
-                    "q1 + q2", "q2 + q3", "q2 + q4", "q3 + q4",
-                    "q2 + q3 + q4"] ),
-         to_Basic( ["q1", "q2", "q3", "q4",
-                    "q1 + q2", "q1 + q4",
-                    "q1 + q2 + q4", "q1 + q3 + q4",
+                    "q1 + q2", "q1 + q3",
+                    "q1 + q2 + q3", "q1 + q2 + q4",
                     "q1 + q2 + q3 + q4"] ),
          to_Basic( ["q1", "q2", "q3", "q4",
-                    "q1 + q2", "q2 + q3",
-                    "q1 + q2 + q4", "q2 + q3 + q4",
-                    "q1 + q2 + q3 + q4"] ) ]
+                    "q1 + q2", "q1 + q3", "q2 + q4", "q3 + q4",
+                    "q1 + q2 + q3 + q4"] ),
+         to_Basic( ["q1", "q2", "q3", "q4",
+                    "q1 + q2", "q2 + q3", "q2 + q4",
+                    "q1 + q2 + q4", "q2 + q3 + q4"] ) ]
 ) # end preferred_vac_mom_Dict
 ###################################
 
@@ -110,16 +109,9 @@ function gen_loop_mom_canon_map(
   ##########################################
 
   vac_mom_list = map( mom_q_coeff->transpose(mom_q_coeff)*q_list, mom_q_coeff_list )
-  # vac_mom_list = mom_list - subs.( mom_list, Ref(Dict(q_list .=> 0)) )
-  # map!( expand, vac_mom_list, vac_mom_list )
-  # filter!( !iszero, vac_mom_list )
-  # map!( normalize_loop_mom_single, vac_mom_list, vac_mom_list )
-  # unique!( vac_mom_list )
 
   preferred_flag = n_loop ∈ keys(preferred_vac_mom_Dict())
 
-  # prefered_all_possible_repl_rules = Dict{Basic, Basic}[]
-  # all_possible_repl_rules = Dict{Basic,Basic}[]
   chosen_repl_order = typemax(Int)
   chosen_repl_rule = Dict{Basic,Basic}()
   
@@ -127,7 +119,7 @@ function gen_loop_mom_canon_map(
     for sign_list ∈ Iterators.product([(1, -1) for _ in q_list]...)
       last(sign_list) == -1 && break
 
-      selected_vac_mom_list = sign_list .* vac_mom_list[selected_vac_mom_indices]
+      selected_vac_mom_list = map( expand, sign_list .* vac_mom_list[selected_vac_mom_indices] )
       selected_coeff_mat = coefficient_matrix( selected_vac_mom_list, q_list )
       (iszero∘expand∘get_det)( selected_coeff_mat ) && break
 
@@ -236,9 +228,7 @@ function canonicalize_amp(
   k_list = get_ext_momenta( loop_den_list )
   n_loop = isempty(q_list) ? 0 : (get_loop_index∘last)( q_list )
 
-  if n_loop == 0
-    return loop_den_list, amp_lorentz_list 
-  end # if
+  n_loop == 0 && return loop_den_list, amp_lorentz_list 
 
   mom_list = map( first∘get_args, loop_den_list )
   canon_map = gen_loop_mom_canon_map( mom_list, loop_den_mom_list_collect ) 
