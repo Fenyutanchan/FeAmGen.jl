@@ -5,7 +5,17 @@ const preferred_vac_mom_Dict() = Dict{Int,Vector{Vector{Basic}}}(
   2 => [ to_Basic( ["q1", "q2", "q1 + q2"] ) ],
   3 => [ to_Basic( ["q1", "q2", "q3", "q1 + q3", "q2 + q3", "q1 + q2 + q3"] ),
          to_Basic( ["q1", "q2", "q3", "q1 + q2", "q1 + q3", "q2 + q3"] ) ],
-  # 4 => Vector{Basic}[  ]
+  4 => [ to_Basic( ["q1", "q2", "q3", "q4",
+                    "q1 + q2", "q2 + q3", "q2 + q4", "q3 + q4",
+                    "q2 + q3 + q4"] ),
+         to_Basic( ["q1", "q2", "q3", "q4",
+                    "q1 + q2", "q1 + q4",
+                    "q1 + q2 + q4", "q1 + q3 + q4",
+                    "q1 + q2 + q3 + q4"] ),
+         to_Basic( ["q1", "q2", "q3", "q4",
+                    "q1 + q2", "q2 + q3",
+                    "q1 + q2 + q4", "q2 + q3 + q4",
+                    "q1 + q2 + q3 + q4"] ) ]
 ) # end preferred_vac_mom_Dict
 ###################################
 
