@@ -4,7 +4,8 @@ const preferred_vac_mom_Dict() = Dict{Int,Vector{Vector{Basic}}}(
   1 => [ [ Basic("q1") ] ],
   2 => [ to_Basic( ["q1", "q2", "q1 + q2"] ) ],
   3 => [ to_Basic( ["q1", "q2", "q3", "q1 + q3", "q2 + q3", "q1 + q2 + q3"] ),
-         to_Basic( ["q1", "q2", "q3", "q1 + q2", "q1 + q3", "q2 + q3"] ) ]
+         to_Basic( ["q1", "q2", "q3", "q1 + q2", "q1 + q3", "q2 + q3"] ) ],
+  # 4 => Vector{Basic}[  ]
 ) # end preferred_vac_mom_Dict
 ###################################
 
@@ -76,7 +77,8 @@ end # function normalize_loop_mom
 # Created by Quan-feng Wu 
 # Feb. 16 2023
 function gen_loop_mom_canon_map(
-    mom_list::Vector{Basic}
+    mom_list::Vector{Basic},
+    loop_den_mom_list_collect::Vector{Vector{Basic}}=Vector{Basic}[]
 )::Dict{Basic,Basic}
 #########################################################
 
@@ -152,10 +154,20 @@ function gen_loop_mom_canon_map(
           chosen_repl_rule = tmp_repl_rule
         elseif tmp_repl_order == chosen_repl_order
           chosen_mom_list = map( mom->(expand∘subs)(mom,chosen_repl_rule), mom_list )
-          sort!( tmp_mom_list; by=string )
-          sort!( chosen_mom_list; by=string )
-          _, index = findmin( string, [chosen_mom_list, tmp_mom_list] )
-          index == 2 && (chosen_repl_rule = tmp_repl_rule)
+          chosen_flag = any( mom_list->chosen_mom_list⊆mom_list, loop_den_mom_list_collect ) ||
+                          any( mom_list->mom_list⊆chosen_mom_list, loop_den_mom_list_collect )
+          tmp_flag = any( mom_list->tmp_mom_list⊆mom_list, loop_den_mom_list_collect ) ||
+                      any( mom_list->mom_list⊆tmp_mom_list, loop_den_mom_list_collect )
+          if chosen_flag && !tmp_flag
+            continue
+          elseif !chosen_flag && tmp_flag
+            chosen_repl_rule = tmp_repl_rule
+          else
+            sort!( tmp_mom_list; by=string )
+            sort!( chosen_mom_list; by=string )
+            _, index = findmin( string, [chosen_mom_list, tmp_mom_list] )
+            index == 2 && (chosen_repl_rule = tmp_repl_rule)
+          end # if
         end # if
       end # for mom_indices
     end # for sign_list
@@ -204,7 +216,8 @@ end # function get_repl_rule_sort_index
 #####################################################
 function canonicalize_amp( 
     loop_den_list::Vector{Basic},  
-    amp_lorentz_list::Vector{Basic} 
+    amp_lorentz_list::Vector{Basic},
+    loop_den_mom_list_collect::Vector{Vector{Basic}}=Vector{Basic}[]
 )::Tuple{Vector{Basic},Vector{Basic}}
 ######################################################
 
@@ -218,7 +231,7 @@ function canonicalize_amp(
   end # if
 
   mom_list = map( first∘get_args, loop_den_list )
-  canon_map = gen_loop_mom_canon_map(mom_list) 
+  canon_map = gen_loop_mom_canon_map( mom_list, loop_den_mom_list_collect ) 
 
   new_loop_den_list = map( den->subs(den,canon_map), loop_den_list )
   new_loop_den_list = normalize_loop_mom( new_loop_den_list )
