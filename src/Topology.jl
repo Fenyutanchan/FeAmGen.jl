@@ -340,7 +340,7 @@ function make_complete_dentop_collect(
 ###########################################
 
   n_loop = first(dentop_list).n_loop
-  @assert n_loop ∈ 1:3 "$(n_loop)-loop is not supported now."
+  @assert haskey( preferred_vac_mom_Dict(), n_loop ) "$(n_loop)-loop is not supported now."
 
   ind_ext_mom = first(dentop_list).ind_ext_mom
   n_sp::Int = (n_loop + 1) * n_loop / 2 + n_loop * length( ind_ext_mom )
