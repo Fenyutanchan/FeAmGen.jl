@@ -1,7 +1,7 @@
 import Base: intersect, isempty, issubset, length, setdiff, union
 
 ###########################################
-mutable struct DenTop
+struct DenTop
   n_loop::Int
   ind_ext_mom::Vector{Basic}
   den_list::Vector{Basic}
@@ -427,14 +427,16 @@ function construct_den_topology(
     DenTop( n_loop, ind_ext_mom, (to_Basic∘load)( amp_file, "loop_den_list" ) )
       for amp_file in amp_file_list
   ]
-  backup_dentop_collect = deepcopy( dentop_collect )
+  backup_dentop_collect = copy( dentop_collect )
 
   unique!( dentop->reduce(*,dentop.den_list), dentop_collect )
   dentop_collect = get_superior_dentop_collect( dentop_collect )
+  # @assert all( backup_dentop->any(dentop->backup_dentop⊆dentop,dentop_collect), backup_dentop_collect )
   @info "$(length(dentop_collect)) initial topolgies found."
 
   @info "Begin to make complete topologies @ $(now())"
   complete_dentop_collect = make_complete_dentop_collect( dentop_collect )
+  @assert all( backup_dentop->any(complete_dentop->backup_dentop⊆complete_dentop,complete_dentop_collect), backup_dentop_collect )
   @info "$(length(complete_dentop_collect)) complete topologies found @ $(now())."
 
   file = open( topology_name, "w" )
