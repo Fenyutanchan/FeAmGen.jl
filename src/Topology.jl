@@ -238,9 +238,9 @@ function get_superior_dentop_collect(
   new_dentop_collect = DenTop[]
 
   for dentop ∈ dentop_collect
-    included_by_pos = findfirst( new_dentop -> dentop ⊆ new_dentop, new_dentop_collect )
+    included_by_pos = findfirst( new_dentop->dentop⊆new_dentop, new_dentop_collect )
     !isnothing(included_by_pos) && continue
-    filter!( new_dentop -> new_dentop ⊈ dentop, new_dentop_collect )
+    filter!( new_dentop->new_dentop⊈dentop, new_dentop_collect )
     push!( new_dentop_collect, dentop )
   end # for dentop
 
@@ -397,11 +397,12 @@ function construct_den_topology(
 )::Vector{DenTop}
 ###########################################
 
-  @assert isdir(amp_dir) && endswith( amp_dir, "_amplitudes" )
+  @assert isdir(amp_dir)
+  @assert endswith( amp_dir, "_amplitudes" ) || endswith( amp_dir, "_amplitudes/" )
   topology_name = begin
     tmp_dir, tmp_name = splitdir(amp_dir)
     tmp_dir = isempty(tmp_dir) ? pwd() : tmp_dir
-    tmp_name = replace( tmp_name, "_amplitudes" => "_topology.out" )
+    tmp_name = replace( tmp_name, "_amplitudes" => "_topology.out", "_amplitudes/" => "_topology.out" )
     joinpath( tmp_dir, tmp_name )
   end # topology_name
   amp_file_list = filter( endswith(".jld2"), readdir( amp_dir; join=true, sort=false ) )
@@ -440,9 +441,11 @@ function construct_den_topology(
   @info "$(length(complete_dentop_collect)) complete topologies found @ $(now())."
 
   file = open( topology_name, "w" )
+  remaining_indices = (collect∘eachindex)( backup_dentop_collect )
   for (index, complete_dentop) ∈ enumerate( complete_dentop_collect )
     @assert is_valid_dentop(complete_dentop)
     pos_list = findall( dentop->dentop⊆complete_dentop, backup_dentop_collect )
+    setdiff!(remaining_indices, pos_list)
     
     line_str = "-"^14
     println()
@@ -463,6 +466,8 @@ function construct_den_topology(
 
   end # for (index, complete_dentop)
   close( file )
+
+  @assert isempty(remaining_indices)
 
   box_message( "Information is in topology.out" )
 
